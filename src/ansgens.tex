@@ -1,0 +1,801 @@
+\documentclass{new_tlp}
+\input pheader18.tex
+
+\begin{document}
+\title[Answer Stream Generators]
+{%An Expressiveness Lift for Prolog: 
+Programming with Answer Stream Generators}
+%{Answer Stream Generators: a Facelift for Prolog}
+
+\begin{comment}
+ \author[Paul Tarau]
+         {%TBD\\
+          %\and 
+          Paul Tarau\\
+          Dept. of Computer Science and Engineering \\ University of North Texas\\
+          1155 Union Circle, Denton, Texas 76203, USA}
+\end{comment}
+
+\maketitle
+
+\begin{abstract}
+Answer Stream Generators encapsulate the work of coroutining logic engines as an algebra of stream operations that extends Prolog with lazy evaluation and  support for infinite answer streams. We implement this algebra on top of SWI-Prolog's Engine API and design an embedded language interpreter providing a compact notation for its composition mechanisms.
+Answer Stream Generators can be used to unify encapsulation of state originating from declarative constructs, procedural side effects and input-output interactions. 
+They enhance the expressiveness of Prolog with language constructs comparable to generators in languages like Python, go, C\verb~#~, Ruby or Lua, and language constructs implicitly available in non-strict functional programming languages like Haskell. 
+\end{abstract}
+
+\section{Introduction}
+
+Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. The goal of this paper is dual-purpose in this sense: we encapsulate an aspect of a pragmatic language extension,
+first-class logic engines \cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER,bp2011},
+into a set of operations organized compositionally in the form of Answer Stream Generators, language constructs similar to Python's generators and sharing features with coroutining constructs now present in a several other widely used programming languages.
+
+{\Large TODO: expand}
+
+Motivation built around some of Prolog's expressiveness limitations:
+\BI
+\I procedural state-management constructs
+\I fixed depth-first and strict evaluation semantics
+\EI
+
+Reasons for some of the new things we propose:
+\BI
+\I what generators can bring in languages like Python
+\I what lazy evaluation brings to Haskell
+\I we want to add streams to
+handle potentially very large amounts of data flowing over the internet
+\I the need to update Prolog's language constructs to closely match new developments adopted by some of today's most successful programming languages (e.g. mention Python's yield \verb~C++~ fibers, go-language's goroutines)
+\EI
+
+\section{SWI Prolog's engine implementation}
+
+An engine can be seen as a Prolog virtual machine that has its own stacks and machine state. Unlike normal SWI-Prolog threads \cite{swi,swi_threads} though, they are not associated with an operating system thread. Instead, you ask an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and cause it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal.
+
+Implementing the engine API dies not assume that a Prolog system supports multi-threading, It only assumes that the virtual machine is fully reentrant, it can be queried and it can stop, yield data and resumes execution as a coroutine.
+
+\section{The Answer Stream Generator API}
+
+We design Answer Stream Generators as a wrapper around the SWI-Prolog engine implementation.
+We also keep the goals and answer templates that started the engine to make them reusable. At the same time this external wrapper ensures that engines stay garbage collectable on termination.
+
+
+{\Large no need to actually place all the upcoming code in the paper - but it is there for now to quickly explain what is going on}
+
+We start by describing the Answer Stream Generators API.
+The predicate {\tt new\_generator} holds when a new generator has been created
+consisting of a new engine, a goal and its answer template, the latest two needed
+for restarting the engine.
+\begin{code}
+new_generator(X,G,engine(E,X,G)):-engine_create(X,G,E).
+\end{code}
+
+The predicate  {\tt clone\_generator} creates a new generator from a generator's goal and answer template. If the goal's execution is side-effect free, the clone will behave the same way as the cloned generator.
+\begin{code}
+clone_generator(engine(_,X,G),engine(E,X,G)):-engine_create(X,G,E).
+\end{code}
+
+The predicate {\tt stop\_generator} stops a generator and allows reclamation of its resources but it will signal that it is {tt done} on any future calls to it.
+It offers a few variants, including a ``self-destruct'' predicate of arity 0 .
+\begin{code}
+stop_generator(E,R):-is_done_generator(E),!,R=E.
+stop_generator(engine(E,X,G),engine(done,X,G)):-engine_destroy(E).
+
+stop_generator(E):-stop_generator(E,_).
+
+stop_generator:-engine_self(E),engine_destroy(E).
+\end{code}
+
+The predicate {\tt ask\_generator} queries a generator unless its engine is {\tt done}.
+It marks the generator as {\tt done} after its first failure.
+{\em This ensures an engine can be garbage collected by making its handle unreachable.}
+\begin{code}  
+ask_generator(engine(done,_,_),_):-!,fail.
+ask_generator(engine(E,_,_),X):-engine_next(E,A),!,X=A.
+ask_generator(Estate,_):-nb_setarg(1,Estate,done),fail.  
+\end{code}
+
+The predicate {\tt generate\_answer} allows a generator to produce answers from inside a forward moving loop. As such it can be used to expose an {\bf AND-stream} seen as progressing  in a linear recursive loop, as an {\bf OR-stream}, undistinguishable from answers generated by an engine on backtracking.
+\begin{code}
+generate_answer(X):-engine_yield(X).
+\end{code}
+The predicate {\tt is\_done\_generator} succeeds if a generator is marked with {\tt done} on its first failure.
+
+\begin{code}
+is_done_generator(engine(done,_,_)).
+\end{code}
+
+\begin{codeh}
+% shows engine handle or "done" as well as the generator's stored goal
+show_generator(engine(E,X,G)):-writeln(X:G=E).
+\end{codeh}
+
+\section{The AND-stream / OR-stream Duality}
+
+We call {\em AND-stream / OR-stream duality} the
+ability to generate answer streams via backtracking (OR-streams) or
+as part of a forward moving recursive loop (AND-streams).
+As the examples that follow will, show,
+being oblivious to the choice of generation method they encapsulate
+is a key contributor to the ``expressiveness lift'' answer generators
+bring to Prolog.
+
+The simplest example of {\em AND-stream} is  implemented
+by the generator {\tt nat}. It defines the infinite stream of natural numbers 
+by yielding an answer at each step of a recursive loop.
+\begin{code}
+nat(E):-new_generator(_,nat_goal(0),E).
+
+nat_goal(N):-
+  SN is N+1,
+  generate_answer(N),
+  nat_goal(SN).
+\end{code}
+
+Alternatively, one could define 
+and equivalent generator {\tt nat\_} as an OR-stream,  with answers 
+produced via  backtracking.
+
+\begin{code}
+nat_(E):-new_generator(N, between(0,inf,N), E).
+\end{code}
+
+Note also that both AND-streams and OR-streams can be infinite, as in the
+case of the generators {\tt nat} and {\tt nat\_}.
+While one can see backtracking over an infinite set of answers as
+a ``naturally born'' OR-stream, the ability of the generators to
+yield answers from inside an infinite recursive loop is critical
+for generating infinite AND-streams.
+
+Note also that generating an answer stream by either of the above methods
+is immaterial to the user of the generator which can be seen as a ``black box''.
+
+The predicate {\tt in/2}, defined as an {\tt xfx} operator,
+``morphs'' iteration over  a stream of answers into backtracking.
+\begin{code}
+:-op(800,xfx,(in)).
+
+X in E:-ask_generator(E,A),select_from(E,A,X).
+
+select_from(_,A,A).
+select_from(E,_,X):-X in E.
+\end{code}
+
+\BX
+The combined effect of the two engines turns the linear-recursive loop of {\tt nat},
+generating an AND-stream of answers into an OR-stream, thus, from the outside, one can explore them via backtracking. Note that {\tt nat} is an infinite stream and so is its
+view from outside.
+\begin{codex}
+?- nat(E),X in E.
+E = engine(<engine>(3,0x7f825943fbe0), _2248, nat_goal(0)),
+X = 0 ;
+E = engine(<engine>(3,0x7f825943fbe0), _2248, nat_goal(0)),
+X = 1 ;
+E = engine(<engine>(3,0x7f825943fbe0), _2248, nat_goal(0)),
+X = 2 ;
+...
+\end{codex}
+\EX
+
+Sequences enumerated on backtracking can be encapsulated as generators to provide a library of ``built-in generators''.
+The predicate {\tt range/2} (with thanks to Python for the name!) creates a generator over a finite interval, closed on the left and open on the right:
+\begin{code}
+range(From,To,E):-Max is To-1,new_generator(I,between(From,Max,I),E).
+\end{code}
+Assuming a  default range from 0 we add:
+\begin{code}
+range(To,E):-range(0,To,E).
+\end{code}
+
+
+\section{The Operational Equivalence between Answer Stream Generators and Lazy Lists}
+
+One can turn lists into generators and (finite) generators into lists quite easily.
+\begin{code}
+list2generator(Xs,engine(E,X,G)):-G=member(X,Xs),engine_create(X,G,E).
+
+finite_generator2list(E,Xs):-findall(X,X in E,Xs).
+\end{code}
+
+\BX
+\begin{codex}
+?- list2generator([a,b,c],E),finite_generator2list(E,Xs).
+E = engine(done, _4962, member(_4962, [a, b, c])),
+Xs = [a, b, c].
+\end{codex}
+\EX
+
+Moreover, if one uses SWI-Prolog's {\tt lazy\_lists} library, generators can be turned into finite or infinite lists and vice-versa.
+In fact, {\tt list2generator} works as is on infinite lazy lists. In the case of {\tt generator2list} we just replace {\tt findall} with {\tt lazy\_findall}.
+\begin{code}
+generator2list(E,Xs):-lazy_findall(X,X in E,Xs).
+\end{code} 
+
+One can observe the two sides of the transformation after defining {\tt lazy\_nats} as follows.
+\begin{code}
+lazy_nats(Xs):-lazy_findall(X,between(0,infinite,X),Xs).
+\end{code}
+
+\BX
+Equivalence between infinite generators and infinite lazy lists.
+\begin{codex}
+?- lazy_nats(Xs),list2generator(Xs,E),generator2list(E,Ys),member(Y,Ys).
+E = engine(<engine>(20,0x7ff7a7502140), _14308, member(_14308, Xs)),
+Ys = [0|_14334],
+Y = 0,
+lazy_list(lazy_lists:lazy_engine_next(<engine>(19,0x7ff7a7501b60), 1), Xs),
+lazy_list(lazy_lists:lazy_engine_next(<engine>(21,0x7ff7a75021e0), 1), _14334) ;
+E = engine(<engine>(20,0x7ff7a7502140), _14412, member(_14412, Xs)),
+Ys = [0, 1|_14444],
+Y = 1,
+lazy_list(lazy_lists:lazy_engine_next(<engine>(19,0x7ff7a7501b60), 1), Xs),
+lazy_list(lazy_lists:lazy_engine_next(<engine>(21,0x7ff7a75021e0), 1), _14444) ;
+E = engine(<engine>(20,0x7ff7a7502140), _14516, member(_14516, Xs)),
+Ys = [0, 1, 2|_14554],
+Y = 2,
+...
+\end{codex}
+\EX
+In fact, one can also use two predicates exported by the library {\tt lazy\_lists}
+to bypass the extra engine created by {\tt lazy\_findall} as follows.
+\begin{code}
+generator2list_(engine(E,_,_),Xs):-lazy_list(lazy_engine_next(E, 1), Xs).
+\end{code}
+
+One can lift this equivalence between data objects to one between predicates using them via higher-order constructs like the following.
+
+\begin{code}
+lend_operation_to_lazy_lists(Op,Xs,Ys,Zs):-
+  list2generator(Xs,E1),
+  list2generator(Ys,E2),
+  call(Op,E1,E2,E3),
+  generator2list(E3,Zs).
+
+lazy_list_sum(Xs,Ys,Zs):-lend_operation_to_lazy_lists(dir_sum,Xs,Ys,Zs).
+
+lazy_list_prod(Xs,Ys,Zs):-lend_operation_to_lazy_lists(cart_prod,Xs,Ys,Zs).
+\end{code}
+
+\section{The Generator Algebra}
+We start with the simpler case of finite generators.
+ 
+\subsection{Operations on Finite  Generators}
+
+Combining finite generators is easy, along the correspondence
+between direct sum and disjunction.
+\begin{code}
+fin_dir_sum(E1,E2,E):-new_generator(R, (R in E1 ; R in E2), E).
+\end{code}
+The same applies to the cartesian product of finite generators, except that
+we need to clone the second generator to produce answers for each answer of the first.
+The reader familiar with linear logic might observe here that answer streams are
+by default usable only once and that an explicit copy operator is needed otherwise.
+
+\begin{code}
+fin_cart_prod(E1,E2,E):-new_generator(R, fin_cart_prod_goal(E1,E2,R), E).
+
+fin_cart_prod_goal(E1,E2,X-Y):-
+  X in E1,
+  clone_generator(E2,Clone),
+  Y in Clone.  
+\end{code}
+
+\BX 
+Finite sum and product generators act as follows:
+\begin{codex}
+?- list2generator([a,b,c],E),range(0,3,F),fin_dir_sum(E,F,G),generator2list(G,Xs).
+E = engine(<engine>(4,0x7f893803abf0), _5378, member(_5378, [a, b, c])),
+F = engine(<engine>(6,0x7f893803af70), _5406, between(0, 2, _5406)),
+G = engine(done, _5434, fin_dir_sum_goal(engine(<engine>(4,0x7f893803abf0), _5378,
+member(_5378, [a, b, c])),engine(<engine>(6,0x7f893803af70), _5406, 
+between(0, 2, _5406)), _5434)),
+Xs = [a, b, c, 0, 1, 2].
+\end{codex}
+\EX
+
+
+
+\subsection{Extension to Infinite Answer Generators}
+
+In the case of possibly infinite generators, we  ask each generator for one answer inside a linear recursive loop. We ensure that termination only happens if both generators terminate.
+\begin{code}
+dir_sum(E1,E2,engine(E,X,G)):-
+  G=dir_sum_goal(E1,E2,X),
+  engine_create(X,G,E).
+  
+dir_sum_goal(E1,E2,X):-
+  ( ask_generator(E1,X)
+  ; ask_generator(E2,X)
+  ; \+ (is_done_generator(E1),is_done_generator(E2)),
+    dir_sum_goal(E1,E2,X)
+  ).  
+\end{code}
+
+Designing the recursive loop for possibly infinite products
+proceeds with a loop that will need to store finite initial 
+segments of the generators as they grow into two lists, initially
+empty.
+\begin{code}
+cart_prod(E1,E2,engine(E,X,G)):-
+  G=cart_prod_goal(E1,E2),
+  engine_create(X,G,E).
+
+cart_prod_goal(E1,E2):-
+  ask_generator(E1,A),
+  cart_prod_loop(1,A,E1-[],E2-[]).
+\end{code}
+
+The algorithm, expressed by the predicate {\tt cart\_prod\_loop}
+switches between generators while none of them is done.
+After that, it keeps progressing the active generator 
+for new pairs, including those selecting an element 
+from the stored lists of the terminated generator.
+\begin{code}
+cart_prod_loop(Ord1,A,E1-Xs,E2-Ys):-
+  flip(Ord1,Ord2,A,Y,Pair),
+  forall(member(Y,Ys),generate_answer(Pair)),
+  ask_generator(E2,B),
+  !,
+  cart_prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
+cart_prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
+  flip(Ord1,_Ord2,X,Y,Pair),
+  X in E1,member(Y,Ys),
+  generate_answer(Pair),
+  fail.
+\end{code}
+
+The predicate {\tt flip} ensures correct order in a given pair
+as  generators take turn being the active one in the recursive loop. 
+\begin{code} 
+flip(1,2,X,Y,X-Y).
+flip(2,1,X,Y,Y-X).
+\end{code}
+
+\BX
+Working with infinite sums and products. The slice/3 predicate (to be defined later) allows limiting output to a finite initial segment.
+\begin{codex}
+?- nat(N),nat(M),dir_sum(N,M,E),slice(E,0,6,S),X in S,writeln(X),fail.
+0
+0
+1
+1
+2
+2
+false.
+
+?- nat(N),nat(M),cart_prod(N,M,E),slice(E,0,6,S),X in S,writeln(X),fail.
+0-0
+1-0
+1-1
+0-1
+2-1
+2-0
+false.
+\end{codex}
+\EX
+
+\subsection{An embedded language interpreter for the algebra}
+
+With our sum and product operations ready, we can proceed designing the embedded language
+facilitation more complex forms of generator compositions.
+\subsubsection{Deep Cloning}
+
+As generators are by default single-use, given that we store a goal and its answer template together with the engine activating it (assuming that the code is free of side-effects), it makes sense to define a deep cloning operation that creates a fresh equivalent engine from possible nested engines that may have ``spent their fuel''.
+Thus, besides  sum and product  the cloning algorithm will also need to support
+linear-logic inspired ``{\tt !}'' operator. Note that sequences represented as lists that being immutable do not require copying.
+\begin{code}
+:-op(100,fx,(!)).
+
+deep_clone(engine(_,X,G),engine(CE,X,G)):-engine_create(X,G,CE).
+deep_clone(E+F,CE+CF):-deep_clone(E,CE),deep_clone(F,CF).
+deep_clone(E*F,CE*CF):-deep_clone(E,CE),deep_clone(F,CF).
+deep_clone(!E,CE):-deep_clone(E,CE).
+deep_clone([X|Xs],[X|Xs]).
+\end{code}
+
+\subsubsection{Working with Sets}
+
+If generators work over sets rather than multisets or arbitrary sequences,
+duplicates need to be removed. This can be done either by sorting (which has the advantage
+of providing a canonical representation, but assumes finite streams) or by using  a built-in like {\tt distinct/2} which will also work with infinite generators (within the limits of actual memory available).
+
+The predicate {\tt setify} wraps a generator to ensure it produces a set of answers, with duplicates removed.
+\begin{code}
+setify(E,SE):-new_generator(X,distinct(X,X in E),SE).
+\end{code}
+In fact, one could just apply the same modification to the goal of a generator and its answer template, but our assumption here is that the generator's engine might be a composition of several engine operations, possibly already in progress.
+
+We can implement our generator algebra as an embedded language via a simple interpreter
+(although partial evaluation can make this more efficient).
+\begin{code}
+eeval(engine(E,X,G),R):-!,R=engine(E,X,G).
+eeval(E+F,S):-eeval(E,EE),eeval(F,EF),dir_sum(EE,EF,S).
+eeval(E*F,P):-eeval(E,EE),eeval(F,EF),cart_prod(EE,EF,P).
+eeval(!E,Bang):-deep_clone(E,DeepE),eeval(DeepE,Bang).
+eeval({E},SetGen):-eeval(E,F),setify(F,SetGen).
+eeval([X|Xs],E):-list2generator([X|Xs],E).
+\end{code}
+Similarly to the {\tt in/2} predicate, we can make the action of the
+interpreter transparent, via the {\tt in\_/2} predicate, also defined as an operator.
+\begin{code}
+:-op(800,xfx,(in_)).
+X in_ E:-eeval(E,EE),X in EE.     
+\end{code}
+
+
+\BX
+Applying the embedded language interpreter.
+\begin{codex}
+?- list2generator([a,b],E),forall(X in_ E +(!E * !E), writeln(X)).
+a
+a-a
+b
+b-a
+b-b
+a-b
+E = engine(<engine>(7,0x7fe9b80517a0), _2298, member(_2298, [a, b])).
+
+?- forall(X in_ {[a,b] + [b,a]}, writeln(X)).
+a
+b
+true.
+\end{codex}
+
+\EX
+\subsection{Some algebraic properties of sums and products}
+
+\BI
+\I monoid structure for + and *
+\I distributivity
+\I commutativity and associativity if the generated sequences represent sets
+\EI
+
+\begin{code}
+\end{code}
+
+\subsection{Lazy Functional Programming Constructs}
+
+\subsection{Map-reduce mechanisms}
+
+The predicate {\tt map\_generator/3} creates a new generator that
+applies a predicate with 2 arguments to the answer stream  of a generator.
+\begin{code}
+map_generator(F,E,NewE):-new_generator(Y,map_goal(F,E,Y),NewE).
+
+map_goal(F,E,Y):-X in E,call(F,X,Y).
+\end{code}
+
+The predicate {\tt map\_generator/4} creates a new generator that
+applies a predicate with 3 arguments to the answer stream  of a generator.
+Note also that in case the answer-counts of the two streams are not the same, the one
+still active is stopped to make it subject to garbage collection.
+\begin{code}
+map_generator(F,E1,E2,NewE):-new_generator(_,map_goal2(F,E1,E2),NewE).
+
+map_goal2(F,E1,E2):-
+  ( ask_generator(E1,X1)->Ok1=true;Ok1=fail),
+  ( ask_generator(E2,X2)->Ok2=true;Ok2=fail),
+  ( Ok1,Ok2->call(F,X1,X2,R),
+    generate_answer(R),
+    map_goal2(F,E1,E2)
+  ; \+Ok1,Ok2->stop_generator(E2),fail
+  ; Ok1,\+Ok2->stop_generator(E1),fail
+  ).
+\end{code}
+
+The predicate {\tt zipper\_of} specializes {\tt map\_generator/4} to create
+pairs of answers produced by the 2 generators.
+\begin{code}
+zipper_of(E1,E2,E):-map_generator(zip2,E1,E2,E).
+
+zip2(X,Y,X-Y).
+\end{code}
+The predicate {\tt reduce\_with}, similar to {\tt fold} in functional languages
+applies repeatedly an operation on the stream of answers of a generator.
+
+It can be made to work in constant space, by
+backtracking internally over a given generator.
+\begin{code}
+reduce_with(Op,E,R):-
+  ask_generator(E,First),
+  Res=result(First),
+  ( Y in E,
+    arg(1,Res,X),
+    call(Op,X,Y,R),
+    nb_setarg(1,Res,R),
+    fail
+  ; arg(1,Res,R)
+  ).
+\end{code}
+
+It can be wrapped into a generator, to support our algebra of generators in a uniform way.
+
+\begin{code}
+reducer(Op,E,NewE):-new_generator(R,reduce_with(Op,E,R),NewE).
+\end{code}
+
+\BX
+\begin{codex}
+?- range(5,E),reducer(plus,E,NewE),X in NewE.
+E = engine(<engine>(4,0x7ff879d64130), _3120, between(0, 4, _3120)),
+NewE = engine(<engine>(3,0x7ff879d643f0), _3156, reduce_with(plus,
+engine(<engine>(4,0x7ff879d64130), _3120, between(0, 4, _3120)), _3156)),
+X = 10 ;
+false.
+\end{codex}
+\EX
+\BI
+\I TODO mention here reducing a direct sum of generators with a min operation - e.g. for finding the best price among a stream of answers representing several vendors for the same product
+\EI
+
+\subsection{Slicing Operations on Answer Generators}
+\begin{code}
+slice(E,From,To,NewE):-new_generator(X,in_slice_of(E,From,To,X),NewE).
+
+in_slice_of(E,From,To, X):-
+  From>=0,From<To,
+  Ctr=c(0),
+  X in E,
+  arg(1,Ctr,K),K1 is K+1,nb_setarg(1,Ctr,K1),
+  (
+    K<From->fail
+  ; K>=To->stop_generator(E),!,fail
+  ; true
+  ).
+  
+take(K,E,NewE):-slice(E,0,K,NewE).
+
+drop(K,E,NewE):-slice(E,K,inf,NewE).
+\end{code}
+
+As an example, putting it all together, let's generate Pythagorean natural numbers X,Y,Z such
+that $X^2+Y^2=Z^2$.
+
+\begin{code}
+pythagoras(Triplets):-
+  nat(M),
+  nat(N),
+  cart_prod(M,N,Pairs),
+  map_generator(mn2xyz,Pairs,Triplets).
+\end{code}
+For efficiency, we will use here the parametric solutions
+$X=M^2-N^2, Y=2MN, Z=M^2+N^2$.
+\begin{code}
+mn2xyz(M-N,X^2+Y^2=:=Z^2):-N>0,M>N,
+  X is M^2-N^2,
+  Y is 2*M*N,
+  Z is M^2+N^2.
+\end{code}
+We can extract a sample of the stream by creating
+a slice generator, together with an assertion testing its correctness as follows.
+\begin{code}
+pythagorean_slice:-
+  pythagoras(P),
+  slice(P,100001,100005,S),
+  forall(R in S,(assertion(R),writeln(R))).
+\end{code}
+
+\BX
+The result of extracting a slice from an infinite stream of Pythagorean triples.
+\begin{codex}
+?- pythagorean_slice.
+184575^2+113792^2=:=216833^2
+184828^2+112896^2=:=216580^2
+185079^2+112000^2=:=216329^2
+185328^2+111104^2=:=216080^2
+true.
+\end{codex}
+\EX
+
+\section{Wrappers on I/O and stateful procedural Prolog constructs}
+
+\BI
+\I e.g. a file or socket reader can be wrapped as a generator
+\I event streams can be seen as generators 
+\I as an example, clause/2, wrapped as an engine allows exploring a predicate in a froward loop rather then on backtracking
+\EI
+
+{\Large TODO: wrap up a file reader as an engine - maybe from the pio package?}
+
+\section{Engines and Multithreading? - if space permits}
+
+{\Large TODO: discuss similarities and differences, possibly show an example where engines implement cooperative multitasking or coordination}
+
+\section{Engine Implementation Support}
+
+{\Large TODO: discuss  SWI-Prolog's lightweight engine implementation}
+
+\BI
+\I mention also that pseudo-engines, implemented more efficiently with state
+preserved with things like nb\_setarg (e.g. counters or aggregates) can be encapsulated as special instances of the engine or generator API
+\I such pseudo-engines can mimic generators the same way as a C-based built-in like {\tt memberchk} emulates an equivalent Prolog definition 
+
+\I mention also expressing a similar set of operations with OR-continuations?
+\EI
+
+\section{Discussion}
+
+
+
+\BI
+{\Large
+\I generators vs. lazy list
+\BI
+\I one  can access the N-th element of a  generator in $P(1)$ space
+\I lazy lists need $O(N)$ for the same
+\I but, lazy lists are reusable while generators need explicit cloning
+\I lazy lists operate via a convenient but {\em concrete} list syntax
+\I generators represent {\em abstract} lazy sequences on which one operates directly (via a somewhat procedural API) or declaratively via an algebra encapsulated as an embedded language
+\EI
+}
+\I {\large discuss similarities of purpose with SWI-Prolog's solution sequences API}
+\I {\large can generators be combined with the {\bf tor} library \cite{tor} to make more efficient algorithms when working on infinite streams or implementing pseudo-engines?}
+
+\I {\large is the linear logic view of generators needed or one should make the cloning operation automatic}
+
+\I {\large should deep cloning be computed symbolically by applying program transformation directly to the goals encapsulated by the engines
+}
+\EI
+
+
+
+\section{Related work}
+
+\vskip 1cm
+Maybe?
+\BI 
+\I some history - see
+\cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER}
+\cite{coord11tarau}
+\cite{bp2011}
+\I work on delimited continuations \cite{delim}, hookable disjunction \cite{tor}
+\I work on pipelines \cite{pipelines}
+\EI
+
+
+{\Large TODO: discuss alternative ways to achieve the same in Prolog e.g. tor \cite{tor}}
+
+{\Large TODO: briefly discuss and compare with Python and mention other generator and coroutine implementations e.g. goroutines, fibers, generator libraries for other languages etc.}
+
+{\Large OPEN QUESTION: can a similar answer generator API be implemented
+it terms of  attributed-variables, TOR, delimited continuations? That 
+would avoid creating new virtual machines. A different semantics would need to
+be faced: would such streams be subject to backtracking. Is that good or bad? 
+} a way to do that would be to attach a goal+template as attributes of a variable
+and then have the unify hook make the goal call itself with a new argument, while
+extracting its "answer" in a lazy\_findall-like mechanism. Thus the simpler question becomes:
+{\large can something like lazy\_findall be implemented without engines?}
+
+\section{Conclusion}
+
+Generators make Prolog more expressive, in line with developments in today's popular functional and procedural languages, by supporting infinite answer streams and lazy functional programming operations.
+
+They give the programmer a sequence or set abstraction that allows organizing sequence processing as AND-streams or OR-streams of answers.
+
+Generator cloning, along the lines of similar linear logic operations, 
+offers the programmer a choice between flexibility and optimal resource utilization.
+
+The generator algebra together with its the embedded language interpreter supports
+the writing compact and elegant code.
+{TODO: expand}
+
+\bibliographystyle{acmtrans}
+\bibliography{theory,tarau,proglang,biblio}
+
+
+\section*{Appendix}
+
+{\large not to be included in the paper, added here just to make a few tests get into the Prolog file extracted from the LaTeX document}
+
+\begin{code}
+t1:-
+  range(0,3,E1),
+  %range(10,14,E2),
+  list2generator([a,b,c],E2),
+  range(100,102,E3),
+  eeval(E1+E3+E2+!E3, E),
+  forall(X in E,writeln(X)).
+    
+t2:-
+  range(0,2,E1),
+  list2generator([a,b,c],E2),
+  eeval(E1*E2, E),
+  forall(X in E,writeln(X)).
+
+  
+t3:-
+  range(0,3,E1),
+  %range(10,14,E2),
+  list2generator([a,b,c],E2),
+  range(100,102,E3),
+  eeval(E1*E3+E2*!E3, E),
+  forall(X in E,writeln(X)).
+
+t4:- 
+  range(3,E),
+  eeval(!(E*E)*!(E+E)*E,NewE),
+  forall(X in NewE,ppp(X)). 
+  
+t5:- 
+ eeval([the]*[cat,dog,robot]*[walks,runs],E),eeval(!E,EE),
+  stop_generator(E,_),
+  forall(X in EE,ppp(X)).
+
+t6:-nat(E),take(4,E,F),forall(X in F,ppp(X)).
+
+t7:-range(20,E),drop(15,E,F),forall(X in F,writeln(X)).
+
+t8:-range(5,E),map_generator(succ,E,NewE),forall(X in NewE,writeln(X)).
+
+
+t9:-range(0,10,E1),range(100,110,E2),
+    dir_sum(E1,E2,E),
+    forall(R in E,writeln(R)).
+    
+t10:-range(0,10,E1),range(100,110,E2),
+    map_generator(plus,E1,E2,E),
+    forall(R in E,writeln(R)).
+
+t11:-range(0,10,E1),
+    list2generator([a,b,c,d],E2),
+    zipper_of(E1,E2,E),
+    forall(R in E,writeln(R)).
+
+
+t12:-range(10,E),reduce_with(plus,E,Sum),writeln(Sum).
+    
+go:-
+   member(G,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12]),
+   ( nl,writeln(G),G,fail
+   ; current_engine(E),ppp(E),fail 
+     % tests that all stays clean
+   ).
+   
+% helpers
+ppp(X):-portray_clause(X).
+\end{code}
+
+One can also transfer these operations to use a concrete lazy list syntax as follows.
+
+\begin{code}
+% adaptor for lazy_list syntax
+
+% finite printer for generators
+ppg(K,E):-take(K,E,F),forall(X in F,ppp(X)).
+
+% finite printer for lazy lists
+ppl(K,Xs):-findnsols(K,X,member(X,Xs),Rs),!,ppp(Rs).
+
+% positive integers
+pos(Xs) :-lazy_findall(X, between(1, infinite, X), Xs).
+
+% negative integers
+neg(Xs) :-lazy_findall(X, (between(1, infinite, X0), X is -X0), Xs).
+  
+lazy_take(K,Xs,Ys):-
+   list2generator(Xs,E1),
+   take(K,E1,E2),
+   generator2list(E2,Ys).
+
+% etc. 
+% this can be generalized with higher order mapping predicates
+% like one would do in  Haskell
+   
+l1:-pos(Ns),neg(Ms),lazy_list_sum(Ns,Ms,Xs),ppl(20,Xs).
+l2:-pos(Ns),neg(Ms),lazy_list_prod(Ns,Ms,Xs),ppl(20,Xs).  
+  
+\end{code}
+
+One can test this port form engines to list as follows:
+
+\begin{codex}
+?- l1.
+[1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8, 9, -9, 10, -10].
+true.
+
+?- l2.
+[1- -1, 2- -1, 2- -2, 1- -2, 3- -2, 3- -1, 3- -3, 2- -3, 1- -3, 4- -3, 4- -2, 4- -1, 4- -4, 3- -4, 2- -4, 1- -4, 5- -4, 5- -3, 5- -2, 5- -1].
+\end{codex}
+
+{\Large TODO} This actually exhibits a nice isomorphism - thus the algebra of generators can be mechanically transferred to an algebra of lazy lists.
+
+\end{document}

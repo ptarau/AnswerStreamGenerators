@@ -1,0 +1,222 @@
+\usepackage{graphicx}
+\usepackage{mathptmx}
+\usepackage{tikz-qtree}
+\usepackage{pgfplots}
+\usepackage{filecontents}
+\usepackage{csvsimple}
+\usepackage{amsfonts,amsmath}
+%\usepackage{subfig} % creates problems - fails maketitile
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{color}
+%\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+
+\definecolor{lgray}{gray}{0.95}
+\definecolor{lblue}{rgb}{0.90,0.90,1.00}
+\definecolor{lyellow}{rgb}{1.00,1.00,0.70}
+
+\usepackage{listings}
+\lstloadlanguages{Prolog}
+% parameters in this will be overriden by same for {code}
+% so this will look the same - except that it will not be treated as code
+
+%\newtheorem{prop}{Proposition}
+%\newtheorem{conj}{Conjecture}
+%\newtheorem{fact}{Fact}
+%\newtheorem{df}{Definition}
+%\newtheorem{lem}{Lemma}
+\newtheorem{ex}{Example}
+%\newtheorem{theo}{Theorem}
+
+\newenvironment{codex}{\small\verbatim}{\endverbatim\normalsize}
+
+\newcommand{\colorON}{\lstset{backgroundcolor=\color{lyellow}}}
+\newcommand{\colorOFF}{\lstset{backgroundcolor=\color{white}}}
+
+
+\let\codeh\comment 
+
+\lstnewenvironment{code}
+    {\lstset{}%
+      \csname lst@SetFirstLabel\endcsname}
+    {\csname lst@SaveFirstLabel\endcsname}
+    \lstset{
+      basicstyle=\small\ttfamily,
+      % frame=single, 
+      backgroundcolor=\color{lgray},
+      flexiblecolumns=false,
+      basewidth={0.5em,0.45em},        
+    }
+
+\newcommand{\BI}[0]{\begin{itemize}}
+\newcommand{\EI}[0]{\end{itemize}}
+\newcommand{\I}[0]{\item}
+\newcommand{\BE}[0]{\begin{enumerate}}
+\newcommand{\EE}[0]{\end{enumerate}}
+\newcommand{\PP}[0]{ \vskip 0.6cm }
+\newcommand{\BX}[0]{\begin{ex}}
+\newcommand{\EX}[0]{\end{ex}}
+\newcommand{\BV}[0]{\begin{verbatim}}
+\newcommand{\EV}[0]{\end{verbatim}}
+
+\newcommand{\BF}[0]{\begin{filecontents*}{data.csv}}
+%\newcommand{\EF}[0]{\end{filecontents*}} NOT WORKING
+  
+\newcommand{\BQ}[0]{\color{blue}\begin{quote}}
+\newcommand{\EQ}[0]{\end{quote}\color{black}}  
+  
+  
+% \PIC{1 xlabel}{2 ylabel}{3 Title Label}{4 label}{
+\newcommand{\PIC}[4]{
+\begin{figure}[htbp]
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[xlabel={#1},ylabel={#2}]
+\addplot table [col sep=comma] {data.csv};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\caption{#3}
+\label{#4}
+\end{figure}
+}  
+
+  
+% \LPIC{1 xlabel}{2 ylabel}{3 Title Label}{4 label}{
+\newcommand{\LPIC}[4]{%\small
+\begin{figure}[htbp]
+\begin{center}
+\begin{tikzpicture}
+\begin{semilogyaxis}[xlabel={#1},ylabel={#2} (log. scale)]
+\addplot table [col sep=comma] {data.csv};
+\end{semilogyaxis}
+\end{tikzpicture}
+\end{center}
+\caption{#3}
+\label{#4}
+\end{figure}
+}  
+
+% \PICS{1 xlabel}{2 ylabel}{3 legend1}{5 legend2}{5 Title Label}{6 label}{
+\newcommand{\PICS}[6]{%\small
+\begin{figure}[htbp]
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[xlabel={#1},ylabel={#2},
+		legend entries={#3,#4},
+		legend style={
+%			at={(1.03,0.5)},
+      at={(0.50,1.03)},
+			anchor=south
+		}
+]
+\addplot table [x=a,y=b,col sep=comma] {data.csv};
+\addplot table [x=a,y=c,col sep=comma] {data.csv};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\caption{#5}
+\label{#6}
+\end{figure}
+}  
+
+% \LPICS{1 xlabel}{2 ylabel}{3 legend1}{5 legend2}{5 Title Label}{6 label}{
+\newcommand{\LPICS}[6]{%\small
+\begin{figure}[htbp]
+\begin{center}
+\begin{tikzpicture}
+\begin{semilogyaxis}[xlabel={#1},ylabel={#2} (log. scale),
+		legend entries={#3,#4},
+		legend style={
+%			at={(1.03,0.5)},
+      at={(0.50,1.03)},
+			anchor=south
+		}
+]
+\addplot table [x=a,y=b,col sep=comma] {data.csv};
+\addplot table [x=a,y=c,col sep=comma] {data.csv};
+\end{semilogyaxis}
+\end{tikzpicture}
+\end{center}
+\caption{#5}
+\label{#6}
+\end{figure}
+}  
+   
+    
+\def \bscale1 {0.25}
+\def \bscale {0.25}
+\def \N {\mathbb{N}}
+\def \T {\mathbb{T}}
+
+% \FIG{Label}{Title}[scale]{file.suf}
+\newcommand{\FIG}[4]{
+\begin{figure}[htbp]
+\centering
+{\includegraphics[scale=#3]{../figs/#4}}
+\caption{#2}
+\label{#1}
+\end{figure}
+}
+
+% \FIG{Label}{Title}[scale]{file.suf}
+\newcommand{\CFIG}[4]{
+\begin{figure}[htbp]
+\centering
+{\includegraphics[scale=#3,viewport=100 100 500 500,clip]{../figs/#4}}
+\caption{#2}
+\label{#1}
+\end{figure}
+}
+% totalheight=0.4\textheight
+
+% \HFIGS{Label}{Title}{Title1}{Title2}{PNG1}{PNG2}
+\newcommand{\HFIGS}[6]{
+\begin{figure}[htbp]
+  \centering
+  \subfloat[#3]{
+    {\includegraphics[scale=0.60]{../figs/#5}}}   
+  \subfloat[#4]{
+    {\includegraphics[scale=0.60]{../figs/#6}}}
+  \caption{#2}
+  \label{#1}
+\end{figure}
+}
+
+% \VFIGS{Label}{Title}{Title1}{Title2}{PNG1}{PNG2}
+\newcommand{\VFIGS}[6]{
+\begin{figure}[htbp]
+  \begin{center}
+    {\includegraphics[scale=0.40]{../figs/#5}}
+    {\includegraphics[scale=0.40]{../figs/#6}}
+  \caption{#2: {\em #3} and {\em #4}}
+  \label{#1}
+  \end{center}
+\end{figure}
+}
+
+
+% \VSFIGS{Label}{Title}{Title1}{Title2}{PNG1}{PNG2}{Scale}
+\newcommand{\VSFIGS}[7]{
+\begin{figure}[htbp]
+  \begin{center}
+    {\includegraphics[scale=#7]{../figs/#5}}
+    {\includegraphics[scale=#7]{../figs/#6}}
+  \caption{#2 #3 #4}
+  \label{#1}
+  \end{center}
+\end{figure}
+}
+
+% CSV{Title}{Label}
+\newcommand{\CSV}[2]{
+\begin{figure}[htbp]
+\begin{center}
+\csvautotabular{data.csv}
+\caption{#1}
+\label{#2}
+\end{center}
+\end{figure}
+}
+
+
