@@ -78,22 +78,28 @@ def s3():
 def c1() :
   g=conv(pos(),neg())
   xs=take(20,g)
-  print(list(xs))
+  ls=list(xs)
+  print(len(ls),ls)  
     
 def c2() :
   g=conv(neg(),iter(range(1,5)))
   xs=take(50,g)
-  print(list(xs))    
+  ls=list(xs)
+  print(len(ls),ls)  
+  
   
 def c3() :
   g=conv(iter(range(1,5)),neg())
   xs=take(50,g)
-  print(list(xs))      
+  ls=list(xs)
+  print(len(ls),ls)  
+  
     
 def c4() :
-  g=conv(iter(range(1,5)),iter("abcd"))
+  g=conv(iter(range(0,4)),iter("abcd"))
   xs=take(50,g)
-  print(list(xs))   
+  ls=list(xs)
+  print(len(ls),ls)  
   
     
     

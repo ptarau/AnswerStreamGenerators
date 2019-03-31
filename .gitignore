@@ -243,4 +243,6 @@ TSWLatexianTemp*
 
 bin/toc
 src/*.gz
+src/*.pdf
+
 
