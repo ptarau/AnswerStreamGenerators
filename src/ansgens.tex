@@ -374,24 +374,64 @@ false.
 \end{codex}
 \EX
 
+
+With some care, one can define engine operations such that they work on both
+finite and infinite Answer Stream Generators.
+
+For instance, the convolution operation can be defined as follows.
+
+
+{\Large add mathematical formula}
+
+\begin{code}
+
+conv(E1,E2,E):-
+  new_generator(_,conv_loop(E1,E2,0,[],[]),E).
+
+conv_loop(E1,E2,N,Xs,Ys):-
+  succ(N,SN),
+  ask_generator(E1,X),XXs=[X|Xs],
+  ask_generator(E2,Y),YYs=[Y|Ys],
+  ( nth0(I,XXs,A),
+    K is N-I,
+    nth0(K,YYs,B),
+    generate_answer(A-B),
+    fail
+  ; true  
+  ),
+  conv_loop(E1,E2,SN,XXs,YYs).
+\end{code}
+
+It assumes the two input streams have the same length, but it terminates
+when the shortest ends. 
+
+\BX
+Examples of convolution.
+\begin{codex}
+?- nat(N),nat(M),conv(M,N,C),take(6,C,D),XY in D,writeln(XY),fail.
+0-0
+1-0
+0-1
+2-0
+1-1
+0-2
+false.
+
+?- nat(N),list2generator([a,b,c],M),conv(M,N,C),XY in C,writeln(XY),fail.
+a-0
+b-0
+a-1
+c-0
+b-1
+a-2
+false.
+\end{codex}
+\EX
+
 \subsection{An embedded language interpreter for the algebra}
 
 With our sum and product operations ready, we can proceed designing the embedded language
 facilitation more complex forms of generator compositions.
-\subsubsection{Deep Cloning}
-
-As generators are by default single-use, given that we store a goal and its answer template together with the engine activating it (assuming that the code is free of side-effects), it makes sense to define a deep cloning operation that creates a fresh equivalent engine from possible nested engines that may have ``spent their fuel''.
-Thus, besides  sum and product  the cloning algorithm will also need to support
-linear-logic inspired ``{\tt !}'' operator. Note that sequences represented as lists that being immutable do not require copying.
-\begin{code}
-:-op(100,fx,(!)).
-
-deep_clone(engine(_,X,G),engine(CE,X,G)):-engine_create(X,G,CE).
-deep_clone(E+F,CE+CF):-deep_clone(E,CE),deep_clone(F,CF).
-deep_clone(E*F,CE*CF):-deep_clone(E,CE),deep_clone(F,CF).
-deep_clone(!E,CE):-deep_clone(E,CE).
-deep_clone([X|Xs],[X|Xs]).
-\end{code}
 
 \subsubsection{Working with Sets}
 
@@ -406,12 +446,15 @@ setify(E,SE):-new_generator(X,distinct(X,X in E),SE).
 In fact, one could just apply the same modification to the goal of a generator and its answer template, but our assumption here is that the generator's engine might be a composition of several engine operations, possibly already in progress.
 
 We can implement our generator algebra as an embedded language via a simple interpreter
-(although partial evaluation can make this more efficient).
+(although partial evaluation can make this more efficient). We can also add {\tt !} as a unary prefix operator, used to mark a generator that needs to be cloned.
+
 \begin{code}
-eeval(engine(E,X,G),R):-!,R=engine(E,X,G).
+:-op(100,fx,(!)).
+
+eeval(engine(E,X,G),engine(E,X,G)).
+eeval(!E,ClonedE):-clone_generator(E,ClonedE).
 eeval(E+F,S):-eeval(E,EE),eeval(F,EF),dir_sum(EE,EF,S).
 eeval(E*F,P):-eeval(E,EE),eeval(F,EF),cart_prod(EE,EF,P).
-eeval(!E,Bang):-deep_clone(E,DeepE),eeval(DeepE,Bang).
 eeval({E},SetGen):-eeval(E,F),setify(F,SetGen).
 eeval([X|Xs],E):-list2generator([X|Xs],E).
 \end{code}
@@ -453,7 +496,22 @@ true.
 \begin{code}
 \end{code}
 
-\subsection{Lazy Functional Programming Constructs}
+\subsubsection{Deep Cloning ???}
+
+As generators are by default single-use, given that we store a goal and its answer template together with the engine activating it (assuming that the code is free of side-effects), it makes sense to define a deep cloning operation that creates a fresh equivalent engine from possible nested engines that may have ``spent their fuel''.
+Thus, besides  sum and product  the cloning algorithm will also need to support
+linear-logic inspired ``{\tt !}'' operator. Note that sequences represented as lists that being immutable do not require copying.
+\begin{code}
+
+deep_clone(engine(_,X,G),engine(CE,X,G)):-engine_create(X,G,CE).
+deep_clone(E+F,CE+CF):-deep_clone(E,CE),deep_clone(F,CF).
+deep_clone(E*F,CE*CF):-deep_clone(E,CE),deep_clone(F,CF).
+deep_clone(!E,CE):-deep_clone(E,CE).
+deep_clone([X|Xs],[X|Xs]).
+\end{code}
+
+
+\section{Lazy Functional Programming Constructs}
 
 \subsection{Map-reduce mechanisms}
 
@@ -622,7 +680,7 @@ preserved with things like nb\_setarg (e.g. counters or aggregates) can be encap
 \I generators vs. lazy list
 \BI
 \I one  can access the N-th element of a  generator in $P(1)$ space
-\I lazy lists need $O(N)$ for the same
+\I lazy lists might or might not need $O(N)$ for the same, depending on possible garbage collection of its unused prefix
 \I but, lazy lists are reusable while generators need explicit cloning
 \I lazy lists operate via a convenient but {\em concrete} list syntax
 \I generators represent {\em abstract} lazy sequences on which one operates directly (via a somewhat procedural API) or declaratively via an algebra encapsulated as an embedded language
@@ -714,7 +772,7 @@ t3:-
 
 t4:- 
   range(3,E),
-  eeval(!(E*E)*!(E+E)*E,NewE),
+  eeval((!E * !E)*(!E + !E)*E,NewE),
   forall(X in NewE,ppp(X)). 
   
 t5:- 
@@ -744,14 +802,36 @@ t11:-range(0,10,E1),
 
 
 t12:-range(10,E),reduce_with(plus,E,Sum),writeln(Sum).
-    
+
+c1:-
+  nat(N),nat(M),conv(M,N,C),ppg(30,C).
+
+c2:-
+  nat(N),list2generator([a,b,c,d],M),conv(M,N,C),ppg(30,C).
+
+c3:-
+  nat(N),list2generator([a,b,c,d],M),conv(N,M,C),ppg(30,C).
+
+c4:-
+  range(5,N),range(5,M),conv(M,N,C),ppg(30,C).
+
+c5:-
+  range(4,N),list2generator([a,b,c,d],M),conv(M,N,C),ppg(30,C).
+  
+      
 go:-
    member(G,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12]),
    ( nl,writeln(G),G,fail
    ; current_engine(E),ppp(E),fail 
      % tests that all stays clean
    ).
-   
+
+cgo:-member(G,[c1,c2,c3,c4,c5]),
+   ( nl,writeln(G),G,fail
+   ; current_engine(E),ppp(E),fail 
+     % tests that all stays clean
+   ).
+      
 % helpers
 ppp(X):-portray_clause(X).
 \end{code}

@@ -103,26 +103,44 @@ cart_prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
 flip(1,2,X,Y,X-Y).
 flip(2,1,X,Y,Y-X).
 
-:-op(100,fx,(!)).
 
-deep_clone(engine(_,X,G),engine(CE,X,G)):-engine_create(X,G,CE).
-deep_clone(E+F,CE+CF):-deep_clone(E,CE),deep_clone(F,CF).
-deep_clone(E*F,CE*CF):-deep_clone(E,CE),deep_clone(F,CF).
-deep_clone(!E,CE):-deep_clone(E,CE).
-deep_clone([X|Xs],[X|Xs]).
+conv(E1,E2,E):-
+  new_generator(_,conv_loop(E1,E2,0,[],[]),E).
+
+conv_loop(E1,E2,N,Xs,Ys):-
+  succ(N,SN),
+  ask_generator(E1,X),XXs=[X|Xs],
+  ask_generator(E2,Y),YYs=[Y|Ys],
+  ( nth0(I,XXs,A),
+    K is N-I,
+    nth0(K,YYs,B),
+    generate_answer(A-B),
+    fail
+  ; true  
+  ),
+  conv_loop(E1,E2,SN,XXs,YYs).
 
 setify(E,SE):-new_generator(X,distinct(X,X in E),SE).
 
-eeval(engine(E,X,G),R):-!,R=engine(E,X,G).
+:-op(100,fx,(!)).
+
+eeval(engine(E,X,G),engine(E,X,G)).
+eeval(!E,ClonedE):-clone_generator(E,ClonedE).
 eeval(E+F,S):-eeval(E,EE),eeval(F,EF),dir_sum(EE,EF,S).
 eeval(E*F,P):-eeval(E,EE),eeval(F,EF),cart_prod(EE,EF,P).
-eeval(!E,Bang):-deep_clone(E,DeepE),eeval(DeepE,Bang).
 eeval({E},SetGen):-eeval(E,F),setify(F,SetGen).
 eeval([X|Xs],E):-list2generator([X|Xs],E).
 
 :-op(800,xfx,(in_)).
 X in_ E:-eeval(E,EE),X in EE.     
 
+
+
+deep_clone(engine(_,X,G),engine(CE,X,G)):-engine_create(X,G,CE).
+deep_clone(E+F,CE+CF):-deep_clone(E,CE),deep_clone(F,CF).
+deep_clone(E*F,CE*CF):-deep_clone(E,CE),deep_clone(F,CF).
+deep_clone(!E,CE):-deep_clone(E,CE).
+deep_clone([X|Xs],[X|Xs]).
 
 map_generator(F,E,NewE):-new_generator(Y,map_goal(F,E,Y),NewE).
 
@@ -215,7 +233,7 @@ t3:-
 
 t4:- 
   range(3,E),
-  eeval(!(E*E)*!(E+E)*E,NewE),
+  eeval((!E * !E)*(!E + !E)*E,NewE),
   forall(X in NewE,ppp(X)). 
   
 t5:- 
@@ -245,14 +263,36 @@ t11:-range(0,10,E1),
 
 
 t12:-range(10,E),reduce_with(plus,E,Sum),writeln(Sum).
-    
+
+c1:-
+  nat(N),nat(M),conv(M,N,C),ppg(30,C).
+
+c2:-
+  nat(N),list2generator([a,b,c,d],M),conv(M,N,C),ppg(30,C).
+
+c3:-
+  nat(N),list2generator([a,b,c,d],M),conv(N,M,C),ppg(30,C).
+
+c4:-
+  range(5,N),range(5,M),conv(M,N,C),ppg(30,C).
+
+c5:-
+  range(4,N),list2generator([a,b,c,d],M),conv(M,N,C),ppg(30,C).
+  
+      
 go:-
    member(G,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12]),
    ( nl,writeln(G),G,fail
    ; current_engine(E),ppp(E),fail 
      % tests that all stays clean
    ).
-   
+
+cgo:-member(G,[c1,c2,c3,c4,c5]),
+   ( nl,writeln(G),G,fail
+   ; current_engine(E),ppp(E),fail 
+     % tests that all stays clean
+   ).
+      
 % helpers
 ppp(X):-portray_clause(X).
 
