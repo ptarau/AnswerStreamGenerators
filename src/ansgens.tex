@@ -192,6 +192,47 @@ Assuming a  default range from 0 we add:
 range(To,E):-range(0,To,E).
 \end{code}
 
+Thus we have several alternative ways to build generators by using finite or infinite conjunctions of disjunctions encapsulated as recursive linear loops or as backtracking over multiple answers.
+
+This duality provides also the following two alternative implementations
+for managing persistent state inside the engine running the generator.
+
+First, like in the implementation of the generator {\tt nat} a Modifier
+is applied to states passed on as arguments of a recursive call. 
+\begin{code}
+generator_loop(Modifier,State):-
+  generate_answer(State),
+  call(Modifier,State,NewState),
+  !,
+  generator_loop(Modifier,NewState).
+\end{code}
+While memory can be reclaimed in this case by Prolog's garbage collector,
+generating it can also be prevented up front via a repeat loop and destructive assignment.
+\begin{code}
+generator_loop_(Modifier,InitialState):-
+  Holder=holder(InitialState),
+  repeat,
+    \+ (
+      arg(1,Holder,State),
+      generate_answer(State),
+      call(Modifier,State,NewState),
+      nb_setarg(1,Holder,NewState)
+    ),
+  !,
+  fail.
+\end{code}
+
+It is easy to see that the two predicates are equivalent. We use
+them to define the infinite stream of positive and negative 
+integers, respectively.
+\begin{code}
+pos(E):-new_generator(_,generator_loop(succ,1),E).
+
+neg(E):-new_generator_(_,generator_loop(pred,-1),E).
+
+pred(SX,X):-succ(X,SX).
+\end{code}
+
 
 \section{The Operational Equivalence between Answer Stream Generators and Lazy Lists}
 
