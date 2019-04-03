@@ -21,7 +21,8 @@ Programming with Answer Stream Generators}
 \begin{abstract}
 Answer Stream Generators encapsulate the work of coroutining logic engines as an algebra of stream operations that extends Prolog with lazy evaluation and  support for infinite answer streams. We implement this algebra on top of SWI-Prolog's Engine API and design an embedded language interpreter providing a compact notation for its composition mechanisms.
 Answer Stream Generators can be used to unify encapsulation of state originating from declarative constructs, procedural side effects and input-output interactions. 
-They enhance the expressiveness of Prolog with language constructs comparable to generators in languages like Python, go, C\verb~#~, Ruby or Lua, and language constructs implicitly available in non-strict functional programming languages like Haskell. 
+
+
 \end{abstract}
 
 \section{Introduction}
@@ -48,11 +49,15 @@ handle potentially very large amounts of data flowing over the internet
 \I the need to update Prolog's language constructs to closely match new developments adopted by some of today's most successful programming languages (e.g. mention Python's yield \verb~C++~ fibers, go-language's goroutines)
 \EI
 
+We organize Answer Stream Operations as an algebra, wrapped as a library module with a declarative interface, to avoid exposing  operations requiring an implementation with a clear procedural flavor to the Prolog application programmer.
+
 \section{SWI Prolog's engine implementation}
 
 An engine can be seen as a Prolog virtual machine that has its own stacks and machine state. Unlike normal SWI-Prolog threads \cite{swi,swi_threads} though, they are not associated with an operating system thread. Instead, you ask an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and cause it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal.
 
 Implementing the engine API dies not assume that a Prolog system supports multi-threading, It only assumes that the virtual machine is fully reentrant, it can be queried and it can stop, yield data and resumes execution as a coroutine.
+
+As Prolog virtual machines, engines have (obviously!) an internal state. Thus interacting with them requires a concise and expressive, but ultimately procedural API. This is not very different from what working with attributed variables, instrumental to adding constraint solvers, requires.
 
 \section{The Answer Stream Generator API}
 
@@ -680,7 +685,7 @@ preserved with things like nb\_setarg (e.g. counters or aggregates) can be encap
 \I generators vs. lazy list
 \BI
 \I one  can access the N-th element of a  generator in $P(1)$ space
-\I lazy lists might or might not need $O(N)$ for the same, depending on possible garbage collection of its unused prefix
+\I lazy lists might or might not need $O(N)$ for the same, depending on possible garbage collection of their unused prefix
 \I but, lazy lists are reusable while generators need explicit cloning
 \I lazy lists operate via a convenient but {\em concrete} list syntax
 \I generators represent {\em abstract} lazy sequences on which one operates directly (via a somewhat procedural API) or declaratively via an algebra encapsulated as an embedded language
@@ -724,10 +729,11 @@ and then have the unify hook make the goal call itself with a new argument, whil
 extracting its "answer" in a lazy\_findall-like mechanism. Thus the simpler question becomes:
 {\large can something like lazy\_findall be implemented without engines?}
 
-{\Large related work on streams - e.g. Zaniolo, Gurevich,  Babcock
+{\Large related work on streams - e.g. Zaniolo, Gurevich,  Babcock}
+
 \section{Conclusion}
 
-Generators make Prolog more expressive, in line with developments in today's popular functional and procedural languages, by supporting infinite answer streams and lazy functional programming operations.
+Answer Stream Generators lift the expressiveness of Prolog with language constructs comparable to generators in languages like Python, go, C\verb~#~, Ruby or Lua, and language constructs implicitly available in non-strict functional programming languages like Haskell. 
 
 They give the programmer a sequence or set abstraction that allows organizing sequence processing as AND-streams or OR-streams of answers.
 
