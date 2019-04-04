@@ -40,6 +40,30 @@ range(From,To,E):-Max is To-1,new_generator(I,between(From,Max,I),E).
 
 range(To,E):-range(0,To,E).
 
+generator_loop(Modifier,State):-
+  generate_answer(State),
+  call(Modifier,State,NewState),
+  !,
+  generator_loop(Modifier,NewState).
+
+generator_loop_(Modifier,InitialState):-
+  Holder=holder(InitialState),
+  repeat,
+    \+ (
+      arg(1,Holder,State),
+      generate_answer(State),
+      call(Modifier,State,NewState),
+      nb_setarg(1,Holder,NewState)
+    ),
+  !,
+  fail.
+
+pos(E):-new_generator(_,generator_loop(succ,1),E).
+
+neg(E):-new_generator_(_,generator_loop(pred,-1),E).
+
+pred(SX,X):-succ(X,SX).
+
 list2generator(Xs,engine(E,X,G)):-G=member(X,Xs),engine_create(X,G,E).
 
 finite_generator2list(E,Xs):-findall(X,X in E,Xs).
@@ -305,10 +329,10 @@ ppg(K,E):-take(K,E,F),forall(X in F,ppp(X)).
 ppl(K,Xs):-findnsols(K,X,member(X,Xs),Rs),!,ppp(Rs).
 
 % positive integers
-pos(Xs) :-lazy_findall(X, between(1, infinite, X), Xs).
+lazy_pos(Xs) :-lazy_findall(X, between(1, infinite, X), Xs).
 
 % negative integers
-neg(Xs) :-lazy_findall(X, (between(1, infinite, X0), X is -X0), Xs).
+lazy_neg(Xs) :-lazy_findall(X, (between(1, infinite, X0), X is -X0), Xs).
   
 lazy_take(K,Xs,Ys):-
    list2generator(Xs,E1),
@@ -319,7 +343,7 @@ lazy_take(K,Xs,Ys):-
 % this can be generalized with higher order mapping predicates
 % like one would do in  Haskell
    
-l1:-pos(Ns),neg(Ms),lazy_list_sum(Ns,Ms,Xs),ppl(20,Xs).
-l2:-pos(Ns),neg(Ms),lazy_list_prod(Ns,Ms,Xs),ppl(20,Xs).  
+l1:-lazy_pos(Ns),lazy_neg(Ms),lazy_list_sum(Ns,Ms,Xs),ppl(20,Xs).
+l2:-lazy_pos(Ns),lazy_neg(Ms),lazy_list_prod(Ns,Ms,Xs),ppl(20,Xs).  
   
 

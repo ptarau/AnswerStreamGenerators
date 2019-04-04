@@ -55,7 +55,7 @@ We organize Answer Stream Operations as an algebra, wrapped as a library module 
 
 An engine can be seen as a Prolog virtual machine that has its own stacks and machine state. Unlike normal SWI-Prolog threads \cite{swi,swi_threads} though, they are not associated with an operating system thread. Instead, you ask an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and cause it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal.
 
-Implementing the engine API dies not assume that a Prolog system supports multi-threading, It only assumes that the virtual machine is fully reentrant, it can be queried and it can stop, yield data and resumes execution as a coroutine.
+Implementing the engine API does not assume that a Prolog system supports multi-threading, It only assumes that the virtual machine is fully reentrant, it can be queried and it can stop, yield data and resumes execution as a coroutine.
 
 As Prolog virtual machines, engines have (obviously!) an internal state. Thus interacting with them requires a concise and expressive, but ultimately procedural API. This is not very different from what working with attributed variables, instrumental to adding constraint solvers, requires.
 
@@ -120,8 +120,8 @@ show_generator(engine(E,X,G)):-writeln(X:G=E).
 We call {\em AND-stream / OR-stream duality} the
 ability to generate answer streams via backtracking (OR-streams) or
 as part of a forward moving recursive loop (AND-streams).
-As the examples that follow will, show,
-being oblivious to the choice of generation method they encapsulate
+As the examples that follow will show,
+being oblivious to the choice of generation method they encapsulate,
 is a key contributor to the ``expressiveness lift'' answer generators
 bring to Prolog.
 
@@ -142,7 +142,7 @@ and equivalent generator {\tt nat\_} as an OR-stream,  with answers
 produced via  backtracking.
 
 \begin{code}
-nat_(E):-new_generator(N, between(0,inf,N), E).
+nat_(E):-new_generator(N, between(0,infinite,N), E).
 \end{code}
 
 Note also that both AND-streams and OR-streams can be infinite, as in the
@@ -168,7 +168,8 @@ select_from(E,_,X):-X in E.
 
 \BX
 The combined effect of the two engines turns the linear-recursive loop of {\tt nat},
-generating an AND-stream of answers into an OR-stream, thus, from the outside, one can explore them via backtracking. Note that {\tt nat} is an infinite stream and so is its
+generating an AND-stream of answers into an OR-stream. Thus, from the outside, one can explore the stream of answers via backtracking. 
+Note that {\tt nat} is an infinite stream and so is its
 view from outside.
 \begin{codex}
 ?- nat(E),X in E.
@@ -192,7 +193,7 @@ Assuming a  default range from 0 we add:
 range(To,E):-range(0,To,E).
 \end{code}
 
-Thus we have several alternative ways to build generators by using finite or infinite conjunctions of disjunctions encapsulated as recursive linear loops or as backtracking over multiple answers.
+Thus we have several alternative ways to build generators by using finite or infinite conjunctions or disjunctions encapsulated as recursive linear loops or as backtracking over multiple answers.
 
 This duality provides also the following two alternative implementations
 for managing persistent state inside the engine running the generator.
@@ -238,7 +239,7 @@ pred(SX,X):-succ(X,SX).
 
 One can turn lists into generators and (finite) generators into lists quite easily.
 \begin{code}
-list2generator(Xs,engine(E,X,G)):-G=member(X,Xs),engine_create(X,G,E).
+list2generator(Xs,E):-new_generator(X,member(X,Xs),E).
 
 finite_generator2list(E,Xs):-findall(X,X in E,Xs).
 \end{code}
@@ -390,7 +391,7 @@ cart_prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
   fail.
 \end{code}
 
-The predicate {\tt flip} ensures correct order in a given pair
+The predicate {\tt flip/5} ensures correct order in a given pair
 as  generators take turn being the active one in the recursive loop. 
 \begin{code} 
 flip(1,2,X,Y,X-Y).
@@ -735,9 +736,9 @@ preserved with things like nb\_setarg (e.g. counters or aggregates) can be encap
 \I {\large discuss similarities of purpose with SWI-Prolog's solution sequences API}
 \I {\large can generators be combined with the {\bf tor} library \cite{tor} to make more efficient algorithms when working on infinite streams or implementing pseudo-engines?}
 
-\I {\large is the linear logic view of generators needed or one should make the cloning operation automatic}
+\I {\large is the linear logic view of generators needed or one should make the cloning operation automatic?}
 
-\I {\large should deep cloning be computed symbolically by applying program transformation directly to the goals encapsulated by the engines
+\I {\large should deep cloning be computed symbolically by applying program transformation directly to the goals encapsulated by the engines?
 }
 \EI
 
@@ -895,10 +896,10 @@ ppg(K,E):-take(K,E,F),forall(X in F,ppp(X)).
 ppl(K,Xs):-findnsols(K,X,member(X,Xs),Rs),!,ppp(Rs).
 
 % positive integers
-pos(Xs) :-lazy_findall(X, between(1, infinite, X), Xs).
+lazy_pos(Xs) :-lazy_findall(X, between(1, infinite, X), Xs).
 
 % negative integers
-neg(Xs) :-lazy_findall(X, (between(1, infinite, X0), X is -X0), Xs).
+lazy_neg(Xs) :-lazy_findall(X, (between(1, infinite, X0), X is -X0), Xs).
   
 lazy_take(K,Xs,Ys):-
    list2generator(Xs,E1),
@@ -909,8 +910,8 @@ lazy_take(K,Xs,Ys):-
 % this can be generalized with higher order mapping predicates
 % like one would do in  Haskell
    
-l1:-pos(Ns),neg(Ms),lazy_list_sum(Ns,Ms,Xs),ppl(20,Xs).
-l2:-pos(Ns),neg(Ms),lazy_list_prod(Ns,Ms,Xs),ppl(20,Xs).  
+l1:-lazy_pos(Ns),lazy_neg(Ms),lazy_list_sum(Ns,Ms,Xs),ppl(20,Xs).
+l2:-lazy_pos(Ns),lazy_neg(Ms),lazy_list_prod(Ns,Ms,Xs),ppl(20,Xs).  
   
 \end{code}
 
