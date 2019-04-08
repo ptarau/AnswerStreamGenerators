@@ -11,19 +11,25 @@ X in E:-ask_(E,A),select_from(E,A,X).
 select_from(_,A,A).
 select_from(E,_,X):-X in E.
 
-% extracts X from state and calls transformer F
-ask_(E,_):-arg(1,E,done),!,fail.
-ask_(E,R):-call(E,X),!,R=X.
-ask_(E,_):-nb_linkarg(1,E,done),fail.
+stop_(E):-nb_linkarg(1,E,done).
 
 is_done(E):-arg(1,E,done).
+
+% extracts X from state and calls transformer E
+ask_(E,_):-is_done(E),!,fail.
+ask_(E,R):-call(E,X),!,R=X.
+ask_(E,_):-stop_(E),fail.
+
+% constant infinite stream returning C
+const_(C,=(C)).
+
+% has_state(E):-arg(1,E,T),functor(T,state,_).
 
 % generic simple stream advancer
 stream_next(F,State,X):-
   arg(1,State,X),
   call(F,X,Y),
   nb_linkarg(1,State,Y).
-
 
 nat_stream(S,X):-stream_next(succ,S,X).
 
@@ -45,6 +51,9 @@ list_(Xs,list_stream(state(Xs))).
 list_stream(State,X):-  
   arg(1,State,[X|Xs]),
   nb_linkarg(1,State,Xs).
+
+eng_(X,G,engine_next(E)):-engine_create(X,G,E).  
+
 
 % finite integer range
 range_(From,To,range_stream(state(From,To))).
@@ -70,6 +79,31 @@ drop(_,E,E).
 
 % slice of a stream From.. To (excluding To)
 slice(From,To)-->{K is To-From,K>=0},drop(From),take(K).
+
+
+% lazy functional operators  
+map_(F,E,map_stream(F,E)).
+
+map_stream(F,E,Y):-ask_(E,X),call(F,X,Y).
+
+map_(F,E1,E2,map_stream(F,E1,E2)).
+
+map_stream(F,E1,E2,Z):-ask_(E1,X),ask_(E2,Y),call(F,X,Y,Z).
+
+reduce_(F,InitVal,E,reduce_stream(state(InitVal),F,E)).
+
+reduce_stream(S,F,E,R):-
+  \+ is_done(E),
+  do((
+    Y in E,
+    arg(1,S,X),
+    call(F,X,Y,Z),
+    nb_linkarg(1,S,Z)
+  )),
+  arg(1,S,R).
+
+
+% sequence sum and product operrations  
 
 % interleaved sum of two finite or infinite streams
 sum_(E1,E2,sum_stream(state(E1,E2))).
@@ -145,18 +179,23 @@ iterate(N,X,NewR):-
 
 eeval(E+F,S):- !,eeval(E,EE),eeval(F,EF),sum_(EE,EF,S).
 eeval(E*F,P):- !,eeval(E,EE),eeval(F,EF),prod_(EE,EF,P).
+eeval(E:F,R):- !,range_(E,F,R).
+eeval([X|Xs],L):-!,list_([X|Xs],L).
+eeval(X^G,E):-!,eng_(X,G,E).
+eeval(A,C):-atomic(A),!,const_(A,C).
 eeval(E,E).
 
 :-op(800,xfx,(in_)).
 X in_ E:-eeval(E,EE),X in EE.
   
-
-% lazy list interface
-
-    
-    
-    
 % tests
+
+  
+f1(X):-nat_(N),list_([10,20,30],M),map_(plus,N,M,R),X in R.
+ 
+f2(X):-nat_(N),nat_(M),map_(plus,N,M,R),X in R.  
+
+f3(X):-range_(1,5,E),reduce_(plus,0,E,R),X in R.
 
 t1(X):-pos_(N),neg_(M),sum_(M,N,S),X in S. 
 
@@ -178,3 +217,23 @@ t7:-range_(0,5,A),list_([a,b,c],B),prod_(A,B,P),
 t8:-nat_(A),list_([a,b,c],B),
   prod_(B,A,P),take(30,P,T),
   forall(X in T,writeln(X)).
+  
+t9(X):-const_(10,C),nat_(N),map_(plus,C,N,R),X in R.
+
+t10(X):-const_(10,C),nat_(N),prod_(C,N,P),X in P.
+
+
+odds(Xs) :-
+  lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
+
+t11(X):-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),X in P.
+  
+e1(X):-eng_(X,member(X,[1,2,3]),E),list_([a,b],L),sum_(E,L,S),X in S.
+
+e2(X):-eng_(X,member(X,[1,2,3]),E),list_([a,b],L),prod_(E,L,S),X in S.
+
+e3:-eng_(X,member(X,[1,2,3]),S),(X in S,writeln(X),fail;is_done(S),writeln(S)).
+
+e4:-(X^member(X,[1,2,3])*[a,b,c,d])=E,do((X in_ E,writeln(X))).
+
+
