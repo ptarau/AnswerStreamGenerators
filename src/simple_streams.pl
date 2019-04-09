@@ -20,7 +20,7 @@ ask_(E,_):-is_done(E),!,fail.
 ask_(E,R):-call(E,X),!,R=X.
 ask_(E,_):-stop_(E),fail.
 
-show(K,Stream):-once(findnsols(K,X, X in Stream,Xs)),writeln(Xs).
+show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
 
 show(Stream):-show(12,Stream).
 
@@ -56,8 +56,14 @@ list_next(State,X):-
   arg(1,State,[X|Xs]),
   nb_linkarg(1,State,Xs).
 
+% work of an engine exposed as a stream  
 eng_(X,G,engine_next(E)):-engine_create(X,G,E).  
 
+
+cycle_(E,CycleStream):-
+  findall(X,X in E,Xs),
+  append(Xs,Tail,Tail),
+  list_(Tail,CycleStream).
 
 % finite integer range
 range_(From,To,range_next(state(From,To))).
@@ -69,9 +75,9 @@ range_next(State,X):-
   nb_linkarg(1,State,SX).
 
 % initial segment of length K stream
-take(K,E,taker(state(K,E))).
+take(K,E,take_next(state(K,E))).
 
-taker(State,X):-
+take_next(State,X):-
   State=state(K,E),
   succ(PK,K),
   ask_(E,X),
@@ -106,7 +112,10 @@ reduce_next(S,F,E,R):-
   )),
   arg(1,S,R).
 
-  
+zipper_of(E1,E2,E):-map_(zip2,E1,E2,E).
+
+zip2(X,Y,X-Y).
+
 % bactrack over G for its side-effects only  
 do(G):-G,fail;true.
 
@@ -241,7 +250,11 @@ t17:-eng_(X,member(X,[1,2,3]),S),(X in S,writeln(X),fail;is_done(S),writeln(S)).
 
 t18:-(X^member(X,[1,2,3])*[a,b])=E,do((X in_ E,writeln(X))).
 
-tests:-do((between(1,18,I),atom_concat(t,I,T),listing(T),call(T),nl)).
+t19:-range_(1,5,R),cycle_(R,C),show(20,C).
+
+t20:-range_(1,4,R),cycle_(R,C),list_([a,b,c,d,e,f],L),zipper_of(C,L,Z),show(Z).
+
+tests:-do((between(1,20,I),atom_concat(t,I,T),listing(T),call(T),nl)).
 
 /*
 ?- tests.
@@ -417,7 +430,21 @@ engine_next(done)
 3-a
 2-b
 
+t19 :-
+    range_(1, 5, R),
+    cycle_(R, C),
+    show(20, C).
+
+[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
+
+t20 :-
+    range_(1, 4, R),
+    cycle_(R, C),
+    list_([a, b, c, d, e, f], L),
+    zipper_of(C, L, Z),
+    show(Z).
+
+[1-a,2-b,3-c,1-d,2-e,3-f]
+
 true.
-
-
 */
