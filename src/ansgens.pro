@@ -27,7 +27,7 @@ nat_goal(N):-
   generate_answer(N),
   nat_goal(SN).
 
-nat_(E):-new_generator(N, between(0,inf,N), E).
+nat_(E):-new_generator(N, between(0,infinite,N), E).
 
 :-op(800,xfx,(in)).
 
@@ -64,7 +64,7 @@ neg(E):-new_generator_(_,generator_loop(pred,-1),E).
 
 pred(SX,X):-succ(X,SX).
 
-list2generator(Xs,engine(E,X,G)):-G=member(X,Xs),engine_create(X,G,E).
+list2generator(Xs,E):-new_generator(X,member(X,Xs),E).
 
 finite_generator2list(E,Xs):-findall(X,X in E,Xs).
 

@@ -24,10 +24,12 @@ show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
 
 show(Stream):-show(12,Stream).
 
+% work of an engine exposed as a stream  
+eng_(X,G,engine_next(E)):-engine_create(X,G,E).  
+
+
 % constant infinite stream returning C
 const_(C,=(C)).
-
-% has_state(E):-arg(1,E,T),functor(T,state,_).
 
 % generic simple stream advancer
 stream_next(F,State,X):-
@@ -56,16 +58,7 @@ list_next(State,X):-
   arg(1,State,[X|Xs]),
   nb_linkarg(1,State,Xs).
 
-% work of an engine exposed as a stream  
-eng_(X,G,engine_next(E)):-engine_create(X,G,E).  
-
-
-cycle_(E,CycleStream):-
-  findall(X,X in E,Xs),
-  append(Xs,Tail,Tail),
-  list_(Tail,CycleStream).
-
-% finite integer range
+  % finite integer range
 range_(From,To,range_next(state(From,To))).
 
 range_next(State,X):-
@@ -73,6 +66,13 @@ range_next(State,X):-
   X<To,
   succ(X,SX),
   nb_linkarg(1,State,SX).
+  
+cycle_(E,CycleStream):-
+  findall(X,X in E,Xs),
+  append(Xs,Tail,Tail),
+  list_(Tail,CycleStream).
+
+  
 
 % initial segment of length K stream
 take(K,E,take_next(state(K,E))).
