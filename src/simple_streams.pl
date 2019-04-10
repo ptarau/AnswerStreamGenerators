@@ -15,7 +15,11 @@ stop_(E):-nb_linkarg(1,E,done).
 
 is_done(E):-arg(1,E,done).
 
-% extracts X from state and calls transformer E
+% queries a generator if it is not done
+% marks generator as "done" after its first failure
+% this ensures it can be garbage collected
+% by making its handle unreacheable
+% extracts X by calling state transformer E
 ask_(E,_):-is_done(E),!,fail.
 ask_(E,R):-call(E,X),!,R=X.
 ask_(E,_):-stop_(E),fail.
@@ -23,9 +27,6 @@ ask_(E,_):-stop_(E),fail.
 show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
 
 show(Stream):-show(12,Stream).
-
-% work of an engine exposed as a stream  
-eng_(X,G,engine_next(E)):-engine_create(X,G,E).  
 
 
 % constant infinite stream returning C
@@ -72,7 +73,31 @@ cycle_(E,CycleStream):-
   append(Xs,Tail,Tail),
   list_(Tail,CycleStream).
 
-  
+
+% engine-based generators
+
+% UNWRPPED, expendable
+
+% work of an engine exposed as a stream  
+eng_(X,G,engine_next(E)):-engine_create(X,G,E).  
+
+% works on a generator wrapping an engine
+% such that its goal and answer template are kept
+gen_(X,G,ask_generator(Gen)):-new_generator(X,G,Gen).
+
+% WRAPPED, reusable
+
+% creates new generator from a generator's goal
+gen_clone(ask_generator(engine(_E,X,G)),NewGen):-gen_(X,G,NewGen).
+
+% creates new generator = engine plus goal for possible cloning
+new_generator(X,G,engine(E,X,G)):-engine_create(X,G,E).
+
+% extracts next answer from wrapped engine
+ask_generator(G,X):-arg(1,G,E),engine_next(E,X).
+
+
+% stream processors
 
 % initial segment of length K stream
 take(K,E,take_next(state(K,E))).
@@ -237,10 +262,7 @@ t12:-const_(10,C),nat_(N),map_(plus,C,N,R),show(R).
 t13:-const_(10,C),nat_(N),prod_(C,N,P),show(P).
 
 
-odds(Xs) :-
-  lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
-
-t14:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
+t14:-eng_(_X,fail,E),list_([a,b],L),sum_(E,L,S),show(S).
   
 t15:-eng_(X,member(X,[1,2,3]),E),list_([a,b],L),sum_(E,L,S),show(S).
 
@@ -254,9 +276,24 @@ t19:-range_(1,5,R),cycle_(R,C),show(20,C).
 
 t20:-range_(1,4,R),cycle_(R,C),list_([a,b,c,d,e,f],L),zipper_of(C,L,Z),show(Z).
 
-tests:-do((between(1,20,I),atom_concat(t,I,T),listing(T),call(T),nl)).
+t21:-eng_(X,member(X,[a,b,c]),G),range_(1,6,R),prod_(G,R,P),show(P).
+
+t22:-gen_(X,member(X,[a,b,c]),G),gen_clone(G,CG),prod_(G,CG,P),show(P).
+
+t23:-gen_(X,member(X,[a,b,c]),G),cycle_(G,C),show(C).
+
+odds(Xs) :-
+  lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
+
+% lazy_findall leaves undead engine
+t24:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
+
+tests:-
+  do((between(1,24,I),atom_concat(t,I,T),listing(T),call(T),nl)),
+  do((current_engine(E),writeln(E))).
 
 /*
+
 ?- tests.
 t1 :-
     nat_(N),
@@ -326,9 +363,7 @@ t9 :-
     list_([a, b, c], B),
     prod_(A, B, P),
     take(20, P, T),
-    \+ ( X in T,
-         \+ writeln(X)
-       ).
+    forall(X in T, writeln(X)).
 
 0-a
 1-a
@@ -386,13 +421,12 @@ t13 :-
 [10-0,10-0,10-1,10-0,10-1,10-2,10-0,10-1,10-2,10-3,10-0,10-1]
 
 t14 :-
-    odds(Xs),
-    list_(Xs, L),
-    nat_(N),
-    prod_(L, N, P),
-    show(P).
+    eng_(_X, fail, E),
+    list_([a, b], L),
+    sum_(E, L, S),
+    show(S).
 
-[1-0,3-0,1-1,5-0,3-1,1-2,7-0,5-1,3-2,1-3,9-0,7-1]
+[a,b]
 
 t15 :-
     eng_(X, member(X, [1, 2, 3]), E),
@@ -446,5 +480,40 @@ t20 :-
 
 [1-a,2-b,3-c,1-d,2-e,3-f]
 
+t21 :-
+    eng_(X, member(X, [a, b, c]), G),
+    range_(1, 6, R),
+    prod_(G, R, P),
+    show(P).
+
+[a-1,b-1,a-2,c-1,b-2,a-3,c-2,b-3,a-4,c-3,b-4,a-5]
+
+t22 :-
+    gen_(X, member(X, [a, b, c]), G),
+    gen_clone(G, CG),
+    prod_(G, CG, P),
+    show(P).
+
+[a-a,b-a,a-b,c-a,b-b,a-c,c-b,b-c]
+
+t23 :-
+    gen_(X, member(X, [a, b, c]), G),
+    cycle_(G, C),
+    show(C).
+
+[a,b,c,a,b,c,a,b,c,a,b,c]
+
+t24 :-
+    odds(Xs),
+    list_(Xs, L),
+    nat_(N),
+    prod_(L, N, P),
+    show(P).
+
+[1-0,3-0,1-1,5-0,3-1,1-2,7-0,5-1,3-2,1-3,9-0,7-1]
+
+<engine>(4,0x7f9c8b08d9c0)
 true.
+
 */
+

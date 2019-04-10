@@ -3,11 +3,7 @@
 
 \begin{document}
 
-{%An Expressiveness Lift for Prolog: 
-Programming with Answer Stream Generators}
-%{Answer Stream Generators: a Facelift for Prolog}
-%\title[A Unified View of Generators]
-%\title{All Rivers Flow to The Sea: A Unified View of (Lazy) Generators in Prolog}
+\title[A Unified View of (Lazy) Generators in Prolog]{All Rivers Flow to The Sea: A Unified View of (Lazy) Generators in Prolog}
 
 \begin{comment}
  \author[Paul Tarau]
@@ -21,9 +17,12 @@ Programming with Answer Stream Generators}
 \maketitle
 
 \begin{abstract}
-Answer Stream Generators encapsulate the work of coroutining logic engines as an algebra of stream operations that extends Prolog with lazy evaluation and  support for infinite answer streams. We implement this algebra on top of SWI-Prolog's Engine API and design an embedded language interpreter providing a compact notation for its composition mechanisms.
-Answer Stream Generators can be used to unify encapsulation of state originating from declarative constructs, procedural side effects and input-output interactions. 
+We describe a unified interface to declarative algorithms producing finite or infinite sequences of answers, stateful computations, I/O operations and first class Prolog engines. Our interface exposes them to the application programmer either as lazy lists or through a generic sequence manipulation API.
 
+On top of our unified interface, we define an algebra of stream operations that extends Prolog via an embedded language interpreter providing a compact notation for its composition mechanisms and supports moving between isomorphic sequence representations.
+
+As a special instance, we introduce answer stream generators that encapsulate the work of 
+coroutining logic engines with support for expendable or reusable answer streams.
 
 \end{abstract}
 
