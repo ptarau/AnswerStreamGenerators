@@ -37,6 +37,22 @@ Motivation built around some of Prolog's expressiveness limitations:
 \BI
 \I procedural state-management constructs
 \I fixed depth-first and strict evaluation semantics
+\I the best implementation can chosen and moved to the desired representation by the end-user via the iso-functor
+e.g. using lazy\_lists offers a familiar syntax to the Prolog application programmer
+\I efficiency - avoiding engines when possible reduces memory footprint and avoids term copying
+\I no gc is needed when working destructively in constant space - but results can be exposed declaratively
+\I algorithms (e.g. convolution of infinite sequences) easier to implement efficiently
+\I handling big data streams -can benefit from a library of stream combinators
+
+
+\I  applications that one can think of are:
+\BI
+\I scanning multiple tweet streams for a common topic, 
+\I finding correlations in multiple stock quote streams 
+\I stream processing  can be parallelized when streams originate from things like arrays
+\I interfaces to ASP or SAT - returning answers sets as streams can benefit from stream combinator operations
+\I combinatorial generation tools - e.g. for for testing purposes - can be encapsulated as lazy streams
+\EI
 \EI
 
 Reasons for some of the new things we propose:
