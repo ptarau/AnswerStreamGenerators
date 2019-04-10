@@ -290,9 +290,47 @@ t24:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
 
 tests:-
   do((between(1,24,I),atom_concat(t,I,T),listing(T),call(T),nl)),
-  do((current_engine(E),writeln(E))).
+  do((current_engine(E),writeln(E))),
+  bm.
 
+  
+  
+bm1(K):-
+  nl,listing(bm1),
+  N is 2^K,writeln(with_lazy_lists:N),
+  lazy_findall(I,between(0,N,I),Is),
+  maplist(succ,Is,Js),last(Js,X),writeln([X]).
+
+bm2(K):-
+  nl,listing(bm2),
+  N is 2^K,N1 is N+1,
+  writeln(with_engine_based_generators:N),
+  eng_(I,between(0,N,I),R),
+  map_(succ,R,SR),
+  slice(N,N1,SR,S),
+  show(S).
+  
+bm3(K):-
+  nl,listing(bm3),
+  N is 2^K,N1 is N+1,
+  writeln(with_simple_generators:N),
+  range_(0,N1,R),
+  map_(succ,R,SR),
+  slice(N,N1,SR,S),
+  show(S).
+  
+bm(K):-maplist(time,[bm1(K),bm2(K),bm3(K)]).
+
+bm:-bm(21).  
+  
 /*
+src$ swipl -s simple_streams.pl
+Welcome to SWI-Prolog (threaded, 64 bits, version 8.1.3-18-g074ca824b)
+SWI-Prolog comes with ABSOLUTELY NO WARRANTY. This is free software.
+Please run ?- license. for legal details.
+
+For online help and background, visit http://www.swi-prolog.org
+For built-in help, use ?- help(Topic). or ?- apropos(Word).
 
 ?- tests.
 t1 :-
@@ -512,8 +550,53 @@ t24 :-
 
 [1-0,3-0,1-1,5-0,3-1,1-2,7-0,5-1,3-2,1-3,9-0,7-1]
 
-<engine>(4,0x7f9c8b08d9c0)
-true.
+<engine>(4,0x7f8c7343c030)
 
+bm1(K) :-
+    nl,
+    listing(bm1),
+    N is 2^K,
+    writeln(with_lazy_lists:N),
+    lazy_findall(I, between(0, N, I), Is),
+    maplist(succ, Is, Js),
+    last(Js, X),
+    writeln([X]).
+
+with_lazy_lists:2097152
+[2097153]
+% 46,139,696 inferences, 7.386 CPU in 8.157 seconds (91% CPU, 6246989 Lips)
+
+bm2(K) :-
+    nl,
+    listing(bm2),
+    N is 2^K,
+    N1 is N+1,
+    writeln(with_engine_based_generators:N),
+    eng_(I, between(0, N, I), R),
+    map_(succ, R, SR),
+    slice(N, N1, SR, S),
+    show(S).
+
+with_engine_based_generators:2097152
+[2097153]
+% 31,459,590 inferences, 4.293 CPU in 4.942 seconds (87% CPU, 7327321 Lips)
+
+bm3(K) :-
+    nl,
+    listing(bm3),
+    N is 2^K,
+    N1 is N+1,
+    writeln(with_simple_generators:N),
+    range_(0, N1, R),
+    map_(succ, R, SR),
+    slice(N, N1, SR, S),
+    show(S).
+
+with_simple_generators:2097152
+[2097153]
+% 37,751,064 inferences, 1.561 CPU in 1.565 seconds (100% CPU, 24187678 Lips)
+true .
+
+?- 
 */
 
