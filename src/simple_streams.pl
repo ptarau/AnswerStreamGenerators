@@ -259,7 +259,41 @@ eeval(E,E).
 
 :-op(800,xfx,(in_)).
 X in_ E:-eeval(E,EE),X in EE.
+ 
+
+% meta engines
+
+clause_(H,next_clause(H,state(1))).
+
+next_clause(H,State,(NewH:-Bs)):-
+  arg(1,State,I),succ(I,SI),
+  nth_clause(H,I,Ref),
+  clause(NewH,Bs,Ref),
+  nb_linkarg(1,State,SI).
   
+/*
+next_unfold(S):-
+  S=state([G|Gs]),
+  next_clause(G,(CH:-Bs)),
+*/  
+  
+  
+/* TODO
+meta_(H,meta_step(H)).
+
+meta_step(H,B):-
+  clause_(H,Hs),
+  list_next(Hs,B),
+  !.
+meta_step(H,H).
+*/
+
+add(0,X,X).
+add(s(X),Y,s(Z)):-add(X,Y,Z).
+
+goal(add(s(s(0)),s(s(0)),_R)).
+
+
 % tests
 
   
