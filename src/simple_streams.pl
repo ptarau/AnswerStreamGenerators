@@ -2,20 +2,11 @@ c:-['simple_streams.pl'].
 
 :-ensure_loaded(arrays).
 
-:-op(800,xfx,(in)).
+% the Generator Generator protocol
+% a generator step is a call to a closure that moves its state forward
+% defining a generator simply stores it as a Prolog fact
 
-% backtracks over progressively advancing states
-
-X in E:-ask_(E,A),select_from(E,A,X).
-
-select_from(_,A,A).
-select_from(E,_,X):-X in E.
-
-stop_(E):-nb_linkarg(1,E,done).
-
-is_done(E):-arg(1,E,done).
-
-% queries a generator if it is not done
+% ask_/2 queries a generator if it is not done
 % marks generator as "done" after its first failure
 % this ensures it can be garbage collected
 % by making its handle unreacheable
@@ -24,12 +15,31 @@ ask_(E,_):-is_done(E),!,fail.
 ask_(E,R):-call(E,X),!,R=X.
 ask_(E,_):-stop_(E),fail.
 
+
+:-op(800,xfx,(in)).
+
+% in/2 backtracks over progressively advancing states
+
+X in E:-ask_(E,A),select_from(E,A,X).
+
+select_from(_,A,A).
+select_from(E,_,X):-X in E.
+
+% stop/1 marks a generator as done
+% future calls to it will fail
+stop_(E):-nb_linkarg(1,E,done).
+
+% checks if a generator is done
+is_done(E):-arg(1,E,done).
+
+% collectsresults after K steps and prints them out
 show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
 
 show(Stream):-show(12,Stream).
 
 
 % constant infinite stream returning C
+% the "next" step, call(=(C),X) will simply unify X and C
 const_(C,=(C)).
 
 % generic simple stream advancer
@@ -38,9 +48,10 @@ stream_next(F,State,X):-
   call(F,X,Y),
   nb_linkarg(1,State,Y).
 
+% generator step for natural numbers
 nat_next(S,X):-stream_next(succ,S,X).
 
-% natural numbers
+% natural number generator, storing the next and its initial state
 nat_(nat_next(state(0))).
 
 % stricly positive integers
@@ -55,19 +66,23 @@ neg_(stream_next(pred,state(-1))).
 % finite stream from list
 list_(Xs,list_next(state(Xs))).
 
+% advancer to the tail of a list
 list_next(State,X):-  
   arg(1,State,[X|Xs]),
   nb_linkarg(1,State,Xs).
 
-  % finite integer range
+  % finite integer range generator
 range_(From,To,range_next(state(From,To))).
 
+% moves forward by incrementing state content
 range_next(State,X):-
   State=state(X,To),
   X<To,
   succ(X,SX),
   nb_linkarg(1,State,SX).
-  
+
+% transforms a finite generator into an infinite cycle
+% uses a circular list, unified with its own tail
 cycle_(E,CycleStream):-
   findall(X,X in E,Xs),
   append(Xs,Tail,Tail),
@@ -76,7 +91,7 @@ cycle_(E,CycleStream):-
 
 % engine-based generators
 
-% UNWRPPED, expendable
+% UNWRAPPED, expendable
 
 % work of an engine exposed as a stream  
 eng_(X,G,engine_next(E)):-engine_create(X,G,E).  
@@ -99,9 +114,10 @@ ask_generator(G,X):-arg(1,G,E),engine_next(E,X).
 
 % stream processors
 
-% initial segment of length K stream
+% generator for initial segment of length K of generator E 
 take(K,E,take_next(state(K,E))).
 
+% advances by asking generator - not more than K times
 take_next(State,X):-
   State=state(K,E),
   succ(PK,K),
@@ -119,14 +135,24 @@ slice(From,To)-->{K is To-From,K>=0},drop(From),take(K).
 % lazy functional operators  
 map_(F,E,map_next(F,E)).
 
+% advances E and applies F to result X
 map_next(F,E,Y):-ask_(E,X),call(F,X,Y).
 
+% combines E1 and E2  by creating an advancer 
+% that applies F to their "next" states
 map_(F,E1,E2,map_next(F,E1,E2)).
 
+% advances bith and applies F
 map_next(F,E1,E2,Z):-ask_(E1,X),ask_(E2,Y),call(F,X,Y,Z).
 
+
+% reduces E with F, starting with initial value
 reduce_(F,InitVal,E,reduce_next(state(InitVal),F,E)).
 
+% bactrack over G for its side-effects only  
+do(G):-G,fail;true.
+
+% reduces state S while E provides "next" elements
 reduce_next(S,F,E,R):-
   \+ is_done(E),
   do((
@@ -137,13 +163,20 @@ reduce_next(S,F,E,R):-
   )),
   arg(1,S,R).
 
+% collects pairs of elements in matching positions from E1 and E2
 zipper_of(E1,E2,E):-map_(zip2,E1,E2,E).
 
 zip2(X,Y,X-Y).
 
-% bactrack over G for its side-effects only  
-do(G):-G,fail;true.
+arith_sum(E1,E2,S):-map_(plus,E1,E2,S).
 
+prod(X,Y,P):-P is X*Y.
+
+arith_prod(E1,E2,P):-map_(prod,E1,E2,P).
+
+fact(N,F):-range_(1,N,R),reduce_(prod,N,R,F).
+
+% fibo(
 
 % sequence sum and product operrations  
 
@@ -282,18 +315,27 @@ t22:-gen_(X,member(X,[a,b,c]),G),gen_clone(G,CG),prod_(G,CG,P),show(P).
 
 t23:-gen_(X,member(X,[a,b,c]),G),cycle_(G,C),show(C).
 
+
+t24:-range_(0,10,A),range_(100,110,B),arith_sum(A,B,S),show(S).
+
+t25:-fact(5,S),show(S).
+
 odds(Xs) :-
   lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 
 % lazy_findall leaves undead engine
-t24:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
+t26:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
+
+
 
 tests:-
-  do((between(1,24,I),atom_concat(t,I,T),listing(T),call(T),nl)),
+  tell('tests.txt'),
+  do((between(1,26,I),atom_concat(t,I,T),listing(T),call(T),nl)),
   do((current_engine(E),writeln(E))),
-  bm.
+  bm,
+  told.
 
-  
+time(G,T):-get_time(T1),once(G),get_time(T2),T is T2-T1. 
   
 bm1(K):-
   nl,listing(bm1),
@@ -319,284 +361,7 @@ bm3(K):-
   slice(N,N1,SR,S),
   show(S).
   
-bm(K):-maplist(time,[bm1(K),bm2(K),bm3(K)]).
+bm(K):-maplist(time,[bm1(K),bm2(K),bm3(K)],Ts),nl,writeln(times=Ts).
 
 bm:-bm(21).  
   
-/*
-src$ swipl -s simple_streams.pl
-Welcome to SWI-Prolog (threaded, 64 bits, version 8.1.3-18-g074ca824b)
-SWI-Prolog comes with ABSOLUTELY NO WARRANTY. This is free software.
-Please run ?- license. for legal details.
-
-For online help and background, visit http://www.swi-prolog.org
-For built-in help, use ?- help(Topic). or ?- apropos(Word).
-
-?- tests.
-t1 :-
-    nat_(N),
-    list_([10, 20, 30], M),
-    map_(plus, N, M, R),
-    show(R).
-
-[10,21,32]
-
-t2 :-
-    nat_(N),
-    nat_(M),
-    map_(plus, N, M, R),
-    show(R).
-
-[0,2,4,6,8,10,12,14,16,18,20,22]
-
-t3 :-
-    range_(1, 5, E),
-    reduce_(plus, 0, E, R),
-    show(R).
-
-[10]
-
-t4 :-
-    pos_(N),
-    neg_(M),
-    sum_(M, N, S),
-    show(S).
-
-[-1,1,-2,2,-3,3,-4,4,-5,5,-6,6]
-
-t5 :-
-    nat_(N),
-    list_([a, b, c], M),
-    sum_(N, M, S),
-    show(S).
-
-[0,a,1,b,2,c,3,4,5,6,7,8]
-
-t6 :-
-    range_(1, 3, N),
-    list_([a, b, c, d, e], M),
-    sum_(M, N, S),
-    show(S).
-
-[a,1,b,2,c,d,e]
-
-t7 :-
-    nat_(N),
-    slice(4, 8, N, S),
-    show(S).
-
-[4,5,6,7]
-
-t8 :-
-    neg_(A),
-    pos_(B),
-    prod_(A, B, P),
-    take(30, P, T),
-    show(30, T).
-
-[-1-1,-2-1,-1-2,-3-1,-2-2,-1-3,-4-1,-3-2,-2-3,-1-4,-5-1,-4-2,-3-3,-2-4,-1-5,-6-1,-5-2,-4-3,-3-4,-2-5,-1-6,-7-1,-6-2,-5-3,-4-4,-3-5,-2-6,-1-7,-8-1,-7-2]
-
-t9 :-
-    nat_(A),
-    list_([a, b, c], B),
-    prod_(A, B, P),
-    take(20, P, T),
-    forall(X in T, writeln(X)).
-
-0-a
-1-a
-0-b
-2-a
-1-b
-0-c
-3-a
-2-b
-1-c
-4-a
-3-b
-2-c
-5-a
-4-b
-3-c
-6-a
-5-b
-4-c
-7-a
-6-b
-
-t10 :-
-    range_(0, 5, A),
-    list_([a, b, c], B),
-    prod_(A, B, P),
-    take(20, P, T),
-    show(30, T).
-
-[0-a,1-a,0-b,2-a,1-b,0-c,3-a,2-b,1-c,4-a,3-b,2-c]
-
-t11 :-
-    nat_(A),
-    list_([a, b, c], B),
-    prod_(B, A, P),
-    take(20, P, T),
-    show(30, T).
-
-[a-0,b-0,a-1,c-0,b-1,a-2,c-1,b-2,a-3,c-2,b-3,a-4,c-3,b-4,a-5,c-4,b-5,a-6,c-5,b-6]
-
-t12 :-
-    const_(10, C),
-    nat_(N),
-    map_(plus, C, N, R),
-    show(R).
-
-[10,11,12,13,14,15,16,17,18,19,20,21]
-
-t13 :-
-    const_(10, C),
-    nat_(N),
-    prod_(C, N, P),
-    show(P).
-
-[10-0,10-0,10-1,10-0,10-1,10-2,10-0,10-1,10-2,10-3,10-0,10-1]
-
-t14 :-
-    eng_(_X, fail, E),
-    list_([a, b], L),
-    sum_(E, L, S),
-    show(S).
-
-[a,b]
-
-t15 :-
-    eng_(X, member(X, [1, 2, 3]), E),
-    list_([a, b], L),
-    sum_(E, L, S),
-    show(S).
-
-[1,a,2,b,3]
-
-t16 :-
-    eng_(X, member(X, [1, 2, 3]), E),
-    list_([a, b], L),
-    prod_(E, L, S),
-    show(S).
-
-[1-a,2-a,1-b,3-a,2-b]
-
-t17 :-
-    eng_(X, member(X, [1, 2, 3]), S),
-    (   X in S,
-        writeln(X),
-        fail
-    ;   is_done(S),
-        writeln(S)
-    ).
-
-1
-2
-3
-engine_next(done)
-
-1-a
-2-a
-1-b
-3-a
-2-b
-
-t19 :-
-    range_(1, 5, R),
-    cycle_(R, C),
-    show(20, C).
-
-[1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
-
-t20 :-
-    range_(1, 4, R),
-    cycle_(R, C),
-    list_([a, b, c, d, e, f], L),
-    zipper_of(C, L, Z),
-    show(Z).
-
-[1-a,2-b,3-c,1-d,2-e,3-f]
-
-t21 :-
-    eng_(X, member(X, [a, b, c]), G),
-    range_(1, 6, R),
-    prod_(G, R, P),
-    show(P).
-
-[a-1,b-1,a-2,c-1,b-2,a-3,c-2,b-3,a-4,c-3,b-4,a-5]
-
-t22 :-
-    gen_(X, member(X, [a, b, c]), G),
-    gen_clone(G, CG),
-    prod_(G, CG, P),
-    show(P).
-
-[a-a,b-a,a-b,c-a,b-b,a-c,c-b,b-c]
-
-t23 :-
-    gen_(X, member(X, [a, b, c]), G),
-    cycle_(G, C),
-    show(C).
-
-[a,b,c,a,b,c,a,b,c,a,b,c]
-
-t24 :-
-    odds(Xs),
-    list_(Xs, L),
-    nat_(N),
-    prod_(L, N, P),
-    show(P).
-
-[1-0,3-0,1-1,5-0,3-1,1-2,7-0,5-1,3-2,1-3,9-0,7-1]
-
-<engine>(4,0x7f8c7343c030)
-
-bm1(K) :-
-    nl,
-    listing(bm1),
-    N is 2^K,
-    writeln(with_lazy_lists:N),
-    lazy_findall(I, between(0, N, I), Is),
-    maplist(succ, Is, Js),
-    last(Js, X),
-    writeln([X]).
-
-with_lazy_lists:2097152
-[2097153]
-% 46,139,696 inferences, 7.386 CPU in 8.157 seconds (91% CPU, 6246989 Lips)
-
-bm2(K) :-
-    nl,
-    listing(bm2),
-    N is 2^K,
-    N1 is N+1,
-    writeln(with_engine_based_generators:N),
-    eng_(I, between(0, N, I), R),
-    map_(succ, R, SR),
-    slice(N, N1, SR, S),
-    show(S).
-
-with_engine_based_generators:2097152
-[2097153]
-% 31,459,590 inferences, 4.293 CPU in 4.942 seconds (87% CPU, 7327321 Lips)
-
-bm3(K) :-
-    nl,
-    listing(bm3),
-    N is 2^K,
-    N1 is N+1,
-    writeln(with_simple_generators:N),
-    range_(0, N1, R),
-    map_(succ, R, SR),
-    slice(N, N1, SR, S),
-    show(S).
-
-with_simple_generators:2097152
-[2097153]
-% 37,751,064 inferences, 1.561 CPU in 1.565 seconds (100% CPU, 24187678 Lips)
-true .
-
-?- 
-*/
-
