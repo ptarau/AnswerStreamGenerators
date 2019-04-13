@@ -15,6 +15,12 @@ ask_(E,_):-is_done(E),!,fail.
 ask_(E,R):-call(E,X),!,R=X.
 ask_(E,_):-stop_(E),fail.
 
+% stop/1 marks a generator as done
+% future calls to it will fail
+stop_(E):-nb_linkarg(1,E,done).
+
+% checks if a generator is done
+is_done(E):-arg(1,E,done).
 
 :-op(800,xfx,(in)).
 
@@ -25,31 +31,29 @@ X in E:-ask_(E,A),select_from(E,A,X).
 select_from(_,A,A).
 select_from(E,_,X):-X in E.
 
-% stop/1 marks a generator as done
-% future calls to it will fail
-stop_(E):-nb_linkarg(1,E,done).
-
-% checks if a generator is done
-is_done(E):-arg(1,E,done).
-
 % collectsresults after K steps and prints them out
 show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
 
 show(Stream):-show(12,Stream).
 
 
+% CONSTRUCTORS of simple generators
+
 % constant infinite stream returning C
 % the "next" step, call(=(C),X) will simply unify X and C
 const_(C,=(C)).
 
 % generic simple stream advancer
-stream_next(F,State,X):-
+gen_next(F,State,X):-
   arg(1,State,X),
   call(F,X,Y),
   nb_linkarg(1,State,Y).
 
+% TODO: explain why nb_linkarg is ok, or 
+% prove with couter example that it is not
+
 % generator step for natural numbers
-nat_next(S,X):-stream_next(succ,S,X).
+nat_next(S,X):-gen_next(succ,S,X).
 
 % natural number generator, storing the next and its initial state
 nat_(nat_next(state(0))).
@@ -61,33 +65,21 @@ pos_(nat_next(state(1))).
 pred(X,PX):-PX is X-1.
 
 % strictly negative integers
-neg_(stream_next(pred,state(-1))).
+neg_(gen_next(pred,state(-1))).
 
-
-% finite stream from list
-list_(Xs,list_next(state(Xs))).
-
-% advancer to the tail of a list
-list_next(State,X):-  
-  arg(1,State,[X|Xs]),
-  nb_linkarg(1,State,Xs).
-
-/*
 % generic advance, where state and yield are distinct
-stream_nextval(F,State,Yield):-
+gen_nextval(F,State,Yield):-
   arg(1,State,X1),
   call(F,X1,X2, Yield),
   nb_linkarg(1,State,X2).
 
 % stream from list or lazy_list   
-list_(Xs,stream_nextval(list_step,state(Xs))).
+list_(Xs,gen_nextval(list_step,state(Xs))).
 
 list_step([X|Xs],Xs,X).
-*/
-
 
 % finite integer range generator
-range_(From,To,stream_next(range_step(To),state(From))).
+range_(From,To,gen_next(range_step(To),state(From))).
 
 % moves forward by incrementing state content
 range_step(To,X,SX):-X<To,succ(X,SX).
@@ -109,14 +101,14 @@ eng_(X,G,engine_next(E)):-engine_create(X,G,E).
 
 % works on a generator wrapping an engine
 % such that its goal and answer template are kept
-gen_(X,G,ask_generator(Gen)):-new_generator(X,G,Gen).
+ceng_(X,G,ask_generator(Gen)):-new_generator(X,G,Gen).
 
 
 
 % WRAPPED, reusable
 
 % creates new generator from a generator's goal
-gen_clone(ask_generator(engine(_E,X,G)),NewGen):-gen_(X,G,NewGen).
+ceng_clone(ask_generator(engine(_E,X,G)),NewGen):-ceng_(X,G,NewGen).
 
 % creates new generator = engine plus goal for possible cloning
 new_generator(X,G,engine(E,X,G)):-engine_create(X,G,E).
@@ -200,21 +192,37 @@ chains_([F|Fs])-->chain_(F),chains_(Fs).
 
 fibo_pair(X-Y,Y-Z) :- Z is X+Y.
 
-fibo_pair(stream_next(fibo_pair,state(1-1))).
+fibo_pair(gen_next(fibo_pair,state(1-1))).
 
 fibo_(F):-fibo_pair(E),chain_(arg(1),E,F).
 
-clause_(H,next_clause(H,state(1))).
+clause_1(H,next_clause(H,state(1))).
 
-next_clause(H,State,(NewH:-Bs)):-
-  arg(1,State,I),succ(I,SI),
+next_clause1(H,State,(NewH:-Bs)):-
+  arg(1,State,I),
+  succ(I,SI),
   nth_clause(H,I,Ref),
   clause(NewH,Bs,Ref),
   nb_linkarg(1,State,SI).
 
+
+clause_(H,gen_nextval(clause_step(H),state(1))).
+
+next_clause(H,State,HBs):-
+  arg(1,State,I),
+  clause_step(H,I,SI,HBs),
+  nb_linkarg(1,State,SI).
+
+clause_step(H,I,SI,(NewH:-Bs)):-
+  succ(I,SI),
+  nth_clause(H,I,Ref),
+  clause(NewH,Bs,Ref).
+
+
+
 % sequence sum and product operrations  
 
-% interleaved sum of two finite or infinite streams
+% interleaved sum of two finite or infinite generators
 sum_(E1,E2,sum_next(state(E1,E2))).
 
 sum_next(State,X):-
@@ -226,7 +234,7 @@ sum_next(State,X):-
 sum_next(state(_,E2),X):-
   ask_(E2,X).
 
-% cartesian product of two finite or infinite streams
+% cartesian product of two finite or infinite generators
 prod_(E1,E2,prod_next(state(0,E1,E2,A1,A2))):-
   new_array(A1),
   new_array(A2).
@@ -251,7 +259,7 @@ fill_to(N,E,A,R):-
   array_get(A,N,R),
   nonvar(R).
   
-% stream of natural number pairs
+% generator of natural number pairs
 nat_pair_(nat_pair_next(state(0))).
 
 nat_pair_next(S,A-B):-nat_next(S,X),cantor_unpair(X,A,B).
@@ -415,9 +423,9 @@ t20:-range_(1,4,R),cycle_(R,C),list_([a,b,c,d,e,f],L),zipper_of(C,L,Z),show(Z).
 
 t21:-eng_(X,member(X,[a,b,c]),G),range_(1,6,R),prod_(G,R,P),show(P).
 
-t22:-gen_(X,member(X,[a,b,c]),G),gen_clone(G,CG),prod_(G,CG,P),show(P).
+t22:-ceng_(X,member(X,[a,b,c]),G),ceng_clone(G,CG),prod_(G,CG,P),show(P).
 
-t23:-gen_(X,member(X,[a,b,c]),G),cycle_(G,C),show(C).
+t23:-ceng_(X,member(X,[a,b,c]),G),cycle_(G,C),show(C).
 
 
 t24:-range_(0,10,A),range_(100,110,B),arith_sum(A,B,S),show(S).
@@ -428,15 +436,19 @@ t26:-nat_(N),chains_([succ,succ],N,N2),show(N2).
 
 t27:-fibo_(E),show(E).
 
+t28:-
+  clause_(chains_(_,_,_),C),
+  do((X in C,portray_clause(X))).
+
 odds(Xs) :-lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 
 % lazy_findall leaves undead engine
-t28:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
+t29:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
 
 
 tests:-
   tell('tests.txt'),
-  do((between(1,28,I),atom_concat(t,I,T),listing(T),call(T),nl)),
+  do((between(1,29,I),atom_concat(t,I,T),listing(T),call(T),nl)),
   do((current_engine(E),writeln(E))),
   bm,
   told.

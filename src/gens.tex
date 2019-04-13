@@ -17,20 +17,24 @@
 \maketitle
 
 \begin{abstract}
-We describe a unified interface to declarative algorithms producing finite or infinite sequences of answers, stateful computations, I/O operations and first class Prolog engines. Our interface exposes them to the application programmer either as lazy lists or through a generic sequence manipulation API.
+We describe a unified interface to algorithms producing finite or infinite sequences, stateful computations, I/O operations and answers of first class Prolog engines. Our interface exposes them to the application programmer either as lazy lists or through a generic sequence manipulation API.
 
-On top of our unified interface, we define an algebra of stream operations that extends Prolog via an embedded language interpreter providing a compact notation for its composition mechanisms and supports moving between isomorphic sequence representations.
+On top of our unified interface, we define an algebra of generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms and supports moving between isomorphic sequence representations.
 
-As a special instance, we introduce answer stream generators that encapsulate the work of 
-coroutining logic engines with support for expendable or reusable answer streams.
+As a special instance, we introduce answer stream generators that 
+encapsulate the work of coroutining logic engines with support 
+for expendable or reusable answer streams.
 
 \end{abstract}
 
 \section{Introduction}
 
-Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. The goal of this paper is dual-purpose in this sense: we encapsulate an aspect of a pragmatic language extension,
-first-class logic engines \cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER,bp2011},
-into a set of operations organized compositionally in the form of Answer Stream Generators, language constructs similar to Python's generators and sharing features with coroutining constructs now present in a several other widely used programming languages.
+Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. The goal of this paper is dual-purpose in this sense: we encapsulate pragmatic language extensions using
+state transformers, lazy lists and first-class logic engines \cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER,bp2011},
+into a set of operations organized compositionally in the form of {\em 
+generators}.
+Our generators are similar to Python's {\em yield} mechanism \cite{} and 
+they share features with coroutining constructs now present in a several other widely used programming languages.
 
 {\Large TODO: expand}
 
@@ -60,13 +64,27 @@ Reasons for some of the new things we propose:
 \BI
 \I what generators can bring in languages like Python \\-e.g. itertools, 
 see \url{https://docs.python.org/3/library/itertools.html}
-\I what lazy evaluation brings to Haskell
+\I lazy evaluation brings to Haskell a declarative handling of infinite sequences
 \I we want to add streams to
 handle potentially very large amounts of data flowing over the internet
 \I the need to update Prolog's language constructs to closely match new developments adopted by some of today's most successful programming languages (e.g. mention Python's yield \verb~C++~ fibers, go-language's goroutines)
 \EI
 
-We organize Answer Stream Operations as an algebra, wrapped as a library module with a declarative interface, to avoid exposing  operations requiring an implementation with a clear procedural flavor to the Prolog application programmer.
+We organize our Generators as an algebra, wrapped as a library module with a declarative interface, to avoid exposing  operations requiring an implementation with a clear procedural flavor to the Prolog application programmer.
+
+By defining an iso-functor that transports operations between
+generators and lazy lists, we offer a choice between 
+abstract sequence operations and the concrete list view familiar to Prolog users.
+
+
+\section{The Generator Interface}
+
+{\Large - constructors based on declarative algorithms, state transformers, I/O operations, etc.}
+
+\section{Generators as Simple State Transformers}
+
+{\Large add here nat, pos etc}
+
 
 \section{SWI Prolog's engine implementation}
 

@@ -66,9 +66,7 @@ t9 :-
     list_([a, b, c], B),
     prod_(A, B, P),
     take(20, P, T),
-    \+ ( X in T,
-         \+ writeln(X)
-       ).
+    forall(X in T, writeln(X)).
 
 0-a
 1-a
@@ -194,15 +192,15 @@ t21 :-
 [a-1,b-1,a-2,c-1,b-2,a-3,c-2,b-3,a-4,c-3,b-4,a-5]
 
 t22 :-
-    gen_(X, member(X, [a, b, c]), G),
-    gen_clone(G, CG),
+    ceng_(X, member(X, [a, b, c]), G),
+    ceng_clone(G, CG),
     prod_(G, CG, P),
     show(P).
 
 [a-a,b-a,a-b,c-a,b-b,a-c,c-b,b-c]
 
 t23 :-
-    gen_(X, member(X, [a, b, c]), G),
+    ceng_(X, member(X, [a, b, c]), G),
     cycle_(G, C),
     show(C).
 
@@ -236,6 +234,15 @@ t27 :-
 [1,1,2,3,5,8,13,21,34,55,89,144]
 
 t28 :-
+    clause_(chains_(_, _, _), C),
+    do((X in C, portray_clause(X))).
+
+chains_([], A, A).
+chains_([A|C], B, E) :-
+    chain_(A, B, D),
+    chains_(C, D, E).
+
+t29 :-
     odds(Xs),
     list_(Xs, L),
     nat_(N),
@@ -244,8 +251,7 @@ t28 :-
 
 [1-0,3-0,1-1,5-0,3-1,1-2,7-0,5-1,3-2,1-3,9-0,7-1]
 
-<engine>(4,0x7f93c58451c0)
-<engine>(5,0x7f93c3e3ca70)
+<engine>(4,0x7f8ab804c220)
 
 bm1(K) :-
     nl,
@@ -253,7 +259,7 @@ bm1(K) :-
     N is 2^K,
     writeln(with_lazy_lists:N),
     lazy_findall(I, between(0, N, I), Is),
-    '__aux_maplist/3_succ+0'(Is, Js),
+    maplist(succ, Is, Js),
     last(Js, X),
     writeln([X]).
 
@@ -288,4 +294,4 @@ bm3(K) :-
 with_simple_generators:2097152
 [2097153]
 
-times=[8.388182878494263,5.573073863983154,1.9322969913482666]
+times=[16.930454969406128,7.7836620807647705,3.586153984069824]
