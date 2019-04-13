@@ -63,6 +63,7 @@ pred(X,PX):-PX is X-1.
 % strictly negative integers
 neg_(stream_next(pred,state(-1))).
 
+
 % finite stream from list
 list_(Xs,list_next(state(Xs))).
 
@@ -71,15 +72,25 @@ list_next(State,X):-
   arg(1,State,[X|Xs]),
   nb_linkarg(1,State,Xs).
 
-  % finite integer range generator
-range_(From,To,range_next(state(From,To))).
+/*
+% generic advance, where state and yield are distinct
+stream_nextval(F,State,Yield):-
+  arg(1,State,X1),
+  call(F,X1,X2, Yield),
+  nb_linkarg(1,State,X2).
+
+% stream from list or lazy_list   
+list_(Xs,stream_nextval(list_step,state(Xs))).
+
+list_step([X|Xs],Xs,X).
+*/
+
+
+% finite integer range generator
+range_(From,To,stream_next(range_step(To),state(From))).
 
 % moves forward by incrementing state content
-range_next(State,X):-
-  State=state(X,To),
-  X<To,
-  succ(X,SX),
-  nb_linkarg(1,State,SX).
+range_step(To,X,SX):-X<To,succ(X,SX).
 
 % transforms a finite generator into an infinite cycle
 % uses a circular list, unified with its own tail
@@ -100,6 +111,8 @@ eng_(X,G,engine_next(E)):-engine_create(X,G,E).
 % such that its goal and answer template are kept
 gen_(X,G,ask_generator(Gen)):-new_generator(X,G,Gen).
 
+
+
 % WRAPPED, reusable
 
 % creates new generator from a generator's goal
@@ -114,6 +127,8 @@ ask_generator(G,X):-arg(1,G,E),engine_next(E,X).
 
 % stream processors
 
+
+
 % generator for initial segment of length K of generator E 
 take(K,E,take_next(state(K,E))).
 
@@ -123,7 +138,7 @@ take_next(State,X):-
   succ(PK,K),
   ask_(E,X),
   nb_linkarg(1,State,PK).
-  
+
 % roll the stream after first K items
 drop(K,E,_):-succ(PK,K),once(offset(PK,_ in E)),fail.
 drop(_,E,E).
@@ -176,7 +191,26 @@ arith_prod(E1,E2,P):-map_(prod,E1,E2,P).
 
 fact(N,F):-range_(1,N,R),reduce_(prod,N,R,F).
 
-% fibo(
+chain_next(F,E,Y):-ask_(E,X),call(F,X,Y).
+  
+chain_(F,E,chain_next(F,E)).
+
+chains_([])-->[].
+chains_([F|Fs])-->chain_(F),chains_(Fs).
+
+fibo_pair(X-Y,Y-Z) :- Z is X+Y.
+
+fibo_pair(stream_next(fibo_pair,state(1-1))).
+
+fibo_(F):-fibo_pair(E),chain_(arg(1),E,F).
+
+clause_(H,next_clause(H,state(1))).
+
+next_clause(H,State,(NewH:-Bs)):-
+  arg(1,State,I),succ(I,SI),
+  nth_clause(H,I,Ref),
+  clause(NewH,Bs,Ref),
+  nb_linkarg(1,State,SI).
 
 % sequence sum and product operrations  
 
@@ -217,7 +251,7 @@ fill_to(N,E,A,R):-
   array_get(A,N,R),
   nonvar(R).
   
-% stream of naturla number pairs
+% stream of natural number pairs
 nat_pair_(nat_pair_next(state(0))).
 
 nat_pair_next(S,A-B):-nat_next(S,X),cantor_unpair(X,A,B).
@@ -247,6 +281,42 @@ iterate(N,X,NewR):-
   (A<2->NewR=R;iterate(N,R,NewR)).
 
 
+  
+  
+% ISO-FUNCTOR TO lazy_lists
+
+% data transformers
+
+gen2lazy(E,Xs):-lazy_findall(X,X in E,Xs).
+
+lazy2gen(Xs,E):-list_(Xs,E).
+
+% iso functors - TODO: test
+
+% transports F(A,B)
+iso_fun(F,From,To,A,B):-
+  call(From,A,X),
+  call(F,X,Y),
+  call(To,Y,B).
+ 
+% transports F(A,B,C) 
+iso_fun(F,From,To,A,B,C):-
+  call(From,A,X),
+  call(From,B,Y),
+  call(F,X,Y,Z),
+  call(To,Z,C).
+
+% lazy lists borrow product from generators 
+lazy_list_prod(Xs,Ys,Zs):-
+  iso_fun(prod_,lazy2gen,gen2lazy,Xs,Ys,Zs).
+
+lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
+
+lazy_nats_next(X,SX,X):-succ(X,SX).
+  
+  
+%lazy_nats_next(state(X),state(Y),X):-succ(X,Y).
+
 % evaluator  
 
 eeval(E+F,S):- !,eeval(E,EE),eeval(F,EF),sum_(EE,EF,S).
@@ -261,15 +331,16 @@ eeval(E,E).
 X in_ E:-eeval(E,EE),X in EE.
  
 
+% pipelines
+
+% make_pipe([E|Es]):-make_pipe(Es,P),
+
 % meta engines
 
-clause_(H,next_clause(H,state(1))).
 
-next_clause(H,State,(NewH:-Bs)):-
-  arg(1,State,I),succ(I,SI),
-  nth_clause(H,I,Ref),
-  clause(NewH,Bs,Ref),
-  nb_linkarg(1,State,SI).
+
+
+% UNFINISHED - MAYBE NOT IMPORTANT
   
 /*
 next_unfold(S):-
@@ -286,13 +357,12 @@ meta_step(H,B):-
   list_next(Hs,B),
   !.
 meta_step(H,H).
-*/
 
 add(0,X,X).
 add(s(X),Y,s(Z)):-add(X,Y,Z).
 
 goal(add(s(s(0)),s(s(0)),_R)).
-
+*/
 
 % tests
 
@@ -354,17 +424,19 @@ t24:-range_(0,10,A),range_(100,110,B),arith_sum(A,B,S),show(S).
 
 t25:-fact(5,S),show(S).
 
-odds(Xs) :-
-  lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
+t26:-nat_(N),chains_([succ,succ],N,N2),show(N2).
+
+t27:-fibo_(E),show(E).
+
+odds(Xs) :-lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 
 % lazy_findall leaves undead engine
-t26:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
-
+t28:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
 
 
 tests:-
   tell('tests.txt'),
-  do((between(1,26,I),atom_concat(t,I,T),listing(T),call(T),nl)),
+  do((between(1,28,I),atom_concat(t,I,T),listing(T),call(T),nl)),
   do((current_engine(E),writeln(E))),
   bm,
   told.
@@ -399,3 +471,4 @@ bm(K):-maplist(time,[bm1(K),bm2(K),bm3(K)],Ts),nl,writeln(times=Ts).
 
 bm:-bm(21).  
   
+ppp(X):-writeln(X).
