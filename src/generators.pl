@@ -1,4 +1,4 @@
-c:-['simple_streams.pl'].
+c:-['generators.pl'].
 
 :-ensure_loaded(arrays).
 
@@ -120,8 +120,6 @@ ask_generator(G,X):-arg(1,G,E),engine_next(E,X).
 
 % stream processors
 
-
-
 % generator for initial segment of length K of generator E 
 take(K,E,take_next(state(K,E))).
 
@@ -190,6 +188,15 @@ chain_(F,E,chain_next(F,E)).
 
 chains_([])-->[].
 chains_([F|Fs])-->chain_(F),chains_(Fs).
+
+
+mplex_(Fs,E,mplex_next(state(E,Fs))).
+
+mplex_next(state(E,Fs),Ys):-
+  ask_(E,X),
+  maplist(rcall(X),Ys,Fs).
+
+rcall(X,Y,F):-call(F,X,Y).
 
 fibo_pair(X-Y,Y-Z) :- Z is X+Y.
 
@@ -436,15 +443,19 @@ t28:-
   clause_(chains_(_,_,_),C),
   do((X in C,portray_clause(X))).
 
+t29:-pos_(E),chains_([succ,pred],E,R),show(R).
+
+t30:-pos_(E),mplex_([succ,pred],E,R),show(R).
+  
 odds(Xs) :-lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 
 % lazy_findall leaves undead engine
-t29:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
+t31:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
 
 
 tests:-
   tell('tests.txt'),
-  do((between(1,29,I),atom_concat(t,I,T),listing(T),call(T),nl)),
+  do((between(1,31,I),atom_concat(t,I,T),listing(T),call(T),nl)),
   do((current_engine(E),writeln(E))),
   bm,
   told.
