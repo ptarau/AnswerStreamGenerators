@@ -75,8 +75,12 @@ gen_nextval(F,State,Yield):-
 
 % stream from list or lazy_list   
 list_(Xs,gen_nextval(list_step,state(Xs))).
-
 list_step([X|Xs],Xs,X).
+
+% alternative, direct implementation
+%list_(Xs,list_next(state(Xs))).
+%list_next(S,X):-arg(1,S,[X|Xs]),nb_linkarg(1,S,Xs).
+
 
 % finite integer range generator
 range_(From,To,gen_next(range_step(To),state(From))).
@@ -298,8 +302,21 @@ conv_step(N-[],SN-Xs,X):-succ(N,SN),conv_pairs(SN,[X|Xs]).
 
 % data transformers
 
-gen2lazy(E,Xs):-lazy_findall(X,X in E,Xs).
+% can this be implemented directly, thus with no use of an engine?
+%gen2lazy(E,Xs):-lazy_findall(X,X in E,Xs).
 
+% YES!
+
+lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
+
+lazy_nats_next(X,SX,X):-succ(X,SX).
+  
+gen2lazy(E,Ls):-lazy_list(gen2lazy_forward,E,Ls).
+
+% E manages its state, so we just pass it on
+gen2lazy_forward(E,E,X):-ask_(E,X).
+
+% list_ also works on lazy lists!
 lazy2gen(Xs,E):-list_(Xs,E).
 
 % iso functors - TODO: test
@@ -321,13 +338,13 @@ iso_fun(F,From,To,A,B,C):-
 lazy_list_prod(Xs,Ys,Zs):-
   iso_fun(prod_,lazy2gen,gen2lazy,Xs,Ys,Zs).
 
-lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
+% bug: this loops
+% lazy_nats(Ns),maplist(succ,Ns,Ms).
 
-lazy_nats_next(X,SX,X):-succ(X,SX).
-  
-  
-%lazy_nats_next(state(X),state(Y),X):-succ(X,Y).
+maplist_(F,LazyXs,LazyYs):-
+  iso_fun(map_(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
 
+  
 % evaluator  
 
 eeval(E+F,S):- !,eeval(E,EE),eeval(F,EF),sum_(EE,EF,S).
@@ -341,6 +358,9 @@ eeval(E,E).
 :-op(800,xfx,(in_)).
 X in_ E:-eeval(E,EE),X in EE.
  
+ask__(E,X):-eeval(E,EE),ask_(EE,X).
+
+
 
 % pipelines
 
@@ -446,16 +466,26 @@ t28:-
 t29:-pos_(E),chains_([succ,pred],E,R),show(R).
 
 t30:-pos_(E),mplex_([succ,pred],E,R),show(R).
-  
+
+t31:-lazy_nats(Ls),list_(Ls,E),show(E).
+
+
+t32:-range_(1,10,N),iso_fun(maplist(succ),gen2lazy,lazy2gen,N,M),show(M).
+
+% while maplist loops, this iso functor based map does not
+t33:-lazy_nats(Ns),
+  maplist_(succ,Ns,Ms),
+  once(findnsols(10,I,member(I,Ms),Rs)),
+  writeln(Rs).
+
 odds(Xs) :-lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 
 % lazy_findall leaves undead engine
-t31:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
-
+t34:-odds(Xs),list_(Xs,L),nat_(N),prod_(L,N,P),show(P).
 
 tests:-
   tell('tests.txt'),
-  do((between(1,31,I),atom_concat(t,I,T),listing(T),call(T),nl)),
+  do((between(1,34,I),atom_concat(t,I,T),listing(T),call(T),nl)),
   do((current_engine(E),writeln(E))),
   bm,
   told.
