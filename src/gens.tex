@@ -20,9 +20,9 @@
 \maketitle
 
 \begin{abstract}
-We describe a unified interface to algorithms producing finite or infinite sequences, stateful computations, I/O operations and answers of first class Prolog engines. Our interface exposes them to the application programmer either as lazy lists or through a generic sequence manipulation API.
+Lazy stream generators provide a unified interface to, stateful computations, I/O operations as well as algorithms producing finite or infinite sequences and answers of first class Prolog engines. We expose them to the application programmer either as lazy lists or through an abstract sequence manipulation API.
 
-On top of our unified interface, we define an algebra of generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms and supports moving between isomorphic sequence representations.
+ We define an algebra of stream generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms and supports moving between isomorphic sequence representations.
 
 As a special instance, we introduce answer stream generators that 
 encapsulate the work of coroutining logic engines with support 
@@ -33,9 +33,11 @@ for expendable or reusable answer streams.
 \section{Introduction}
 
 Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. The goal of this paper is dual-purpose in this sense: we encapsulate pragmatic language extensions using
-state transformers, lazy lists and first-class logic engines \cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER,bp2011},
+state transformers, lazy lists and first-class logic engines 
+%\cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER,bp2011},
+\cite{tarau:cl2000,bp2011},
 into a set of operations organized compositionally in the form of {\em 
-generators}.
+stream generators}.
 Our generators are similar to Python's {\em yield} mechanism \cite{} and 
 they share features with coroutining constructs now present in a several other widely used programming languages.
 
@@ -81,16 +83,35 @@ generators and lazy lists, we offer a choice between
 abstract sequence operations and the concrete list view familiar to Prolog users.
 
 
-\section{The Generator Interface}
+
+Contributions of this paper:
+\BI
+\I a simple and clean approach for setting up lazy streams
+\I a lazy list representation of lazy streams to naturally use them as Prolog lists
+\I a library of lazy stream sources, transformers, combinators and sinks
+  (or two libraries if we are counting the lazy\_lists library)
+\EI
+
+\section{Overview}
+
+{\Large
+     Show small examples of the use of lazy streams to give an idea of their expressive power and how neat the code looks
+ }
+     
+     
+\section{Implementation}
+     
+\subsection{The Stream Generator Interface}
 
 {\Large - constructors based on declarative algorithms, state transformers, I/O operations, etc.}
 
-\section{Generators as Simple State Transformers}
+\subsection{Generators as Simple State Transformers}
 
 {\Large add here nat, pos etc}
 
+\section{Answer Stream Generators}
 
-\section{SWI Prolog's engine implementation}
+\subsection{SWI Prolog's engine implementation}
 
 An engine can be seen as a Prolog virtual machine that has its own stacks and machine state. Unlike normal SWI-Prolog threads \cite{swi,swi_threads} though, they are not associated with an operating system thread. Instead, you ask an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and cause it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal.
 
@@ -98,7 +119,7 @@ Implementing the engine API does not assume that a Prolog system supports multi-
 
 As Prolog virtual machines, engines have (obviously!) an internal state. Thus interacting with them requires a concise and expressive, but ultimately procedural API. This is not very different from what working with attributed variables, instrumental to adding constraint solvers, requires.
 
-\section{The Answer Stream Generator API}
+\subsection{The Answer Stream Generator API}
 
 We design Answer Stream Generators as a wrapper around the SWI-Prolog engine implementation.
 We also keep the goals and answer templates that started the engine to make them reusable. At the same time this external wrapper ensures that engines stay garbage collectable on termination.
@@ -154,7 +175,7 @@ is_done_generator(engine(done,_,_)).
 show_generator(engine(E,X,G)):-writeln(X:G=E).
 \end{codeh}
 
-\section{The AND-stream / OR-stream Duality}
+\subsection{The AND-stream / OR-stream Duality}
 
 We call {\em AND-stream / OR-stream duality} the
 ability to generate answer streams via backtracking (OR-streams) or
@@ -273,8 +294,18 @@ neg(E):-new_generator_(_,generator_loop(pred,-1),E).
 pred(SX,X):-succ(X,SX).
 \end{code}
 
+\section{Lazy List View}
 
-\section{The Operational Equivalence between Answer Stream Generators and Lazy Lists}
+   Explain that we can use lazy lists like Prolog lists:
+   \BI
+   \I
+    show examples of use
+   \I show how the representation works
+   \I show how we can convert lazy streams to lazy lists (and back), i,e., the two representations are isomorphic
+   \I explain the problem with eager maplist, show how we can transport a lazy maplist from streams and derive a specialized version
+   \EI
+   
+\subsection{The Operational Equivalence between Answer Stream Generators and Lazy Lists}
 
 One can turn lists into generators and (finite) generators into lists quite easily.
 \begin{code}
@@ -581,21 +612,6 @@ true.
 
 \begin{code}
 \end{code}
-
-\subsubsection{Deep Cloning ???}
-
-As generators are by default single-use, given that we store a goal and its answer template together with the engine activating it (assuming that the code is free of side-effects), it makes sense to define a deep cloning operation that creates a fresh equivalent engine from possible nested engines that may have ``spent their fuel''.
-Thus, besides  sum and product  the cloning algorithm will also need to support
-linear-logic inspired ``{\tt !}'' operator. Note that sequences represented as lists that being immutable do not require copying.
-\begin{code}
-
-deep_clone(engine(_,X,G),engine(CE,X,G)):-engine_create(X,G,CE).
-deep_clone(E+F,CE+CF):-deep_clone(E,CE),deep_clone(F,CF).
-deep_clone(E*F,CE*CF):-deep_clone(E,CE),deep_clone(F,CF).
-deep_clone(!E,CE):-deep_clone(E,CE).
-deep_clone([X|Xs],[X|Xs]).
-\end{code}
-
 
 \section{Lazy Functional Programming Constructs}
 

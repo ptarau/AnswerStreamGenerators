@@ -1,16 +1,30 @@
-% dynamic arrays in Prolog - extyend and shrink as needed
+:-module(dynamic_arrays,[
+  new_array/2,
+  new_array/1,
+  push_to/2,
+  pop_from/2,
+  array_get/3,
+  array_set/3,
+  array_length/2,
+  array_size/2
+]).
 
-% for use as a stack
+% dynamic arrays in Prolog - extend and shrink as needed
+
+% for use as a stack, initially fill with unbound variables, Top=0
 new_array(InitSize,'a'(0,A)):-InitSize>0,functor(A,'x',InitSize).
 
-% for use as an array, initialized with vars marking empty slots
+% for use as an array, initialized with variables marking empty slots
 new_full_array(InitSize,'a'(Top,A)):-InitSize>0,Top is InitSize-1,functor(A,'x',InitSize).
 
+% small array of default size 1
 new_array(A):-new_array(1,A).
 
+% pushes to the stack
 push_to(A,X):-push_to_if_it_fits(A,X),!.
 push_to(A,X):-resize_up(A),push_to_if_it_fits(A,X).
 
+% pops last e;ement pushed
 pop_from(A,X):-pop_from_and_maybe_trim(A,X).
 
 % fails if out of range
@@ -23,6 +37,7 @@ array_get(A,I,X):- % var I, for use as an interator, via nondet arg/3
 array_set(A,I,X):-integer(I),
   arg(1,A,Top),I=<Top,succ(I,I1),arg(2,A,T),nb_setarg(I1,T,X).
 
+% size of the container array, not number of elements
 array_length(A,Size):-arg(2,A,T),functor(T,_,Size).
 
 % how namy elements it has up to Top
