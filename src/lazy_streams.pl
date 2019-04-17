@@ -9,8 +9,8 @@ Their operations have  isomorphic lazy list counterparts, the main difference be
   ask_/2, % like ask, but working in a stream expression
   stop/1, % stop/1 marks a generator as done so its resources can be freed
   is_done/1, % true if generator is done,
-  op(800,xfx,(in)),
-  op(800,xfx,(in_)),
+  op(800,xfx,(in)), % exports in/2
+  op(800,xfx,(in_)), % exports in_/2
   in/2, % like member/2, for lists - test or generates
   in_/2, % like in/2, but working on a stream expression
   show/1, % prints a list representation of an initial segment of a stream
@@ -23,11 +23,11 @@ Their operations have  isomorphic lazy list counterparts, the main difference be
   pos/1, % stream of positive natural numbers starting at 1
   neg/1, % stream of negative integers starting at -1
   list/2, % creates a stream from a finite or infinite (lazy) list
-  cycle/2,
-  clause_stream/2,
-  take/3,
-  drop/3,
-  slice/4,
+  cycle/2, % creates infinite cyclic list from finite list
+  clause_stream/2, % generator for all clauses matching a given head
+  take/3, % generator for finite initial segment of given length
+  drop/3, % skips initial segment of given length
+  slice/4, % extracts finite slice between bounds, right bound excluded
   range/3, % generator for integers betwen two numbers, larger excluded
   prod/3, % generator for direct product of two finite or infinite streams
   cantor_pair/3, % Cantor's pairing function
@@ -37,30 +37,30 @@ Their operations have  isomorphic lazy list counterparts, the main difference be
   conv/1, % generator for N * N self-convolution
   map/3, % generator obtained by applying a predicate to a stream
   map/4, % % generator obtained by applying a predicate to two streams
-  zipper_of/3,
-  reduce/4,
+  zipper_of/3, % forms pairs from corresponding elements of two streams
+  reduce/4, % reduces/folds a stream with given predicate of arity 2
   arith_sum/3, % adds 2 streams element by element
   arith_mult/3, % multiplies 2 streams element by element
-  chain/3,
-  chains/3,
-  mplex/3,
+  chain/3, % generator derived from other by applying a transformer of arity 2
+  chains/3, % generator piping a stream through a list of transformers of arity 2
+  mplex/3, % multiplexes a stream to by applying to its output a list of generators
   lazy_nats/1, % infinite lazy list of natural numbers starting at 0
   lazy_maplist/3, % maplist working also on an infinite lazy list
   lazy_maplist/4, % maplist working also on two infinite lazy lists
-  gen2lazy/2,
-  lazy2gen/2,
+  gen2lazy/2, % turns a generator into an isomorphic lazy list
+  lazy2gen/2, % turns a lazy list into and isomorphic generator
   iso_fun/5, % functor transporting predicates of arity 2 between isomorphic domains
   iso_fun/6, % functor transporting predicates of arity 3 between isomorphic domains
   do/1, % runs a goal exclusively for its side effects
-  fact/2,
-  fibo/1
+  fact/2, % generator for infinite stream of factorials
+  fibo/1 % generator for infinite stream of Fibonacci numbers
 ]).
 
 :-use_module(dynamic_arrays).
 :-use_module(library(lazy_lists)).
 :-use_module(library(solution_sequences)).
 
-% the Generator Generator protocol
+% the Generator Generator protocol :
 % a generator step is a call to a closure that moves its state forward
 % defining a generator simply stores it as a Prolog fact
 
@@ -225,7 +225,7 @@ map_next(F,E1,E2,Z):-ask(E1,X),ask(E2,Y),call(F,X,Y,Z).
 reduce(F,InitVal,E,reduce_next(state(InitVal),F,E)).
 
 % bactrack over G for its side-effects only  
-do(G):-G,fail;true.
+do(G):-call(G),fail;true.
 
 % reduces state S while E provides "next" elements
 reduce_next(S,F,E,R):-
@@ -257,7 +257,7 @@ chain_next(F,E,Y):-ask(E,X),call(F,X,Y).
 % pipes  elements of a stream through one transformer
 chain(F,E,chain_next(F,E)).
 
-% pipes strem through a list of transformers
+% pipes stream through a list of transformers
 chains([])-->[].
 chains([F|Fs])-->chain(F),chains(Fs).
 
@@ -271,9 +271,9 @@ mplex_next(state(E,Fs),Ys):-
 revcall(X,Y,F):-call(F,X,Y).
 
 % generates a stream of clauses matching a given goal
-clause_stream(H,gen_nextval(clause_streamstep(H),state(1))).
+clause_stream(H,gen_nextval(clause_stream_step(H),state(1))).
 
-clause_streamstep(H,I,SI,(NewH:-Bs)):-
+clause_stream_step(H,I,SI,(NewH:-Bs)):-
   succ(I,SI),
   nth_clause(H,I,Ref),
   clause(NewH,Bs,Ref).
@@ -374,16 +374,19 @@ conv_step(N-[],SN-Xs,X):-succ(N,SN),conv_pairs(SN,[X|Xs]).
 
 % YES!
 
+% infinite lazy list of natural numbers
 lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
 
 lazy_nats_next(X,SX,X):-succ(X,SX).
   
+% turns a generator into an isomorphic lazy list  
 gen2lazy(E,Ls):-lazy_list(gen2lazy_forward,E,Ls).
 
 % E manages its state, so we just pass it on
 gen2lazy_forward(E,E,X):-ask(E,X).
 
-% list also works on lazy lists!
+% turns a lazy list into and isomorphic generator
+% note that list also works on lazy lists!
 lazy2gen(Xs,E):-list(Xs,E).
 
 % iso functors - TODO: test
