@@ -10,7 +10,7 @@
 ]).
 
 % dynamic arrays in Prolog - extend and shrink as needed
-
+%
 % for use as a stack, initially fill with unbound variables, Top=0
 new_array(InitSize,'a'(0,A)):-InitSize>0,functor(A,'x',InitSize).
 

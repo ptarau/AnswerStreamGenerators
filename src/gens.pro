@@ -159,13 +159,6 @@ eeval([X|Xs],E):-list2generator([X|Xs],E).
 X in_ E:-eeval(E,EE),X in EE.     
 
 
-
-deep_clone(engine(_,X,G),engine(CE,X,G)):-engine_create(X,G,CE).
-deep_clone(E+F,CE+CF):-deep_clone(E,CE),deep_clone(F,CF).
-deep_clone(E*F,CE*CF):-deep_clone(E,CE),deep_clone(F,CF).
-deep_clone(!E,CE):-deep_clone(E,CE).
-deep_clone([X|Xs],[X|Xs]).
-
 map_generator(F,E,NewE):-new_generator(Y,map_goal(F,E,Y),NewE).
 
 map_goal(F,E,Y):-X in E,call(F,X,Y).

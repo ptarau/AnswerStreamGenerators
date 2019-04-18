@@ -1,17 +1,17 @@
-/*
+%/*
 :-module(test_lazy_streams,[
   mytests/0,
-  bm/0,
-  ll/1,
-  c/0]
+  bm/0
+  ]
 ).
-*/
+%*/
 
-:-use_module(lazy_streams).
+:-use_module('../prolog/lazy_streams.pl').
 
 c:-make.
 
-% TESTS
+%! TESTS AND BENCHMARKS: 
+% run with: ?-mytests. and ?-bm.
 
 t1:-nat(N),list([10,20,30],M),map(plus,N,M,R),show(R).
  

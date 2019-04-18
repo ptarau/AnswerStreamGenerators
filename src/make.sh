@@ -1,7 +1,7 @@
 export PFILE=$1
 
 # make code extractor
-gcc -O -o toc ../src/toc.c
+gcc -O -o ../bin/toc ../src/toc.c
 
 # make latex
 pushd .

@@ -1,7 +1,13 @@
-/*
-Lazy Stream Generators of finite or infinite sequences and their operations.
+/**
+<module> Lazy Stream Generators of finite or infinite sequences and their operations.
 
-Their operations have  isomorphic lazy list counterparts, the main difference being the use of a generic sequence manipulation API instead the use of a concrete list syntax in the case of lazy list. This isomorphism supports delegating operations between lazy lists and lazy streams.
+Lazy stream generators provide a unified interface to, stateful computations, I/O operations as well as algorithms producing finite or infinite sequences and answers of first class Prolog engines. We expose them to the application programmer either as lazy lists or through an abstract sequence manipulation API.
+
+ We define an algebra of stream generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms and supports moving between isomorphic sequence representations.
+
+ Lazy Stream Generators operations have  isomorphic lazy list counterparts, the main difference being the use of a generic sequence manipulation API instead the use of a concrete list syntax in the case of lazy list. This isomorphism supports delegating operations between lazy lists and lazy streams.
+ 
+As a special instance, we introduce answer stream generators that  encapsulate the work of coroutining logic engines with support for expendable or reusable answer streams.
 */
 
 :- module(lazy_streams,[
@@ -62,45 +68,56 @@ Their operations have  isomorphic lazy list counterparts, the main difference be
 :-use_module(library(lazy_lists)).
 :-use_module(library(solution_sequences)).
 
-% the Generator Generator protocol :
-% a generator step is a call to a closure that moves its state forward
-% defining a generator simply stores it as a Prolog fact
-
-% ask/2 queries a generator if it is not done
-% marks generator as "done" after its first failure
-% this ensures it can be garbage collected
-% by making its handle unreacheable
-% extracts X by calling state transformer E
+%! ask(+Generator, -NextValue) 
+%
+% the Generator Generator protocol works as follows:
+% A generator step is a call to a closure that moves its state forward
+% defining a generator simply stores it as a Prolog fact.
+%
+% The predicate ask/2 queries a generator if it is not done and
+% it marks a generator as "done" after its first failure.
+% This ensures it can be garbage collected
+% by making its handle unreacheable.
+%
+% ask/2 extracts X by calling state transformer E.
 ask(E,_):-is_done(E),!,fail.
 ask(E,R):-call(E,X),!,R=X.
 ask(E,_):-stop(E),fail.
 
-% stop/1 marks a generator as done
-% future calls to it will fail
+%! stop/1 marks a generator as done.
+%  Future calls to it will fail
 stop(E):-nb_linkarg(1,E,done).
 
+% is_done(+Generator)
+%
 % checks if a generator is done
 is_done(E):-arg(1,E,done).
 
 :-op(800,xfx,(in)).
 
-% in/2 backtracks over progressively advancing states
+%! in(-Value, +Generator)
+%
+% in/2 backtracks over progressively advancing states.
+% in/2 is an xfx infix operator of priority 800
 
 X in E:-ask(E,A),select_from(E,A,X).
 
 select_from(_,A,A).
 select_from(E,_,X):-X in E.
 
-% collects results after K steps and prints them out
+%! show(+NumberOfItems, +Generator)
+% show/2 collects results after K steps and prints them out
 show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
 
-% collects and prints 12 results
+%! show(+NumberOfItems, +Generator)
+% collects and prints 12 results of Generator
 show(Stream):-show(12,Stream).
 
 
 % CONSTRUCTORS of simple generators
 
-% constant infinite stream returning C
+%! const(+Constant, -Generator)
+% Builds a constant infinite stream returning its first argument.
 % the "next" step, call(=(C),X) will simply unify X and C
 const(C,=(C)).
 
@@ -159,9 +176,9 @@ range_step(To,X,SX):-X<To,succ(X,SX).
 % transforms a finite generator into an infinite cycle
 % uses a circular list, unified with its own tail
 cycle(E,CycleStream):-
-  findall(X,X in E,Xs),
-  append(Xs,Tail,Tail), % creates circular infinite list
-  list(Tail,CycleStream).
+  findall(X,X in E,Xs,Xs),
+  %append(Xs,Tail,Tail), % creates circular infinite list
+  list(Xs,CycleStream).
 
 
 % engine-based generators
@@ -401,7 +418,7 @@ iso_fun(F,From,To,A,B):-
   call(To,Y,B).
  
 % transports F(+A,+B,-C) 
-iso_fun(F,From,To,A,B,C):- writeln(iso_fun(F,From,To,A,B,C)),
+iso_fun(F,From,To,A,B,C):- % writeln(iso_fun(F,From,To,A,B,C)),
   call(From,A,X),
   call(From,B,Y),
   call(F,X,Y,Z),
@@ -426,7 +443,7 @@ lazy_maplist(F,LazyXs,LazyYs):-
   iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
 
 lazy_maplist(F,LazyXs,LazyYs,LazyZs):-
-iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs,LazyZs).  
+  iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs,LazyZs).  
 
 % uses lazy lists to split a stream into two
 % infelicity: second stream shifted by one position ...
