@@ -1,9 +1,11 @@
+/*
 :-module(test_lazy_streams,[
   mytests/0,
   bm/0,
   ll/1,
   c/0]
 ).
+*/
 
 :-use_module(lazy_streams).
 
@@ -96,12 +98,20 @@ t34:-lazy_nats(Ns),
   lazy_maplist(plus,Ns,Ns,Ms),
   once(findnsols(10,I,member(I,Ms),Rs)),
   writeln(Rs).
-  
-  
+
+t35:-nat(E),
+     gen2lazy(E,Xs),
+     gen2lazy(E,Ys),
+     lazy2gen(Ys,B),
+     lazy2gen(Xs,A),
+     show(A),show(B),show(E).
+
+t36:-nat(E),split(E,E1,E2),show(E1),show(E2).
+
 odds(Xs) :-lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 
 % lazy_findall leaves undead engine
-t35:-odds(Xs),list(Xs,L),nat(N),prod(L,N,P),show(P).
+t37:-odds(Xs),list(Xs,L),nat(N),prod(L,N,P),show(P).
 
 mytests:-
   tell('tests.txt'),
@@ -114,12 +124,12 @@ mytests:-
 run_tests:-
   member(T,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,
   t17,t18,t19,t20,t21,t22,t23,t24,t25,t26,t27,t28,t29,t30,
-  t31,t32,t33,t34,t35]),
+  t31,t32,t33,t34,t35,t36,t37]),
   nl,
   listing(T),
   call(T),
   fail
-; bm,
+; %bm,
   true.
   
 time(G,T):-get_time(T1),once(G),get_time(T2),T is T2-T1. 

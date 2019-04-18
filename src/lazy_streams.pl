@@ -44,6 +44,7 @@ Their operations have  isomorphic lazy list counterparts, the main difference be
   chain/3, % generator derived from other by applying a transformer of arity 2
   chains/3, % generator piping a stream through a list of transformers of arity 2
   mplex/3, % multiplexes a stream to by applying to its output a list of generators
+  split/3,
   lazy_nats/1, % infinite lazy list of natural numbers starting at 0
   lazy_maplist/3, % maplist working also on an infinite lazy list
   lazy_maplist/4, % maplist working also on two infinite lazy lists
@@ -51,6 +52,7 @@ Their operations have  isomorphic lazy list counterparts, the main difference be
   lazy2gen/2, % turns a lazy list into and isomorphic generator
   iso_fun/5, % functor transporting predicates of arity 2 between isomorphic domains
   iso_fun/6, % functor transporting predicates of arity 3 between isomorphic domains
+  iso_fun_/6, % functor transporting predicates of arity 3 between isomorphic domains on ar in 2 out
   do/1, % runs a goal exclusively for its side effects
   fact/2, % generator for infinite stream of factorials
   fibo/1 % generator for infinite stream of Fibonacci numbers
@@ -108,9 +110,6 @@ gen_next(F,State,X):-
   call(F,X,Y),
   nb_linkarg(1,State,Y).
 
-% TODO: explain why nb_linkarg is ok, or 
-% prove with couter example that it is not
-
 % generator step for natural numbers
 nat_next(S,X):-gen_next(succ,S,X).
 
@@ -131,6 +130,10 @@ gen_nextval(F,State,Yield):-
   arg(1,State,X1),
   call(F,X1,X2, Yield),
   nb_linkarg(1,State,X2).
+
+  % TODO: explain why/when nb_linkarg is ok, or 
+% prove with counter examples that it is not
+% convolution seems sensitive to it
 
 % like gen_nextval, but copying X2
 gen_safe_nextval(F,State,Yield):-
@@ -397,13 +400,20 @@ iso_fun(F,From,To,A,B):-
   call(F,X,Y),
   call(To,Y,B).
  
-% transports F(A,B,C) 
-iso_fun(F,From,To,A,B,C):-
+% transports F(+A,+B,-C) 
+iso_fun(F,From,To,A,B,C):- writeln(iso_fun(F,From,To,A,B,C)),
   call(From,A,X),
   call(From,B,Y),
   call(F,X,Y,Z),
   call(To,Z,C).
 
+%  transports F(+A,-B,-C) 
+iso_fun_(F,From,To,A,B,C):- 
+  call(From,A,X),
+  call(F,X, Y,Z), % X in, Y,Z out 
+  call(To,Y,B),
+  call(To,Z,C).
+  
 % lazy lists borrow product from generators 
 lazy_list_prod(Xs,Ys,Zs):-
   iso_fun(prod,lazy2gen,gen2lazy,Xs,Ys,Zs).
@@ -417,6 +427,12 @@ lazy_maplist(F,LazyXs,LazyYs):-
 
 lazy_maplist(F,LazyXs,LazyYs,LazyZs):-
 iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs,LazyZs).  
+
+% uses lazy lists to split a stream into two
+% infelicity: second stream shifted by one position ...
+split(E,E1,E2):-iso_fun_(lazy_dup,gen2lazy,lazy2gen,E,E1,E2).
+  
+lazy_dup(Xs,Xs,Xs).
 
 % evaluator  
 

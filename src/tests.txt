@@ -67,7 +67,7 @@ t9 :-
     list([a, b, c], B),
     prod(A, B, P),
     take(20, P, T),
-    do((in(X, T), writeln(X))).
+    do((X in T, writeln(X))).
 
 0-a
 0-b
@@ -150,7 +150,7 @@ t16 :-
 
 t17 :-
     eng(X, member(X, [1, 2, 3]), S),
-    (   in(X, S),
+    (   X in S,
         writeln(X),
         fail
     ;   is_done(S),
@@ -237,7 +237,7 @@ t27 :-
 
 t28 :-
     clause_stream(chains(_, _, _), C),
-    do((in(X, C), portray_clause(X))).
+    do((X in C, portray_clause(X))).
 
 chains([], A, A).
 chains([A|C], B, E) :-
@@ -290,9 +290,33 @@ t34 :-
     ),
     writeln(Rs).
 
+iso_fun(map(plus),lazy2gen,gen2lazy,_18000,_18000,_18028)
 [0,2,4,6,8,10,12,14,16,18]
 
 t35 :-
+    nat(E),
+    gen2lazy(E, Xs),
+    gen2lazy(E, Ys),
+    lazy2gen(Ys, B),
+    lazy2gen(Xs, A),
+    show(A),
+    show(B),
+    show(E).
+
+[0,1,2,3,4,5,6,7,8,9,10,11]
+[1,2,3,4,5,6,7,8,9,10,11,12]
+[2,3,4,5,6,7,8,9,10,11,12,13]
+
+t36 :-
+    nat(E),
+    split(E, E1, E2),
+    show(E1),
+    show(E2).
+
+[0,1,2,3,4,5,6,7,8,9,10,11]
+[1,2,3,4,5,6,7,8,9,10,11,12]
+
+t37 :-
     odds(Xs),
     list(Xs, L),
     nat(N),
@@ -300,48 +324,4 @@ t35 :-
     show(P).
 
 [1-0,1-1,3-0,1-2,3-1,5-0,1-3,3-2,5-1,7-0,1-4,3-3]
-
-bm1(K) :-
-    nl,
-    ll(bm1),
-    N is 2^K,
-    writeln(with_lazy_lists:N),
-    lazy_findall(I, between(0, N, I), Is),
-    lazy_maplist(succ, Is, Js),
-    last(Js, X),
-    writeln([X]).
-
-with_lazy_lists:2097152
-[2097153]
-
-bm2(K) :-
-    nl,
-    ll(bm2),
-    N is 2^K,
-    N1 is N+1,
-    writeln(with_engine_based_generators:N),
-    eng(I, between(0, N, I), R),
-    map(succ, R, SR),
-    slice(N, N1, SR, S),
-    show(S).
-
-with_engine_based_generators:2097152
-[2097153]
-
-bm3(K) :-
-    nl,
-    ll(bm3),
-    N is 2^K,
-    N1 is N+1,
-    writeln(with_simple_generators:N),
-    range(0, N1, R),
-    map(succ, R, SR),
-    slice(N, N1, SR, S),
-    show(S).
-
-with_simple_generators:2097152
-[2097153]
-[196- -167,197- -166,198- -165,199- -164,200- -163,201- -162,202- -161,203- -160,204- -159,205- -158,206- -157,207- -156,208- -155,209- -154,210- -153,211- -152,212- -151,213- -150,214- -149,215- -148,216- -147,217- -146,218- -145,219- -144,220- -143,221- -142,222- -141,223- -140,224- -139,225- -138,226- -137,227- -136,228- -135,229- -134,230- -133,231- -132,232- -131,233- -130,234- -129,235- -128,236- -127,237- -126,238- -125,239- -124,240- -123,241- -122,242- -121,243- -120,244- -119,245- -118]
-
-times=[19.47943377494812,7.566975116729736,3.52510404586792,0.8986799716949463]
-<engine>(3,0x7fbbba727a00)
+<engine>(3,0x7fe7b3c08720)
