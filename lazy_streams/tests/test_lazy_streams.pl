@@ -1,10 +1,10 @@
-%/*
+/*
 :-module(test_lazy_streams,[
   mytests/0,
   bm/0
   ]
 ).
-%*/
+*/
 
 :-use_module('../prolog/lazy_streams.pl').
 
@@ -106,32 +106,30 @@ t35:-nat(E),
      lazy2gen(Xs,A),
      show(A),show(B),show(E).
 
-t36:-nat(E),split(E,E1,E2),show(E1),show(E2).
+t36:-nat(E),split(E,E1,E2),show(E1),show(E2),show(E).
+
+t37:-nat(E),split(E,E1,E2),ask(E,A),ask(E1,X),ask(E2,Y),writeln(A+X+Y),show(E).
+
+t38:-list([a,b,c],L),nat(N),cat([L,N],R),show(R).
 
 odds(Xs) :-lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 
 % lazy_findall leaves undead engine
-t37:-odds(Xs),list(Xs,L),nat(N),prod(L,N,P),show(P).
+t39:-odds(Xs),list(Xs,L),nat(N),prod(L,N,P),show(P).
 
-mytests:-
-  tell('tests.txt'),
-  %do((between(1,35,I),atom_concat(t,I,T),ll(T),call(T),nl)),
-  run_tests,
-  do((current_engine(E),writeln(E))),
-  %bm,
-  told.
 
 run_tests:-
   member(T,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,
   t17,t18,t19,t20,t21,t22,t23,t24,t25,t26,t27,t28,t29,t30,
-  t31,t32,t33,t34,t35,t36,t37]),
+  t31,t32,t33,t34,t35,t36,t37,t38,t39]),
   nl,
   listing(T),
   call(T),
   fail
 ; %bm,
   true.
-  
+ 
+ 
 time(G,T):-get_time(T1),once(G),get_time(T2),T is T2-T1. 
  
 ll(X) :- listing(X).
@@ -167,10 +165,15 @@ bm4(K):-
   drop(Lim,Prod,More),
   show(50,More).
 
- 
+ppp(X):-writeln(X). 
   
 bm(K):-maplist(time,[bm1(K),bm2(K),bm3(K),bm4(16)],Ts),nl,writeln(times=Ts).
 
 bm:-bm(21).  
 
-ppp(X):-writeln(X).
+go:-
+  tell('tests.txt'),
+  run_tests,
+  do((current_engine(E),writeln(E))),
+  %bm,
+  told.
