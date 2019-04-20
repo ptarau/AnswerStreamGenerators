@@ -109,6 +109,45 @@ t11 :-
 [a-0,a-1,b-0,a-2,b-1,c-0,a-3,b-2,c-1,a-4,b-3,c-2,a-5,b-4,c-3,a-6,b-5,c-4,a-7,b-6]
 
 t12 :-
+    neg(A),
+    pos(B),
+    prod_(A, B, P),
+    take(30, P, T),
+    show(30, T),
+    stop(P).
+
+[-1-1,-2-1,-2-2,-1-2,-3-2,-3-1,-3-3,-2-3,-1-3,-4-3,-4-2,-4-1,-4-4,-3-4,-2-4,-1-4,-5-4,-5-3,-5-2,-5-1,-5-5,-4-5,-3-5,-2-5,-1-5,-6-5,-6-4,-6-3,-6-2,-6-1]
+
+t13 :-
+    nat(A),
+    list([a, b, c], B),
+    prod_(A, B, P),
+    show(20, P),
+    stop(P).
+
+[0-a,1-a,1-b,0-b,2-b,2-a,2-c,1-c,0-c,3-c,3-b,3-a,4-c,4-b,4-a,5-c,5-b,5-a,6-c,6-b]
+
+t14 :-
+    range(0, 5, A),
+    list([a, b, c], B),
+    prod_(A, B, P),
+    take(20, P, T),
+    show(30, T),
+    stop(P).
+
+[0-a,1-a,1-b,0-b,2-b,2-a,2-c,1-c,0-c,3-c,3-b,3-a,4-c,4-b,4-a]
+
+t15 :-
+    nat(A),
+    list([a, b, c], B),
+    prod_(B, A, P),
+    take(20, P, T),
+    show(30, T),
+    stop(P).
+
+[a-0,b-0,b-1,a-1,c-1,c-0,c-2,b-2,a-2,c-3,b-3,a-3,c-4,b-4,a-4,c-5,b-5,a-5,c-6,b-6]
+
+t16 :-
     const(10, C),
     nat(N),
     map(plus, C, N, R),
@@ -116,7 +155,7 @@ t12 :-
 
 [10,11,12,13,14,15,16,17,18,19,20,21]
 
-t13 :-
+t17 :-
     const(10, C),
     nat(N),
     prod(C, N, P),
@@ -124,7 +163,7 @@ t13 :-
 
 [10-0,10-1,10-0,10-2,10-1,10-0,10-3,10-2,10-1,10-0,10-4,10-3]
 
-t14 :-
+t18 :-
     eng(_X, fail, E),
     list([a, b], L),
     sum(E, L, S),
@@ -132,7 +171,7 @@ t14 :-
 
 [a,b]
 
-t15 :-
+t19 :-
     eng(X, member(X, [1, 2, 3]), E),
     list([a, b], L),
     sum(E, L, S),
@@ -140,7 +179,7 @@ t15 :-
 
 [1,a,2,b,3]
 
-t16 :-
+t20 :-
     eng(X, member(X, [1, 2, 3]), E),
     list([a, b], L),
     prod(E, L, S),
@@ -148,7 +187,7 @@ t16 :-
 
 [1-a,1-b,2-a,2-b,3-a,3-b]
 
-t17 :-
+t21 :-
     eng(X, member(X, [1, 2, 3]), S),
     (   X in S,
         writeln(X),
@@ -169,14 +208,14 @@ engine_next(done)
 3-a
 3-b
 
-t19 :-
+t23 :-
     range(1, 5, R),
     cycle(R, C),
     show(20, C).
 
 [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
 
-t20 :-
+t24 :-
     range(1, 4, R),
     cycle(R, C),
     list([a, b, c, d, e, f], L),
@@ -185,7 +224,7 @@ t20 :-
 
 [1-a,2-b,3-c,1-d,2-e,3-f]
 
-t21 :-
+t25 :-
     eng(X, member(X, [a, b, c]), G),
     range(1, 6, R),
     prod(G, R, P),
@@ -193,7 +232,7 @@ t21 :-
 
 [a-1,a-2,b-1,a-3,b-2,c-1,a-4,b-3,c-2,a-5,b-4,c-3]
 
-t22 :-
+t26 :-
     ceng(X, member(X, [a, b, c]), G),
     ceng_clone(G, CG),
     prod(G, CG, P),
@@ -201,14 +240,14 @@ t22 :-
 
 [a-a,a-b,b-a,a-c,b-b,c-a,b-c,c-b]
 
-t23 :-
+t27 :-
     ceng(X, member(X, [a, b, c]), G),
     cycle(G, C),
     show(C).
 
 [a,b,c,a,b,c,a,b,c,a,b,c]
 
-t24 :-
+t28 :-
     range(0, 10, A),
     range(100, 110, B),
     arith_sum(A, B, S),
@@ -216,26 +255,26 @@ t24 :-
 
 [100,102,104,106,108,110,112,114,116,118]
 
-t25 :-
+t29 :-
     fact(5, S),
     show(S).
 
 [120]
 
-t26 :-
+t30 :-
     nat(N),
     chains([succ, succ], N, N2),
     show(N2).
 
 [2,3,4,5,6,7,8,9,10,11,12,13]
 
-t27 :-
+t31 :-
     fibo(E),
     show(E).
 
 [1,1,2,3,5,8,13,21,34,55,89,144]
 
-t28 :-
+t32 :-
     clause_stream(chains(_, _, _), C),
     do((X in C, portray_clause(X))).
 
@@ -244,35 +283,35 @@ chains([A|C], B, E) :-
     chain(A, B, D),
     chains(C, D, E).
 
-t29 :-
+t33 :-
     pos(E),
     chains([succ, pred], E, R),
     show(R).
 
 [1,2,3,4,5,6,7,8,9,10,11,12]
 
-t30 :-
+t34 :-
     pos(E),
     mplex([succ, pred], E, R),
     show(R).
 
 [[2,0],[3,1],[4,2],[5,3],[6,4],[7,5],[8,6],[9,7],[10,8],[11,9],[12,10],[13,11]]
 
-t31 :-
+t35 :-
     lazy_nats(Ls),
     list(Ls, E),
     show(E).
 
 [0,1,2,3,4,5,6,7,8,9,10,11]
 
-t32 :-
+t36 :-
     range(1, 10, N),
     iso_fun(lazy_maplist(succ), gen2lazy, lazy2gen, N, M),
     show(M).
 
 [2,3,4,5,6,7,8,9,10]
 
-t33 :-
+t37 :-
     lazy_nats(Ns),
     lazy_maplist(succ, Ns, Ms),
     (   findnsols(10, I, member(I, Ms), Rs)
@@ -282,7 +321,7 @@ t33 :-
 
 [1,2,3,4,5,6,7,8,9,10]
 
-t34 :-
+t38 :-
     lazy_nats(Ns),
     lazy_maplist(plus, Ns, Ns, Ms),
     (   findnsols(10, I, member(I, Ms), Rs)
@@ -292,7 +331,7 @@ t34 :-
 
 [0,2,4,6,8,10,12,14,16,18]
 
-t35 :-
+t39 :-
     nat(E),
     gen2lazy(E, Xs),
     gen2lazy(E, Ys),
@@ -306,7 +345,7 @@ t35 :-
 [1,2,3,4,5,6,7,8,9,10,11,12]
 [2,3,4,5,6,7,8,9,10,11,12,13]
 
-t36 :-
+t40 :-
     nat(E),
     split(E, E1, E2),
     show(E1),
@@ -317,7 +356,7 @@ t36 :-
 [0,1,2,3,4,5,6,7,8,9,10,11]
 [1,2,3,4,5,6,7,8,9,10,11,12]
 
-t37 :-
+t41 :-
     nat(E),
     split(E, E1, E2),
     ask(E, A),
@@ -329,7 +368,7 @@ t37 :-
 0+1+1
 [2,3,4,5,6,7,8,9,10,11,12,13]
 
-t38 :-
+t42 :-
     list([a, b, c], L),
     nat(N),
     cat([L, N], R),
@@ -337,7 +376,7 @@ t38 :-
 
 [a,b,c,0,1,2,3,4,5,6,7,8]
 
-t39 :-
+t43 :-
     odds(Xs),
     list(Xs, L),
     nat(N),
@@ -345,4 +384,4 @@ t39 :-
     show(P).
 
 [1-0,1-1,3-0,1-2,3-1,5-0,1-3,3-2,5-1,7-0,1-4,3-3]
-<engine>(3,0x7fc96b04f3e0)
+<engine>(3,0x7fa79f4148b0)

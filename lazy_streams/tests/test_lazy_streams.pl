@@ -40,88 +40,103 @@ t11:-nat(A),list([a,b,c],B),
   prod(B,A,P),take(20,P,T),
   show(30,T).
   
-t12:-const(10,C),nat(N),map(plus,C,N,R),show(R).
-
-t13:-const(10,C),nat(N),prod(C,N,P),show(P).
-
-
-t14:-eng(_X,fail,E),list([a,b],L),sum(E,L,S),show(S).
   
-t15:-eng(X,member(X,[1,2,3]),E),list([a,b],L),sum(E,L,S),show(S).
+t12:-neg(A),pos(B),prod_(A,B,P),
+   take(30,P,T),show(30,T),stop(P).
 
-t16:-eng(X,member(X,[1,2,3]),E),list([a,b],L),prod(E,L,S),show(S).
+t13:-nat(A),list([a,b,c],B),prod_(A,B,P),show(20,P),stop(P).
 
-t17:-eng(X,member(X,[1,2,3]),S),(X in S,writeln(X),fail;is_done(S),writeln(S)).
+t14:-range(0,5,A),list([a,b,c],B),prod_(A,B,P),
+     take(20,P,T),show(30,T),stop(P).
+    
+t15:-nat(A),list([a,b,c],B),
+  prod_(B,A,P),take(20,P,T),
+  show(30,T),
+  stop(P).
+  
+    
+t16:-const(10,C),nat(N),map(plus,C,N,R),show(R).
 
-t18:-(X^member(X,[1,2,3])*[a,b])=E,do((X in_ E,writeln(X))).
-
-t19:-range(1,5,R),cycle(R,C),show(20,C).
-
-t20:-range(1,4,R),cycle(R,C),list([a,b,c,d,e,f],L),zipper_of(C,L,Z),show(Z).
-
-t21:-eng(X,member(X,[a,b,c]),G),range(1,6,R),prod(G,R,P),show(P).
-
-t22:-ceng(X,member(X,[a,b,c]),G),ceng_clone(G,CG),prod(G,CG,P),show(P).
-
-t23:-ceng(X,member(X,[a,b,c]),G),cycle(G,C),show(C).
+t17:-const(10,C),nat(N),prod(C,N,P),show(P).
 
 
-t24:-range(0,10,A),range(100,110,B),arith_sum(A,B,S),show(S).
+t18:-eng(_X,fail,E),list([a,b],L),sum(E,L,S),show(S).
+  
+t19:-eng(X,member(X,[1,2,3]),E),list([a,b],L),sum(E,L,S),show(S).
 
-t25:-fact(5,S),show(S).
+t20:-eng(X,member(X,[1,2,3]),E),list([a,b],L),prod(E,L,S),show(S).
 
-t26:-nat(N),chains([succ,succ],N,N2),show(N2).
+t21:-eng(X,member(X,[1,2,3]),S),(X in S,writeln(X),fail;is_done(S),writeln(S)).
 
-t27:-fibo(E),show(E).
+t22:-(X^member(X,[1,2,3])*[a,b])=E,do((X in_ E,writeln(X))).
 
-t28:-
+t23:-range(1,5,R),cycle(R,C),show(20,C).
+
+t24:-range(1,4,R),cycle(R,C),list([a,b,c,d,e,f],L),zipper_of(C,L,Z),show(Z).
+
+t25:-eng(X,member(X,[a,b,c]),G),range(1,6,R),prod(G,R,P),show(P).
+
+t26:-ceng(X,member(X,[a,b,c]),G),ceng_clone(G,CG),prod(G,CG,P),show(P).
+
+t27:-ceng(X,member(X,[a,b,c]),G),cycle(G,C),show(C).
+
+
+t28:-range(0,10,A),range(100,110,B),arith_sum(A,B,S),show(S).
+
+t29:-fact(5,S),show(S).
+
+t30:-nat(N),chains([succ,succ],N,N2),show(N2).
+
+t31:-fibo(E),show(E).
+
+t32:-
   clause_stream(chains(_,_,_),C),
   do((X in C,portray_clause(X))).
 
-t29:-pos(E),chains([succ,pred],E,R),show(R).
+t33:-pos(E),chains([succ,pred],E,R),show(R).
 
-t30:-pos(E),mplex([succ,pred],E,R),show(R).
+t34:-pos(E),mplex([succ,pred],E,R),show(R).
 
-t31:-lazy_nats(Ls),list(Ls,E),show(E).
+t35:-lazy_nats(Ls),list(Ls,E),show(E).
 
 
-t32:-range(1,10,N),iso_fun(lazy_maplist(succ),gen2lazy,lazy2gen,N,M),show(M).
+t36:-range(1,10,N),iso_fun(lazy_maplist(succ),gen2lazy,lazy2gen,N,M),show(M).
 
 % while maplist loops, this iso functor based map does not
-t33:-lazy_nats(Ns),
+t37:-lazy_nats(Ns),
   lazy_maplist(succ,Ns,Ms),
   once(findnsols(10,I,member(I,Ms),Rs)),
   writeln(Rs).
 
 % results in reusability of a lazy list 
-t34:-lazy_nats(Ns),
+t38:-lazy_nats(Ns),
   lazy_maplist(plus,Ns,Ns,Ms),
   once(findnsols(10,I,member(I,Ms),Rs)),
   writeln(Rs).
 
-t35:-nat(E),
+t39:-nat(E),
      gen2lazy(E,Xs),
      gen2lazy(E,Ys),
      lazy2gen(Ys,B),
      lazy2gen(Xs,A),
      show(A),show(B),show(E).
 
-t36:-nat(E),split(E,E1,E2),show(E1),show(E2),show(E).
+t40:-nat(E),split(E,E1,E2),show(E1),show(E2),show(E).
 
-t37:-nat(E),split(E,E1,E2),ask(E,A),ask(E1,X),ask(E2,Y),writeln(A+X+Y),show(E).
+t41:-nat(E),split(E,E1,E2),ask(E,A),ask(E1,X),ask(E2,Y),writeln(A+X+Y),show(E).
 
-t38:-list([a,b,c],L),nat(N),cat([L,N],R),show(R).
+t42:-list([a,b,c],L),nat(N),cat([L,N],R),show(R).
 
 odds(Xs) :-lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 
 % lazy_findall leaves undead engine
-t39:-odds(Xs),list(Xs,L),nat(N),prod(L,N,P),show(P).
+t43:-odds(Xs),list(Xs,L),nat(N),prod(L,N,P),show(P).
 
 
 run_tests:-
   member(T,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,
   t17,t18,t19,t20,t21,t22,t23,t24,t25,t26,t27,t28,t29,t30,
-  t31,t32,t33,t34,t35,t36,t37,t38,t39]),
+  t31,t32,t33,t34,t35,t36,t37,t38,t39,t40,t41,t42,t43]),
   nl,
   listing(T),
   call(T),
@@ -177,3 +192,6 @@ go:-
   do((current_engine(E),writeln(E))),
   %bm,
   told.
+
+
+

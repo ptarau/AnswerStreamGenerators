@@ -35,13 +35,14 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   drop/3, % skips initial segment of given length
   slice/4, % extracts finite slice between bounds, right bound excluded
   range/3, % generator for integers betwen two numbers, larger excluded
+  cat/2, % concatenates a list of gnerators - all but last should be finite
+  conv/1, % generator for N * N self-convolution
+  sum/3, % generator for direct sum of two finite or infinite streams
+  prod_/3, % generator for direct product of two finite or infinite streams, engine based
   prod/3, % generator for direct product of two finite or infinite streams
   cantor_pair/3, % Cantor's pairing function
   cantor_unpair/3, % Cantor's unpairing function
   int_sqrt/2, % integer square root - with Newton's method
-  cat/2, % concatenates a list of gnerators - all but last should be finite
-  sum/3, % generator for direct sum of two finite or infinite streams
-  conv/1, % generator for N * N self-convolution
   map/3, % generator obtained by applying a predicate to a stream
   map/4, % % generator obtained by applying a predicate to two streams
   zipper_of/3, % forms pairs from corresponding elements of two streams
@@ -87,7 +88,10 @@ ask(E,_):-stop(E),fail.
 
 %! stop/1 marks a generator as done.
 %  Future calls to it will fail
-stop(E):-nb_linkarg(1,E,done).
+stop(E):-
+  arg(1,E,Handle),
+  (is_engine(Handle),engine_destroy(Handle) ; true),
+  nb_linkarg(1,E,done).
 
 % is_done(+Generator)
 %
@@ -108,7 +112,7 @@ select_from(E,_,X):-X in E.
 
 %! show(+NumberOfItems, +Generator)
 % show/2 collects results after K steps and prints them out
-%show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
+% same as: show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
 
 show(K,Gen):-nexts_of(Gen,K,Xs),writeln(Xs).
 
@@ -382,11 +386,36 @@ sum_next(state(_,E2),X):-
 
 %! cat(+GeneratorList, -ConcatenationOfGenerators)
 % 
-% concatenates strems of a list of generators
+% concatenates streams of a list of generators
 % Int only makes sense if all but the last one are finite.
 cat(Es,cat_next(Es)).
 
 cat_next(Es,X):-member(E,Es),ask(E,X),!.
+
+
+%! prod(+Gen1,+Gen2, -NewGen)
+%
+% engine-based direct product
+prod_(E1,E2,E):-eng(_,cart_prod_goal(E1,E2),E).
+
+cart_prod_goal(E1,E2):-
+  ask(E1,A),
+  cart_prod_loop(1,A,E1-[],E2-[]).
+
+cart_prod_loop(Ord1,A,E1-Xs,E2-Ys):-
+  flip(Ord1,Ord2,A,Y,Pair),
+  forall(member(Y,Ys),engine_yield(Pair)),
+  ask(E2,B),
+  !,
+  cart_prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
+cart_prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
+  flip(Ord1,_Ord2,X,Y,Pair),
+  X in E1,member(Y,Ys),
+  engine_yield(Pair),
+  fail.
+  
+flip(1,2,X,Y,X-Y).
+flip(2,1,X,Y,Y-X).
 
 %! prod(+Gen1,+Gen2, -NewGen)
 %
