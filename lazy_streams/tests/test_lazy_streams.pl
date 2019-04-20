@@ -132,11 +132,24 @@ odds(Xs) :-lazy_findall(X, (between(0, infinite, X0),X is 2*X0+1), Xs).
 % lazy_findall leaves undead engine
 t43:-odds(Xs),list(Xs,L),nat(N),prod(L,N,P),show(P).
 
-
+t44:-
+  lazy_nats(As),lazy_nats(Bs),lazy_conv(As,Bs,Ps),
+  findall(P,(
+    between(1,20,I),
+    nth1(I,Ps,P)
+  ),
+  Qs),
+  writeln(Qs).
+  
+t45:-neg(As),pos(Bs),
+     convolution(As,Bs,Ps),show(Ps),
+     stop(As),stop(Bs),stop(Ps).
+ 
+  
 run_tests:-
   member(T,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,
   t17,t18,t19,t20,t21,t22,t23,t24,t25,t26,t27,t28,t29,t30,
-  t31,t32,t33,t34,t35,t36,t37,t38,t39,t40,t41,t42,t43]),
+  t31,t32,t33,t34,t35,t36,t37,t38,t39,t40,t41,t42,t43,t44,t45]),
   nl,
   listing(T),
   call(T),
@@ -192,6 +205,13 @@ go:-
   do((current_engine(E),writeln(E))),
   %bm,
   told.
+
+
+  
+
+
+  
+  
 
 
 

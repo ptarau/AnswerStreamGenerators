@@ -61,6 +61,8 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   iso_fun/5, % functor transporting predicates of arity 2 between isomorphic domains
   iso_fun/6, % functor transporting predicates of arity 3 between isomorphic domains
   iso_fun_/6, % functor transporting predicates of arity 3 between isomorphic domains on ar in 2 out
+  lazy_conv/3, % convolution of lazy lists
+  convolution/3, % convolution of streams, borrowed from lazy lists
   do/1, % runs a goal exclusively for its side effects
   fact/2, % generator for infinite stream of factorials
   fibo/1 % generator for infinite stream of Fibonacci numbers
@@ -486,7 +488,9 @@ iterate(N,X,NewR):-
 conv_pairs(N,Ps):-conv_pairs(N,0,Ps).
 
 conv_pairs(0,L,[L-0]).
-conv_pairs(K,L,[L-K|Ps]):-succ(PK,K),succ(L,SL),conv_pairs(PK,SL,Ps).
+conv_pairs(K,L,[L-K|Ps]):-
+  succ(PK,K),succ(L,SL),
+  conv_pairs(PK,SL,Ps).
  
 %! conv(-Generator) 
 %
@@ -495,6 +499,8 @@ conv(gen_safe_nextval(conv_step,state(0-[0-0]))).
 
 conv_step(N-[X|Xs],N-Xs,X).
 conv_step(N-[],SN-Xs,X):-succ(N,SN),conv_pairs(SN,[X|Xs]).
+
+
   
   
 %nobug:-conv(C),(ask(C,_),ask(C,_),ask(C,_),fail;ask(C,B)),writeln(B).
@@ -590,6 +596,25 @@ split(E,E1,E2):-iso_fun_(lazy_dup,gen2lazy,lazy2gen,E,E1,E2).
   
 lazy_dup(Xs,Xs,Xs).
 
+%! convolution of two finite or infinite lazy lists
+lazy_conv(As,Bs,Ps):-
+  lazy_findall(P,(
+    between(0,infinite,N),
+    lazy_lconv(N,As,Bs,P)
+  ),
+  Ps).
+
+lazy_lconv(N,As,Bs, X-Y):-
+   N1 is N-1,
+   between(0,N1,L),
+   K is N1-L,
+   nth0(L,As,X),
+   nth0(K,Bs,Y).
+
+
+convolution(E1,E2, E):-
+  iso_fun(lazy_conv,gen2lazy,lazy2gen,E1,E2, E).
+   
 % evaluator  
 
 eeval(E+F,S):- !,eeval(E,EE),eeval(F,EF),sum(EE,EF,S).
