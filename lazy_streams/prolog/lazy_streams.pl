@@ -583,40 +583,48 @@ lazy_list_prod(Xs,Ys,Zs):-
 % ?-lazy_nats(Ns),maplist(succ,Ns,Ms).
 %
 % lazy_maplist/3 fixes that.
-
 lazy_maplist(F,LazyXs,LazyYs):-
   iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
 
 lazy_maplist(F,LazyXs,LazyYs,LazyZs):-
   iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs,LazyZs).  
 
-% uses lazy lists to split a stream into two
-% infelicity: second stream shifted by one position ...
+%! split(+E, -E1, -E2)
+%
+% split/3 uses lazy lists to split a stream into two.
+% infelicity: original stream shifted by one position ...
 split(E,E1,E2):-iso_fun_(lazy_dup,gen2lazy,lazy2gen,E,E1,E2).
   
 lazy_dup(Xs,Xs,Xs).
 
-%! convolution of two finite or infinite lazy lists
+%! lazy_conv(+As,+Bs,-Ps) 
+% 
+% convolution of two finite or infinite lazy lists
 lazy_conv(As,Bs,Ps):-
   lazy_findall(P,(
     between(0,infinite,N),
-    lazy_lconv(N,As,Bs,P)
+    lazy_lconv_step(N,As,Bs,P)
   ),
   Ps).
 
-lazy_lconv(N,As,Bs, X-Y):-
+lazy_lconv_step(N,As,Bs, X-Y):-
    N1 is N-1,
    between(0,N1,L),
    K is N1-L,
    nth0(L,As,X),
    nth0(K,Bs,Y).
 
-
+%! convolution(+Gen1,+Gen2,-NewGen) 
+% 
+% convolution of two finite or infinite lazy generators
 convolution(E1,E2, E):-
   iso_fun(lazy_conv,gen2lazy,lazy2gen,E1,E2, E).
    
 % evaluator  
 
+%! eeval(+GeneratorExpression, -Generator)
+% evaluates a generator expressioin to ready to use
+% gnerator that combines their effects
 eeval(E+F,S):- !,eeval(E,EE),eeval(F,EF),sum(EE,EF,S).
 eeval(E*F,P):- !,eeval(E,EE),eeval(F,EF),prod(EE,EF,P).
 eeval(E:F,R):- !,range(E,F,R).
@@ -626,6 +634,11 @@ eeval(A,C):-atomic(A),!,const(A,C).
 eeval(E,E).
 
 :-op(800,xfx,(in_)).
+
+%! in(-X, +GeneratorExpression)
+%
+% backtracks over elements of a generator expression
+% note that in_/2 is an xfx 800 operator, used as X in_ Gen
 X in_ E:-eeval(E,EE),X in EE.
  
 ask_(E,X):-eeval(E,EE),ask(EE,X).

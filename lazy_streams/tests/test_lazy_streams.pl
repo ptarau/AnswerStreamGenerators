@@ -144,12 +144,16 @@ t44:-
 t45:-neg(As),pos(Bs),
      convolution(As,Bs,Ps),show(Ps),
      stop(As),stop(Bs),stop(Ps).
- 
+
+t46:- do((X in_ 10:20,writeln(X))).
+
+t47:-do((X in_ X^member(X,[a,b,c]),writeln(X))).
   
 run_tests:-
   member(T,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,
   t17,t18,t19,t20,t21,t22,t23,t24,t25,t26,t27,t28,t29,t30,
-  t31,t32,t33,t34,t35,t36,t37,t38,t39,t40,t41,t42,t43,t44,t45]),
+  t31,t32,t33,t34,t35,t36,t37,t38,t39,
+  t40,t41,t42,t43,t44,t45,t46,t47]),
   nl,
   listing(T),
   call(T),
@@ -159,6 +163,8 @@ run_tests:-
  
  
 time(G,T):-get_time(T1),once(G),get_time(T2),T is T2-T1. 
+ 
+:-op(888,fx,(ll)).
  
 ll(X) :- listing(X).
 
