@@ -353,9 +353,11 @@ chain(F,E,chain_next(F,E)).
 chains([])-->[].
 chains([F|Fs])-->chain(F),chains(Fs).
 
-%! mplex(Closures, Gen, NewGen)
+%! mplex(+Closures, +Gen, -Values)
 %
 % multiplexes a stream through a list of transfomers
+% returns the list of values obtained by appying each 
+% transformer to the next lement of the generator
 mplex(Fs,E,mplex_next(state(E,Fs))).
 
 mplex_next(state(E,Fs),Ys):-

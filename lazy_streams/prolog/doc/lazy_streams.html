@@ -66,7 +66,9 @@ in given two generators, finite of the same length or infinite.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="arith_mult/3"><b class="pred">arith_mult</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">Elementwise multiplication of two streams.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="chain/3"><b class="pred">chain</b><var class="arglist">(+Closure, +Generator, -Newgenerator)</var></a></dt><dd class="defbody">Pipes elements of a stream through a transformer.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="chains/3"><b class="pred">chains</b><var class="arglist">(+ListOfClosures, +Generator, -Newgenerator)</var></a></dt><dd class="defbody">Pipes stream through a list of transformers.</dd>
-<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="mplex/3"><b class="pred">mplex</b><var class="arglist">(Closures, Gen, NewGen)</var></a></dt><dd class="defbody">multiplexes a stream through a list of transfomers</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="mplex/3"><b class="pred">mplex</b><var class="arglist">(+Closures, +Gen, -Values)</var></a></dt><dd class="defbody">multiplexes a stream through a list of transfomers
+returns the list of values obtained by appying each
+transformer to the next lement of the generator</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="clause_stream/2"><b class="pred">clause_stream</b><var class="arglist">(+Head, -StreamOfMatchingClauses)</var></a></dt><dd class="defbody">generates a stream of clauses matching a given goal</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="sum/3"><b class="pred">sum</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">Interleaved sum erging two finite or infinite generators.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="cat/2"><b class="pred">cat</b><var class="arglist">(+GeneratorList, -ConcatenationOfGenerators)</var></a></dt><dd class="defbody">concatenates streams of a list of generators
