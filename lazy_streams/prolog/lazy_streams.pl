@@ -48,6 +48,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   zipper_of/3, % forms pairs from corresponding elements of two streams
   reduce/4, % reduces/folds a stream with given predicate of arity 2
   arith_sum/3, % adds 2 streams element by element
+  mult/3, % product of two numbers
   arith_mult/3, % multiplies 2 streams element by element
   chain/3, % generator derived from other by applying a transformer of arity 2
   chains/3, % generator piping a stream through a list of transformers of arity 2
@@ -88,14 +89,16 @@ ask(E,_):-is_done(E),!,fail.
 ask(E,R):-call(E,X),!,R=X.
 ask(E,_):-stop(E),fail.
 
-%! stop/1 marks a generator as done.
-%  Future calls to it will fail
+%! stop(+Generator) 
+%
+% stop/1 marks a generator as done.
+% Future calls to it will fail
 stop(E):-
   arg(1,E,Handle),
   (is_engine(Handle),engine_destroy(Handle) ; true),
   nb_linkarg(1,E,done).
 
-% is_done(+Generator)
+%! is_done(+Generator)
 %
 % checks if a generator is done
 is_done(E):-arg(1,E,done).
@@ -118,7 +121,7 @@ select_from(E,_,X):-X in E.
 
 show(K,Gen):-nexts_of(Gen,K,Xs),writeln(Xs).
 
-%! show(+NumberOfItems, +Generator)
+%! show(+Generator)
 % collects and prints 12 results of Generator
 show(Stream):-show(12,Stream).
 
@@ -179,7 +182,7 @@ gen_safe_nextval(F,State,Yield):-
   call(F,X1,X2, Yield),
   nb_setarg(1,State,X2).
  
-%! list(-Stream) 
+%! list(+ListOrLazyList,-Stream) 
 %
 % Builds stream generator from list or lazy list.  
 list(Xs,gen_nextval(list_step,state(Xs))).
@@ -292,7 +295,7 @@ map(F,E1,E2,map_next(F,E1,E2)).
 map_next(F,E1,E2,Z):-ask(E1,X),ask(E2,Y),call(F,X,Y,Z).
 
 
-%! reduce(+Closure,+InitialVal, -Generator)
+%! reduce(+Closure, +Generator, +InitialVal, -ResultGenerator)
 % Builds generator that reduces given generator's yields with given closure, 
 % starting with an initial value. Yields the resulting single final value.
 reduce(F,InitVal,E,reduce_next(state(InitVal),F,E)).
@@ -327,6 +330,9 @@ zip2(X,Y,X-Y).
 % Elementwise addition of two streams.
 arith_sum(E1,E2,S):-map(plus,E1,E2,S).
 
+%! mult(+X,+Y,-P)
+%
+% P is the result of the multiplication of two numbers
 mult(X,Y,P):-P is X*Y.
 
 %! arith_mult(+Gen1,+Gen2, -NewGen)
@@ -341,7 +347,7 @@ chain_next(F,E,Y):-ask(E,X),call(F,X,Y).
 % Pipes  elements of a stream through a transformer.
 chain(F,E,chain_next(F,E)).
 
-%!chains(+ListOfClosures,+Generator, -Newgenerator) 
+%! chains(+ListOfClosures,+Generator, -Newgenerator) 
 %
 % Pipes stream through a list of transformers.
 chains([])-->[].
@@ -395,7 +401,7 @@ cat(Es,cat_next(Es)).
 cat_next(Es,X):-member(E,Es),ask(E,X),!.
 
 
-%! prod(+Gen1,+Gen2, -NewGen)
+%! prod_(+Gen1,+Gen2, -NewGen)
 %
 % engine-based direct product
 prod_(E1,E2,E):-eng(_,cart_prod_goal(E1,E2),E).
@@ -456,7 +462,7 @@ nat_pair(nat_pair_next(state(0))).
 nat_pair_next(S,A-B):-nat_next(S,X),cantor_unpair(X,B,A).
 
 
-% cantor_pair(+Int1,+Int2, -Int)
+%! cantor_pair(+Int1,+Int2, -Int)
 %
 % Cantor's pairing function
 cantor_pair(K1,K2,P):-P is (((K1+K2)*(K1+K2+1))//2)+K2.
@@ -558,7 +564,7 @@ iso_fun(F,From,To,A,B,C):- % writeln(iso_fun(F,From,To,A,B,C)),
   call(F,X,Y,Z),
   call(To,Z,C).
 
-%! iso_fun_(+Operation,+SourceType,+TargetType,+Arg1, -Res1 -Res2)
+%! iso_fun_(+Operation,+SourceType,+TargetType,+Arg1, -Res1, -Res2)
 %
 % Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
 % an operation can be performed and brings back the results. 
@@ -586,6 +592,9 @@ lazy_list_prod(Xs,Ys,Zs):-
 lazy_maplist(F,LazyXs,LazyYs):-
   iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
 
+%! lazy_maplist(+F,+LazyXs,LazyYs, -LazyYs)
+%
+% like maplist/4, but working on (possibly infinite) lazy lists
 lazy_maplist(F,LazyXs,LazyYs,LazyZs):-
   iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs,LazyZs).  
 
@@ -635,19 +644,27 @@ eeval(E,E).
 
 :-op(800,xfx,(in_)).
 
-%! in(-X, +GeneratorExpression)
+%! in_(-X, +GeneratorExpression)
 %
 % backtracks over elements of a generator expression
 % note that in_/2 is an xfx 800 operator, used as X in_ Gen
 X in_ E:-eeval(E,EE),X in EE.
  
+%! ask_(GeneratorExpression, -Element)
+% 
+% produces next element after evaluating a gnerator expression
 ask_(E,X):-eeval(E,EE),ask(EE,X).
 
 
-% factorial for testing
+%! fact(+N,-ResultGenerator)
+%
+% factorial computation - use ask/2 to extract value
+% used for testing
 fact(N,F):-range(1,N,R),reduce(mult,N,R,F).
 
-% Fibonacci stream for testing
+%! fibo(-Generator)
+%
+% infinite Fibonacci stream for testing
 fibo(F):-fibo_pair(E),chain(arg(1),E,F).
 
 fibo_pair(gen_next(fibo_pair_step,state(1-1))).

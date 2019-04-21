@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>lazy_streams.pl</title>
+
+<link rel="stylesheet" type="text/css" href="pldoc.css">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+</head>
+<body>
+
+
+<h1 class="file"><span style="float:right"></span>lazy_streams.pl</h1>
+
+<dl>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="ask/2"><b class="pred">ask</b><var class="arglist">(+Generator, -NextValue)</var></a></dt><dd class="defbody">the <var>Generator</var> generator protocol works as follows:
+A generator step is a call to a closure that moves its state forward
+defining a generator simply stores it as a Prolog fact.
+
+<p>
+The predicate <a href="lazy_streams.html#ask/2">ask/2</a> queries a generator if it is not done and
+it marks a generator as "done" after its first failure.
+This ensures it can be garbage collected
+by making its handle unreacheable.</p>
+
+<p>
+<a href="lazy_streams.html#ask/2">ask/2</a> extracts X by calling state transformer E.</p></dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="stop/1"><b class="pred">stop</b><var class="arglist">(+Generator)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#stop/1">stop/1</a> marks a generator as done.
+Future calls to it will fail</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="is_done/1"><b class="pred">is_done</b><var class="arglist">(+Generator)</var></a></dt><dd class="defbody">checks if a generator is done</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="in/2"><var class="arglist">-Value</var> <b class="pred">in</b> <var class="arglist">+Generator</var></a></dt><dd class="defbody"><a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=in/2">in/2</a> backtracks over progressively advancing states.
+<a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=in/2">in/2</a> is an xfx infix operator of priority 800</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="show/2"><b class="pred">show</b><var class="arglist">(+NumberOfItems, +Generator)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#show/2">show/2</a> collects results after K steps and prints them out
+same as: <code>show(K,Stream)</code>:-<code>once(findnsols(K,X,X in Stream,Xs))</code>,<code>writeln(Xs)</code>.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="show/1"><b class="pred">show</b><var class="arglist">(+Generator)</var></a></dt><dd class="defbody">collects and prints 12 results of <var>Generator</var></dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="const/2"><b class="pred">const</b><var class="arglist">(+Constant, -Generator)</var></a></dt><dd class="defbody">Builds a constant infinite stream returning its first argument.
+the "next" step, <code>call(=(C),X)</code> will simply unify X and C</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="nat/1"><b class="pred">nat</b><var class="arglist">(-NaturalNumberStream)</var></a></dt><dd class="defbody">Natural number generator, storing the next and its initial state.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="pos/1"><b class="pred">pos</b><var class="arglist">(-PositiveIntegerStream)</var></a></dt><dd class="defbody">stricly positive integers</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="neg/1"><b class="pred">neg</b><var class="arglist">(-NegativeIntgerStream)</var></a></dt><dd class="defbody">strictly negative integers</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="list/2"><b class="pred">list</b><var class="arglist">(+ListOrLazyList, -Stream)</var></a></dt><dd class="defbody">Builds stream generator from list or lazy list. </dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="range/3"><b class="pred">range</b><var class="arglist">(+From, +To, -RangeStream)</var></a></dt><dd class="defbody">finite positive integer range generator</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="cycle/2"><b class="pred">cycle</b><var class="arglist">(+StreamGenerator, -CycleStreamGenerator)</var></a></dt><dd class="defbody">transforms a finite generator into an infinite cycle
+advancing over its elements repeatedly.
+Uses a circular list, unified with its own tail.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="eng/3"><b class="pred">eng</b><var class="arglist">(+AnswerTemplate, +Goal, -Generator)</var></a></dt><dd class="defbody"><var>Generator</var> exposing the work of an engine as a stream of answers. </dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="ceng/3"><b class="pred">ceng</b><var class="arglist">(+Answertemplate, +Goal, -Generator)</var></a></dt><dd class="defbody">Clonable generator exposing the work of an engine as a stream of answers.
+It works on a generator wrapping an engine
+such that its goal and answer template are kept.
+That makes it clonable, assuming it runs code that's side-effect free.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="ceng_clone/2"><b class="pred">ceng_clone</b><var class="arglist">(+Generator, -Clone)</var></a></dt><dd class="defbody">creates new generator from a generator's goal</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="take/3"><b class="pred">take</b><var class="arglist">(+K, +Generator, -NewGenerator)</var></a></dt><dd class="defbody">Builds generator for initial segment of length <var>K</var> of given generator. </dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="drop/3"><b class="pred">drop</b><var class="arglist">(+K, +Generator, -NewGenerator)</var></a></dt><dd class="defbody">Roll the stream to first postion after first <var>K</var> items.
+Returns generator positioned <var>K</var> steps forward.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="slice/4"><b class="pred">slice</b><var class="arglist">(+From, +To, +Generator, -NewGenerator)</var></a></dt><dd class="defbody">Builds generator for a slice of a given stream <var>From</var>..<var>To</var> (excluding <var>To</var>).</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="map/3"><b class="pred">map</b><var class="arglist">(+Closure, +Generator, -NewGenerator)</var></a></dt><dd class="defbody">Builds a generator that will apply a closure to each element of a given generator.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="map/4"><b class="pred">map</b><var class="arglist">(+Closure, +Generator1, +Generator2, -NewGenerator)</var></a></dt><dd class="defbody">Builds a generator that combines two gnerators by creating
+an advancer that applies a <var>Closure</var> to their "next" yields.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="reduce/4"><b class="pred">reduce</b><var class="arglist">(+Closure, +Generator, +InitialVal, -ResultGenerator)</var></a></dt><dd class="defbody">Builds generator that reduces given generator's yields with given closure,
+starting with an initial value. Yields the resulting single final value.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="do/1"><b class="pred">do</b><var class="arglist">(+Goal)</var></a></dt><dd class="defbody">Bactracks over <var>Goal</var> for its side-effects only. </dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="zipper_of/3"><b class="pred">zipper_of</b><var class="arglist">(+Generator1, +Generator2, -NewGenerator)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#zipper_of/3">zipper_of/3</a> collects pairs of elements in matching positions
+in given two generators, finite of the same length or infinite.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="arith_sum/3"><b class="pred">arith_sum</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">Elementwise addition of two streams.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="mult/3"><b class="pred">mult</b><var class="arglist">(+X, +Y, -P)</var></a></dt><dd class="defbody"><var>P</var> is the result of the multiplication of two numbers</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="arith_mult/3"><b class="pred">arith_mult</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">Elementwise multiplication of two streams.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="chain/3"><b class="pred">chain</b><var class="arglist">(+Closure, +Generator, -Newgenerator)</var></a></dt><dd class="defbody">Pipes elements of a stream through a transformer.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="chains/3"><b class="pred">chains</b><var class="arglist">(+ListOfClosures, +Generator, -Newgenerator)</var></a></dt><dd class="defbody">Pipes stream through a list of transformers.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="mplex/3"><b class="pred">mplex</b><var class="arglist">(Closures, Gen, NewGen)</var></a></dt><dd class="defbody">multiplexes a stream through a list of transfomers</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="clause_stream/2"><b class="pred">clause_stream</b><var class="arglist">(+Head, -StreamOfMatchingClauses)</var></a></dt><dd class="defbody">generates a stream of clauses matching a given goal</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="sum/3"><b class="pred">sum</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">Interleaved sum erging two finite or infinite generators.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="cat/2"><b class="pred">cat</b><var class="arglist">(+GeneratorList, -ConcatenationOfGenerators)</var></a></dt><dd class="defbody">concatenates streams of a list of generators
+Int only makes sense if all but the last one are finite.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="prod_/3"><b class="pred">prod_</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">engine-based direct product</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="prod/3"><b class="pred">prod</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">direct product of two finite or infinite generators</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="cantor_pair/3"><b class="pred">cantor_pair</b><var class="arglist">(+Int1, +Int2, -Int)</var></a></dt><dd class="defbody">Cantor's pairing function</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="cantor_unpair/3"><b class="pred">cantor_unpair</b><var class="arglist">(+Int, -Int1, -Int2)</var></a></dt><dd class="defbody">Inverse of Cantor's pairing function.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="int_sqrt/2"><b class="pred">int_sqrt</b><var class="arglist">(+PosInt, -IntSqrt)</var></a></dt><dd class="defbody">computes integer square root using Newton's method</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="conv/1"><b class="pred">conv</b><var class="arglist">(-Generator)</var></a></dt><dd class="defbody"><var>Generator</var> for N * N self-convolution.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_nats/1"><b class="pred">lazy_nats</b><var class="arglist">(-LazyListOfNaturalNumbers)</var></a></dt><dd class="defbody">infinite lazy list of natural numbers</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="gen2lazy/2"><b class="pred">gen2lazy</b><var class="arglist">(+Generator, -LazyLIst)</var></a></dt><dd class="defbody">Turns a generator into a lazy list </dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy2gen/2"><b class="pred">lazy2gen</b><var class="arglist">(+LazyList, -Generator)</var></a></dt><dd class="defbody">Turns a lazy list into a generator.
+Note that <a href="lazy_streams.html#list/2">list/2</a> actually just works on lazy lists!</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="iso_fun/5"><b class="pred">iso_fun</b><var class="arglist">(+Operation, +SourceType, +TargetType, +Arg1, -ResultOfSourceType)</var></a></dt><dd class="defbody">Transports a predicate of arity 2 F(+A,-B) to a domain where
+an operation can be performed and brings back the result.</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="iso_fun/6"><b class="pred">iso_fun</b><var class="arglist">(+Operation, +SourceType, +TargetType, +Arg1, +Arg2, -ResultOfSourceType)</var></a></dt><dd class="defbody">Transports a predicate of arity 2 F(+A,+B,-C) to a domain where
+an operation can be performed and brings back the result.
+transports F(+A,+B,-C) </dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="iso_fun_/6"><b class="pred">iso_fun_</b><var class="arglist">(+Operation, +SourceType, +TargetType, +Arg1, -Res1, -Res2)</var></a></dt><dd class="defbody">Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
+an operation can be performed and brings back the results.
+transports F(+A,+B,-C) </dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_maplist/3"><b class="pred">lazy_maplist</b><var class="arglist">(+F, +LazyXs, -LazyYs)</var></a></dt><dd class="defbody">Applies a predicate to a lazy list resulting in anoter lazy list
+Works with infinite list as input.
+
+<p>
+Lazy lists are not plain lists, as proven by applying maplist:
+This loops!
+?-<code>lazy_nats(Ns)</code>,<code>maplist(succ,Ns,Ms)</code>.</p>
+
+<p>
+<a href="lazy_streams.html#lazy_maplist/3">lazy_maplist/3</a> fixes that.</p></dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_maplist/4"><b class="pred">lazy_maplist</b><var class="arglist">(+F, +LazyXs, LazyYs, -LazyYs)</var></a></dt><dd class="defbody">like <a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=maplist/4">maplist/4</a>, but working on (possibly infinite) lazy lists</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="split/3"><b class="pred">split</b><var class="arglist">(+E, -E1, -E2)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#split/3">split/3</a> uses lazy lists to split a stream into two.
+infelicity: original stream shifted by one position ...</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_conv/3"><b class="pred">lazy_conv</b><var class="arglist">(+As, +Bs, -Ps)</var></a></dt><dd class="defbody">convolution of two finite or infinite lazy lists</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="convolution/3"><b class="pred">convolution</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">convolution of two finite or infinite lazy generators</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="in_/2"><var class="arglist">-X</var> <b class="pred">in_</b> <var class="arglist">+GeneratorExpression</var></a></dt><dd class="defbody">backtracks over elements of a generator expression
+note that in_/2 is an xfx 800 operator, used as <var>X</var> in_ Gen</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="ask_/2"><b class="pred">ask_</b><var class="arglist">(GeneratorExpression, -Element)</var></a></dt><dd class="defbody">produces next element after evaluating a gnerator expression</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="fact/2"><b class="pred">fact</b><var class="arglist">(+N, -ResultGenerator)</var></a></dt><dd class="defbody">factorial computation - use <a href="lazy_streams.html#ask/2">ask/2</a> to extract value
+used for testing</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="fibo/1"><b class="pred">fibo</b><var class="arglist">(-Generator)</var></a></dt><dd class="defbody">infinite Fibonacci stream for testing</dd>
+</dl>
+
+</body>
+</html>

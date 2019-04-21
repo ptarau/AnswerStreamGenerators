@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>prolog</title>
+
+<link rel="stylesheet" type="text/css" href="pldoc.css">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+</head>
+<body>
+
+
+<h1 class="dir">prolog</h1>
+
+<h2 class="wiki plfiles">Prolog files</h2>
+
+<table class="summary">
+<tr><th colspan="3" class="file"><span style="float:left"><a href="dynamic_arrays.html">dynamic_arrays.pl</a></span><span style="float:right"></span></th></tr>
+<tr><th colspan="3" class="file"><span style="float:left"><a href="lazy_streams.html">lazy_streams.pl</a></span><span style="float:right"></span></th></tr>
+<tr class="public"><td><a href="lazy_streams.html#arith_mult/3">arith_mult/3</a></td><td class="summary">Elementwise multiplication of two streams.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#arith_sum/3">arith_sum/3</a></td><td class="summary">Elementwise addition of two streams.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#ask/2">ask/2</a></td><td class="summary">the Generator generator protocol works as follows: A generator step is a call to a closure that moves its state forward defining a generator simply stores it as a Prolog fact.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#ask_/2">ask_/2</a></td><td class="summary">produces next element after evaluating a gnerator expression.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#cantor_pair/3">cantor_pair/3</a></td><td class="summary">Cantor's pairing function.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#cantor_unpair/3">cantor_unpair/3</a></td><td class="summary">Inverse of Cantor's pairing function.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#cat/2">cat/2</a></td><td class="summary">concatenates streams of a list of generators Int only makes sense if all but the last one are finite.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#ceng/3">ceng/3</a></td><td class="summary">Clonable generator exposing the work of an engine as a stream of answers.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#ceng_clone/2">ceng_clone/2</a></td><td class="summary">creates new generator from a generator's goal.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#chain/3">chain/3</a></td><td class="summary">Pipes elements of a stream through a transformer.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#chains/3">chains/3</a></td><td class="summary">Pipes stream through a list of transformers.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#clause_stream/2">clause_stream/2</a></td><td class="summary">generates a stream of clauses matching a given goal.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#const/2">const/2</a></td><td class="summary">Builds a constant infinite stream returning its first argument.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#conv/1">conv/1</a></td><td class="summary">Generator for N * N self-convolution.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#convolution/3">convolution/3</a></td><td class="summary">convolution of two finite or infinite lazy generators.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#cycle/2">cycle/2</a></td><td class="summary">transforms a finite generator into an infinite cycle advancing over its elements repeatedly.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#do/1">do/1</a></td><td class="summary">Bactracks over Goal for its side-effects only.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#drop/3">drop/3</a></td><td class="summary">Roll the stream to first postion after first K items.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#eng/3">eng/3</a></td><td class="summary">Generator exposing the work of an engine as a stream of answers.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#fact/2">fact/2</a></td><td class="summary">factorial computation - use <a href="lazy_streams.html#ask/2">ask/2</a> to extract value used for testing.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#fibo/1">fibo/1</a></td><td class="summary">infinite Fibonacci stream for testing.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#gen2lazy/2">gen2lazy/2</a></td><td class="summary">Turns a generator into a lazy list .</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#(in)/2">in/2</a></td><td class="summary"><a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=in/2">in/2</a> backtracks over progressively advancing states.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#(in_)/2">in_/2</a></td><td class="summary">backtracks over elements of a generator expression note that in_/2 is an xfx 800 operator, used as X in_ Gen.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#int_sqrt/2">int_sqrt/2</a></td><td class="summary">computes integer square root using Newton's method.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#is_done/1">is_done/1</a></td><td class="summary">checks if a generator is done.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#iso_fun/5">iso_fun/5</a></td><td class="summary">Transports a predicate of arity 2 F(+A,-B) to a domain where an operation can be performed and brings back the result.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#iso_fun/6">iso_fun/6</a></td><td class="summary">Transports a predicate of arity 2 F(+A,+B,-C) to a domain where an operation can be performed and brings back the result.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#iso_fun_/6">iso_fun_/6</a></td><td class="summary">Transports a predicate of arity 2 F(+A,-B,-C) to a domain where an operation can be performed and brings back the results.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#lazy2gen/2">lazy2gen/2</a></td><td class="summary">Turns a lazy list into a generator.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#lazy_conv/3">lazy_conv/3</a></td><td class="summary">convolution of two finite or infinite lazy lists.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#lazy_maplist/3">lazy_maplist/3</a></td><td class="summary">Applies a predicate to a lazy list resulting in anoter lazy list Works with infinite list as input.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#lazy_maplist/4">lazy_maplist/4</a></td><td class="summary">like <a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=maplist/4">maplist/4</a>, but working on (possibly infinite) lazy lists.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#lazy_nats/1">lazy_nats/1</a></td><td class="summary">infinite lazy list of natural numbers.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#list/2">list/2</a></td><td class="summary">Builds stream generator from list or lazy list.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#map/3">map/3</a></td><td class="summary">Builds a generator that will apply a closure to each element of a given generator.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#map/4">map/4</a></td><td class="summary">Builds a generator that combines two gnerators by creating an advancer that applies a Closure to their "next" yields.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#mplex/3">mplex/3</a></td><td class="summary">multiplexes a stream through a list of transfomers.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#mult/3">mult/3</a></td><td class="summary">P is the result of the multiplication of two numbers.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#nat/1">nat/1</a></td><td class="summary">Natural number generator, storing the next and its initial state.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#neg/1">neg/1</a></td><td class="summary">strictly negative integers.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#pos/1">pos/1</a></td><td class="summary">stricly positive integers.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#prod/3">prod/3</a></td><td class="summary">direct product of two finite or infinite generators.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#prod_/3">prod_/3</a></td><td class="summary">engine-based direct product.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#range/3">range/3</a></td><td class="summary">finite positive integer range generator.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#reduce/4">reduce/4</a></td><td class="summary">Builds generator that reduces given generator's yields with given closure, starting with an initial value.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#show/1">show/1</a></td><td class="summary">collects and prints 12 results of Generator.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#show/2">show/2</a></td><td class="summary"><a href="lazy_streams.html#show/2">show/2</a> collects results after K steps and prints them out same as: <code>show(K,Stream)</code>:-<code>once(findnsols(K,X,X in Stream,Xs))</code>,<code>writeln(Xs)</code>.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#slice/4">slice/4</a></td><td class="summary">Builds generator for a slice of a given stream From..To (excluding To).</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#split/3">split/3</a></td><td class="summary"><a href="lazy_streams.html#split/3">split/3</a> uses lazy lists to split a stream into two.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#stop/1">stop/1</a></td><td class="summary"><a href="lazy_streams.html#stop/1">stop/1</a> marks a generator as done.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#sum/3">sum/3</a></td><td class="summary">Interleaved sum erging two finite or infinite generators.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#take/3">take/3</a></td><td class="summary">Builds generator for initial segment of length K of given generator.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+<tr class="public"><td><a href="lazy_streams.html#zipper_of/3">zipper_of/3</a></td><td class="summary"><a href="lazy_streams.html#zipper_of/3">zipper_of/3</a> collects pairs of elements in matching positions in given two generators, finite of the same length or infinite.</td><td align="right"><span style="white-space: nowrap"></span></td></tr>
+</table>
+
+</body>
+</html>
