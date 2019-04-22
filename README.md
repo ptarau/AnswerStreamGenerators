@@ -14,5 +14,15 @@ The code is contained a SWI Prolog package.
 To install it, type:
 
 ```
-pack_install('https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip')
+pack_install('https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip').
 ```
+
+followed by
+
+```
+?-use_module(library(lazy_streams)).
+
+?-tests.
+```
+
+to see some tests and examples of use.
