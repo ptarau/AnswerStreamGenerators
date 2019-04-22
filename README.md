@@ -8,3 +8,7 @@ bin
 and type
 
 ./run.sh
+
+The code is no contained in
+a SWI Prolog package at
+
