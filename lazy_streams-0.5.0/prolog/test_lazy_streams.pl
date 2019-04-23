@@ -1,14 +1,14 @@
 /*
 :-module(test_lazy_streams,[
-  mytests/0,
+  tests/0,
   bm/0
   ]
 ).
 */
 
-:-use_module('../prolog/lazy_streams.pl').
+%:-use_module('lazy_streams.pl').
 
-c:-make.
+%c:-make.
 
 %! TESTS AND BENCHMARKS: 
 % run with: ?-mytests. and ?-bm.
@@ -203,9 +203,19 @@ ppp(X):-writeln(X).
   
 bm(K):-maplist(time,[bm1(K),bm2(K),bm3(K),bm4(16)],Ts),nl,writeln(times=Ts).
 
+%! bm
+%
+% benchmarking some stream operations
+
 bm:-bm(21).  
 
-go:-
+%! tests
+% runs all tests, listing their code as examples of use cases
+%
+% after taping 
+% ?-tests.
+% results are written out to file tests.txt
+tests:-
   tell('tests.txt'),
   run_tests,
   do((current_engine(E),writeln(E))),

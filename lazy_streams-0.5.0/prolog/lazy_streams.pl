@@ -66,12 +66,16 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   convolution/3, % convolution of streams, borrowed from lazy lists
   do/1, % runs a goal exclusively for its side effects
   fact/2, % generator for infinite stream of factorials
-  fibo/1 % generator for infinite stream of Fibonacci numbers
+  fibo/1, % generator for infinite stream of Fibonacci numbers
+  tests/0, % run all tests, with output to tests.txt
+  bm/0 % run all benchmarks
 ]).
 
 :-use_module(dynamic_arrays).
 :-use_module(library(lazy_lists)).
 :-use_module(library(solution_sequences)).
+%:-include(test_lazy_streams).
+:-ensure_loaded(test_lazy_streams).
 
 %! ask(+Generator, -NextValue) 
 %
