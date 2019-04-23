@@ -20,41 +20,92 @@
 \maketitle
 
 \begin{abstract}
-Lazy stream generators provide a unified interface to, stateful computations, I/O operations as well as algorithms producing finite or infinite sequences and answers of first class Prolog engines. We expose them to the application programmer either as lazy lists or through an abstract sequence manipulation API.
-
- We define an algebra of stream generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms and supports moving between isomorphic sequence representations.
+Lazy stream generators provide a unified interface to stateful computations, I/O operations as well as algorithms producing finite or infinite sequences. 
 
 As a special instance, we introduce answer stream generators that 
-encapsulate the work of coroutining logic engines with support 
-for expendable or reusable answer streams.
+encapsulate the work of coroutining first-class logic engines and support interoperation between forward recursive {\em AND-streams} and backtracking-generated {\em OR-streams}. 
+
+Stream generators are exposed to the application programmer either through an abstract sequence manipulation API or as lazy lists. We define an algebra of stream generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms and supports moving between isomorphic sequence representations.
 
 \end{abstract}
 
 \section{Introduction}
 
-Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. The goal of this paper is dual-purpose in this sense: we encapsulate pragmatic language extensions using
+Stream processing, now prevalent in widely used programming languages languages like Java, Python, C\# or JavaScript offers a uniform declarative view on processing finite 
+and infinite\footnote{We use ``infinite'' here as a short hand qualifier for data or computation streams of unpredictable, large or very large size.} sequences. Arguably, it's advent has been driven, besides the expressiveness lift it provides, by the need of processing big data, in static incarnations like very large training sets for machine learning or dynamic event streams coming from Web search queries and clicks  or from sensor networks supporting today's fast spreading IOT infrastructure.
+ 
+Several techniques have been used to extend mature programming languages with stream processing. The task has been facilitated by the presence of generalized iterators-like constructs like Python's generators or by presence of lazy evaluation semantics in
+functional languages.
+
+Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. 
+
+The first limitation that needs to be overcome is that Prolog's resolution mechanism is subject to a fixed depth-first and strict evaluation semantics.
+While Prolog's depth-first  search mechanism can be complemented with alternative search strategies as shown in \cite{tor} by overriding its disjunction operator, the evaluation mechanism remains ultimately eager especially when in the tradition of programming with lists, inherited log-time ago from functional languages, one chains recursive steps
+in the body of clauses connected by conjunctions. 
+
+The second problem is the presence of procedural state-management constructs that are
+interleaved with Prolog's declarative programming style, ranging form 
+random generator streams to file and socket I/O and dynamic database operations.
+
+While monadic constructs in functional languages \cite{moggi:monads,wadler93:cont}  can provide  a unified view of declarative and procedural state-management operations, logic programming languages still lack a unified approach providing a uniform interface to the above.
+
+A key step in this direction is SWI-Prolog's  {\em lazy\_lists} library \cite{lazy_lists}.
+ It uses, ``under the hood'', attributed variables and destructive updates  to provide a declarative view of such state transformers in terms of the list unification familiar to the Prolog programmer. 
+
+At the same time, we would like to expose stream generators as an abstract sequence-manipulation algebra and be able to 
+
+lazy evaluation functionality directly 
+
+The goal of this paper is dual-purpose: we encapsulate pragmatic language extensions using
 state transformers, lazy lists and first-class logic engines 
 %\cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER,bp2011},
-\cite{tarau:cl2000,bp2011},
+\cite{tarau:cl2000,bp2011}, recently added to SWI-Prolog \cite{swi},
 into a set of operations organized compositionally in the form of {\em 
 stream generators}.
-Our generators are similar to Python's {\em yield} mechanism \cite{} and 
-they share features with coroutining constructs now present in a several other widely used programming languages.
+Our generators are similar to Python's {\em yield} mechanism \cite{beazley09} and 
+they share features with coroutining constructs now present in a several other widely used programming languages including C\#, Javascript and Lua. At the same time 
+they lift Prolog's expressiveness with lazy evaluation mechanisms similar to non-strict
+functional programming languages like Haskell \cite{hudak07} or functional-logic languages like Curry \cite{antoy05}.
 
-{\Large TODO: expand}
 
-Motivation built around some of Prolog's expressiveness limitations:
+Contributions of this paper:
 \BI
-\I procedural state-management constructs
-\I fixed depth-first and strict evaluation semantics
-\I the best implementation can chosen and moved to the desired representation by the end-user via the iso-functor
+\I a simple and clean approach for setting up lazy streams
+\I a lazy list representation of lazy streams to naturally use them as Prolog lists
+\I a library of lazy stream sources, transformers, combinators and sinks
+  (or two libraries if we are counting the lazy\_lists library)
+\EI
+
+We organize our Generators as an algebra, wrapped as a library module with a declarative interface, to avoid exposing  operations requiring an implementation with a clear procedural flavor to the Prolog application programmer.
+
+By defining an iso-functor that transports operations between
+generators and lazy lists, we offer a choice between 
+abstract sequence operations and the concrete list view familiar to Prolog users.
+
+
+
+\BI
+ \I the best implementation can chosen and moved to the desired representation by the end-user via the iso-functor
 e.g. using lazy\_lists offers a familiar syntax to the Prolog application programmer
 \I efficiency - avoiding engines when possible reduces memory footprint and avoids term copying
 \I no gc is needed when working destructively in constant space - but results can be exposed declaratively
 \I algorithms (e.g. convolution of infinite sequences) easier to implement efficiently
 \I handling big data streams -can benefit from a library of stream combinators
+\EI
 
 
+Reasons for some of the new things we propose:
+\BI
+\I what generators can bring in languages like Python \\-e.g. itertools, 
+see \url{https://docs.python.org/3/library/itertools.html}
+\I lazy evaluation brings to Haskell a declarative handling of infinite sequences
+\I we want to add streams to
+handle potentially very large amounts of data flowing over the internet
+\I the need to update Prolog's language constructs to closely match new developments adopted by some of today's most successful programming languages (e.g. mention Python's yield \verb~C++~ fibers, go-language's goroutines)
+\EI
+enhances the expressiveness of  
+
+\BI
 \I  applications that one can think of are:
 \BI
 \I scanning multiple tweet streams for a common topic, 
@@ -66,31 +117,7 @@ e.g. using lazy\_lists offers a familiar syntax to the Prolog application progra
 \EI
 \EI
 
-Reasons for some of the new things we propose:
-\BI
-\I what generators can bring in languages like Python \\-e.g. itertools, 
-see \url{https://docs.python.org/3/library/itertools.html}
-\I lazy evaluation brings to Haskell a declarative handling of infinite sequences
-\I we want to add streams to
-handle potentially very large amounts of data flowing over the internet
-\I the need to update Prolog's language constructs to closely match new developments adopted by some of today's most successful programming languages (e.g. mention Python's yield \verb~C++~ fibers, go-language's goroutines)
-\EI
 
-We organize our Generators as an algebra, wrapped as a library module with a declarative interface, to avoid exposing  operations requiring an implementation with a clear procedural flavor to the Prolog application programmer.
-
-By defining an iso-functor that transports operations between
-generators and lazy lists, we offer a choice between 
-abstract sequence operations and the concrete list view familiar to Prolog users.
-
-
-
-Contributions of this paper:
-\BI
-\I a simple and clean approach for setting up lazy streams
-\I a lazy list representation of lazy streams to naturally use them as Prolog lists
-\I a library of lazy stream sources, transformers, combinators and sinks
-  (or two libraries if we are counting the lazy\_lists library)
-\EI
 
 \section{Overview}
 
@@ -842,152 +869,11 @@ the writing compact and elegant code.
 {TODO: expand}
 
 \bibliographystyle{acmtrans}
-\bibliography{theory,tarau,proglang,biblio}
+\bibliography{theory,tarau,proglang,biblio,new}
 
 
 \section*{Appendix}
 
 {\large not to be included in the paper, added here just to make a few tests get into the Prolog file extracted from the LaTeX document}
 
-\begin{code}
-t1:-
-  range(0,3,E1),
-  %range(10,14,E2),
-  list2generator([a,b,c],E2),
-  range(100,102,E3),
-  eeval(E1+E3+E2+!E3, E),
-  forall(X in E,writeln(X)).
-    
-t2:-
-  range(0,2,E1),
-  list2generator([a,b,c],E2),
-  eeval(E1*E2, E),
-  forall(X in E,writeln(X)).
-
-  
-t3:-
-  range(0,3,E1),
-  %range(10,14,E2),
-  list2generator([a,b,c],E2),
-  range(100,102,E3),
-  eeval(E1*E3+E2*!E3, E),
-  forall(X in E,writeln(X)).
-
-t4:- 
-  range(3,E),
-  eeval((!E * !E)*(!E + !E)*E,NewE),
-  forall(X in NewE,ppp(X)). 
-  
-t5:- 
- eeval([the]*[cat,dog,robot]*[walks,runs],E),eeval(!E,EE),
-  stop_generator(E,_),
-  forall(X in EE,ppp(X)).
-
-t6:-nat(E),take(4,E,F),forall(X in F,ppp(X)).
-
-t7:-range(20,E),drop(15,E,F),forall(X in F,writeln(X)).
-
-t8:-range(5,E),map_generator(succ,E,NewE),forall(X in NewE,writeln(X)).
-
-
-t9:-range(0,10,E1),range(100,110,E2),
-    dir_sum(E1,E2,E),
-    forall(R in E,writeln(R)).
-    
-t10:-range(0,10,E1),range(100,110,E2),
-    map_generator(plus,E1,E2,E),
-    forall(R in E,writeln(R)).
-
-t11:-range(0,10,E1),
-    list2generator([a,b,c,d],E2),
-    zipper_of(E1,E2,E),
-    forall(R in E,writeln(R)).
-
-
-t12:-range(10,E),reduce_with(plus,E,Sum),writeln(Sum).
-
-c1:-
-  nat(N),nat(M),conv(M,N,C),ppg(30,C).
-
-c2:-
-  nat(N),list2generator([a,b,c,d],M),conv(M,N,C),ppg(30,C).
-
-c3:-
-  nat(N),list2generator([a,b,c,d],M),conv(N,M,C),ppg(30,C).
-
-c4:-
-  range(5,N),range(5,M),conv(M,N,C),ppg(30,C).
-
-c5:-
-  range(4,N),list2generator([a,b,c,d],M),conv(M,N,C),ppg(30,C).
-  
-      
-go:-
-   member(G,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12]),
-   ( nl,writeln(G),G,fail
-   ; current_engine(E),ppp(E),fail 
-     % tests that all stays clean
-   ).
-
-cgo:-member(G,[c1,c2,c3,c4,c5]),
-   ( nl,writeln(G),G,fail
-   ; current_engine(E),ppp(E),fail 
-     % tests that all stays clean
-   ).
-      
-% helpers
-ppp(X):-portray_clause(X).
-\end{code}
-
-One can also transfer these operations to use a concrete lazy list syntax as follows.
-
-\begin{code}
-% adaptor for lazy_list syntax
-
-% finite printer for generators
-ppg(K,E):-take(K,E,F),forall(X in F,ppp(X)).
-
-% finite printer for lazy lists
-ppl(K,Xs):-findnsols(K,X,member(X,Xs),Rs),!,ppp(Rs).
-
-% positive integers
-lazy_pos(Xs) :-lazy_findall(X, between(1, infinite, X), Xs).
-
-% negative integers
-lazy_neg(Xs) :-lazy_findall(X, (between(1, infinite, X0), X is -X0), Xs).
-  
-lazy_take(K,Xs,Ys):-
-   list2generator(Xs,E1),
-   take(K,E1,E2),
-   generator2list(E2,Ys).
-
-% etc. 
-% this can be generalized with higher order mapping predicates
-% like one would do in  Haskell
-   
-l1:-lazy_pos(Ns),lazy_neg(Ms),lazy_list_sum(Ns,Ms,Xs),ppl(20,Xs).
-l2:-lazy_pos(Ns),lazy_neg(Ms),lazy_list_prod(Ns,Ms,Xs),ppl(20,Xs).  
-  
-\end{code}
-
-One can test this port form engines to list as follows:
-
-\begin{codex}
-?- l1.
-[1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8, 9, -9, 10, -10].
-true.
-
-?- l2.
-[1- -1, 2- -1, 2- -2, 1- -2, 3- -2, 3- -1, 3- -3, 2- -3, 1- -3, 4- -3, 4- -2, 4- -1, 4- -4, 3- -4, 2- -4, 1- -4, 5- -4, 5- -3, 5- -2, 5- -1].
-\end{codex}
-
-{\Large TODO} This actually exhibits a nice isomorphism - thus the algebra of generators can be mechanically transferred to an algebra of lazy lists.
-
-\BI
-\I predicates on streams: is\_orderd - enforceable by keeping the last element fetched
-\I dictionary streams: sequences of key-value pairs - e.g.,  at time t, value of stock
-\I combinatorial streams - trees if size 0,1,2....
-\I interesting stream examples: clickstreams, traderbot, sensor networks, 
-medical devices, network packets
-\EI
 \end{document}
