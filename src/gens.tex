@@ -34,20 +34,20 @@ Stream generators are exposed to the application programmer either through an ab
 Stream processing, now prevalent in widely used programming languages languages like Java, Python, C\# or JavaScript offers a uniform declarative view on processing finite 
 and infinite\footnote{We use ``infinite'' here as a short hand qualifier for data or computation streams of unpredictable, large or very large size.} sequences. Arguably, it's advent has been driven, besides the expressiveness lift it provides, by the need of processing big data, in static incarnations like very large training sets for machine learning or dynamic event streams coming from Web search queries and clicks  or from sensor networks supporting today's fast spreading IOT infrastructure.
  
-Several techniques have been used to extend mature programming languages with stream processing. The task has been facilitated by the presence of generalized iterators-like constructs like Python's generators or by presence of lazy evaluation semantics in
+Several techniques have been used to extend mature programming languages with stream processing. The task has been facilitated by the presence of generalized iterator constructs like Python's generators or by presence of lazy evaluation semantics in
 functional languages.
 
-Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. 
+Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. However, to extend Prolog with state-of-the-art lazy stream processing capabilities, a few limitations need to be overcome.
 
-The first limitation that needs to be overcome is that Prolog's resolution mechanism is subject to a fixed depth-first and strict evaluation semantics.
-While Prolog's depth-first  search mechanism can be complemented with alternative search strategies as shown in \cite{tor} by overriding its disjunction operator, the evaluation mechanism remains ultimately eager especially when in the tradition of programming with lists, inherited log-time ago from functional languages, one chains recursive steps
+The first limitation is that Prolog's resolution mechanism is subject to a fixed depth-first search and a strict evaluation semantics.
+While Prolog's depth-first  search mechanism can be complemented with alternative search strategies as shown in \cite{tor} by overriding its disjunction operator, the evaluation mechanism remains ultimately eager, especially when, in the tradition of programming with lists, one chains recursive steps
 in the body of clauses connected by conjunctions. 
 
-The second problem is the presence of procedural state-management constructs that are
-interleaved with Prolog's declarative programming style, ranging form 
+The second limitation, consequence of Prolog's incremental evolution as a programming language, is the presence of procedural state-management and I/O constructs that are
+interleaved with its native declarative programming constructs. These range form 
 random generator streams to file and socket I/O and dynamic database operations.
-
-While monadic constructs in functional languages \cite{moggi:monads,wadler93:cont}  can provide  a unified view of declarative and procedural state-management operations, logic programming languages still lack a unified approach providing a uniform interface to the above.
+While monadic constructs in functional languages \cite{moggi:monads,wadler93:cont}  can provide  a unified view of declarative and procedural state-management operations, logic programming languages still lack a unified approach providing a uniform interface to 
+this mix of declarative and procedural language constructs.
 
 A key step in this direction is SWI-Prolog's  {\em lazy\_lists} library \cite{lazy_lists}.
  It uses, ``under the hood'', attributed variables and destructive updates  to provide a declarative view of such state transformers in terms of the list unification familiar to the Prolog programmer. 
