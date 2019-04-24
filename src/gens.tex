@@ -32,7 +32,7 @@ Stream generators are exposed to the application programmer either through an ab
 \section{Introduction}
 
 Stream processing, now prevalent in widely used programming languages languages like Java, Python, C\# or JavaScript offers a uniform declarative view on processing finite 
-and infinite\footnote{We use ``infinite'' here as a short hand qualifier for data or computation streams of unpredictable, large or very large size.} sequences. Arguably, it's advent has been driven, besides the expressiveness lift it provides, by the need of processing big data, in static incarnations like very large training sets for machine learning or dynamic event streams coming from Web search queries and clicks  or from sensor networks supporting today's fast spreading IOT infrastructure.
+and infinite\footnote{We use ``infinite'' here as a short hand qualifier for data or computation streams of unpredictable, large or very large size.} sequences. Arguably, its advent has been driven, besides the expressiveness lift it provides, by the need of processing big data. This big data problem manifests itself in static incarnations like very large training sets for machine learning, or as dynamic event streams coming from Web search queries and clicks,  or from sensor networks supporting today's fast spreading IOT infrastructure.
  
 Several techniques have been used to extend mature programming languages with stream processing. The task has been facilitated by the presence of generalized iterator constructs like Python's generators or by presence of lazy evaluation semantics in
 functional languages.
@@ -40,7 +40,7 @@ functional languages.
 Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time surviver in the complex ecosystem of programming languages. However, to extend Prolog with state-of-the-art lazy stream processing capabilities, a few limitations need to be overcome.
 
 The first limitation is that Prolog's resolution mechanism is subject to a fixed depth-first search and a strict evaluation semantics.
-While Prolog's depth-first  search mechanism can be complemented with alternative search strategies as shown in \cite{tor} by overriding its disjunction operator, the evaluation mechanism remains ultimately eager, especially when, in the tradition of programming with lists, one chains recursive steps
+While Prolog's depth-first  search mechanism can be complemented with alternative search strategies as shown in \cite{tor} by overriding its disjunction operator, the evaluation mechanism remains ultimately eager, especially when programming with lists or DCGs, one chains recursive steps
 in the body of clauses connected by conjunctions. 
 
 The second limitation, consequence of Prolog's incremental evolution as a programming language, is the presence of procedural state-management and I/O constructs that are
@@ -49,17 +49,17 @@ random generator streams to file and socket I/O and dynamic database operations.
 While monadic constructs in functional languages \cite{moggi:monads,wadler93:cont}  can provide  a unified view of declarative and procedural state-management operations, logic programming languages still lack a unified approach providing a uniform interface to 
 this mix of declarative and procedural language constructs.
 
-A key step in this direction is SWI-Prolog's  {\em lazy\_lists} library \cite{lazy_lists}.
- It uses, ``under the hood'', attributed variables and destructive updates  to provide a declarative view of such state transformers in terms of the list unification familiar to the Prolog programmer. 
+A key step in this direction is SWI-Prolog's \cite{swi} {\em lazy\_lists} library \cite{lazy_lists}.
+ It uses, ``under the hood'', attributed variables and destructive updates  to provide a declarative view of such state transformers in terms of the list unification steps familiar to the Prolog programmer. 
+At the same time, it makes sense to expose stream generators as abstract sequence-manipulation operators, independent of the specific list representation of
+possibly infinite, lazily produced streams coming from I/O operations, coroutining logic engines or some complex computations that one might want to declaratively aggregate into an algebra of stream combinators.
 
-At the same time, we would like to expose stream generators as an abstract sequence-manipulation algebra and be able to 
 
-lazy evaluation functionality directly 
-
-The goal of this paper is dual-purpose: we encapsulate pragmatic language extensions using
+This brings us to the main goals of this paper. 
+We encapsulate stream processing extensions to Prolog that use
 state transformers, lazy lists and first-class logic engines 
 %\cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER,bp2011},
-\cite{tarau:cl2000,bp2011}, recently added to SWI-Prolog \cite{swi},
+\cite{tarau:cl2000,bp2011}, recently added to SWI-Prolog \cite{swi_engines}
 into a set of operations organized compositionally in the form of {\em 
 stream generators}.
 Our generators are similar to Python's {\em yield} mechanism \cite{beazley09} and 
@@ -68,12 +68,12 @@ they lift Prolog's expressiveness with lazy evaluation mechanisms similar to non
 functional programming languages like Haskell \cite{hudak07} or functional-logic languages like Curry \cite{antoy05}.
 
 
-Contributions of this paper:
+The main contributions of this paper are:
 \BI
 \I a simple and clean approach for setting up lazy streams
 \I a lazy list representation of lazy streams to naturally use them as Prolog lists
-\I a library of lazy stream sources, transformers, combinators and sinks
-  (or two libraries if we are counting the lazy\_lists library)
+\I a library of lazy stream sources, transformers and combinators %and sinks
+%  (or two libraries if we are counting the lazy\_lists library)
 \EI
 
 We organize our Generators as an algebra, wrapped as a library module with a declarative interface, to avoid exposing  operations requiring an implementation with a clear procedural flavor to the Prolog application programmer.
@@ -83,39 +83,6 @@ generators and lazy lists, we offer a choice between
 abstract sequence operations and the concrete list view familiar to Prolog users.
 
 
-
-\BI
- \I the best implementation can chosen and moved to the desired representation by the end-user via the iso-functor
-e.g. using lazy\_lists offers a familiar syntax to the Prolog application programmer
-\I efficiency - avoiding engines when possible reduces memory footprint and avoids term copying
-\I no gc is needed when working destructively in constant space - but results can be exposed declaratively
-\I algorithms (e.g. convolution of infinite sequences) easier to implement efficiently
-\I handling big data streams -can benefit from a library of stream combinators
-\EI
-
-
-Reasons for some of the new things we propose:
-\BI
-\I what generators can bring in languages like Python \\-e.g. itertools, 
-see \url{https://docs.python.org/3/library/itertools.html}
-\I lazy evaluation brings to Haskell a declarative handling of infinite sequences
-\I we want to add streams to
-handle potentially very large amounts of data flowing over the internet
-\I the need to update Prolog's language constructs to closely match new developments adopted by some of today's most successful programming languages (e.g. mention Python's yield \verb~C++~ fibers, go-language's goroutines)
-\EI
-enhances the expressiveness of  
-
-\BI
-\I  applications that one can think of are:
-\BI
-\I scanning multiple tweet streams for a common topic, 
-\I finding correlations in multiple stock quote streams 
-\I managing IOT signal streams
-\I stream processing  can be parallelized when streams originate from things like arrays
-\I interfaces to ASP or SAT - returning answers sets as streams can benefit from stream combinator operations
-\I combinatorial generation tools - e.g. for for testing purposes - can be encapsulated as lazy streams
-\EI
-\EI
 
 
 
@@ -803,6 +770,37 @@ preserved with things like nb\_setarg (e.g. counters or aggregates) can be encap
 \section{Discussion}
 
 
+
+\BI
+ \I efficiency - avoiding engines when possible reduces memory footprint and avoids term copying
+\I no gc is needed when working destructively in constant space - but results can be exposed declaratively
+\I algorithms (e.g. convolution of infinite sequences) easier to implement efficiently
+\I handling big data streams -can benefit from a library of stream combinators
+\EI
+
+
+Reasons for some of the new things we propose:
+\BI
+\I what generators can bring in languages like Python \\-e.g. itertools, 
+see \url{https://docs.python.org/3/library/itertools.html}
+\I lazy evaluation brings to Haskell a declarative handling of infinite sequences
+\I we want to add streams to
+handle potentially very large amounts of data flowing over the internet
+\I the need to update Prolog's language constructs to closely match new developments adopted by some of today's most successful programming languages (e.g. mention Python's yield \verb~C++~ fibers, go-language's goroutines)
+\EI
+enhances the expressiveness of  
+
+\BI
+\I  applications that one can think of are:
+\BI
+\I scanning multiple tweet streams for a common topic, 
+\I finding correlations in multiple stock quote streams 
+\I managing IOT signal streams
+\I stream processing  can be parallelized when streams originate from things like arrays
+\I interfaces to ASP or SAT - returning answers sets as streams can benefit from stream combinator operations
+\I combinatorial generation tools - e.g. for for testing purposes - can be encapsulated as lazy streams
+\EI
+\EI
 
 \BI
 {\Large
