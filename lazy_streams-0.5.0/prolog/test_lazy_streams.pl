@@ -225,6 +225,16 @@ tests:-
 
   
 
+% examples from paper
+
+and_nat_stream(E):-eng(_,nat_goal(0),E).
+
+nat_goal(N):-
+  SN is N+1,
+  engine_yield(N),
+  nat_goal(SN).
+  
+or_nat_stream(E):-eng(N, between(0,infinite,N), E).
 
   
   

@@ -35,6 +35,7 @@ same as: <code>show(K,Stream)</code>:-<code>once(findnsols(K,X,X in Stream,Xs))<
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="show/1"><b class="pred">show</b><var class="arglist">(+Generator)</var></a></dt><dd class="defbody">collects and prints 12 results of <var>Generator</var></dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="const/2"><b class="pred">const</b><var class="arglist">(+Constant, -Generator)</var></a></dt><dd class="defbody">Builds a constant infinite stream returning its first argument.
 the "next" step, <code>call(=(C),X)</code> will simply unify X and C</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="rand/1"><b class="pred">rand</b><var class="arglist">(+RandomStreamGenerator)</var></a></dt><dd class="defbody">produces a stream of random floating point numbers between 0 and 1</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="nat/1"><b class="pred">nat</b><var class="arglist">(-NaturalNumberStream)</var></a></dt><dd class="defbody">Natural number generator, storing the next and its initial state.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="pos/1"><b class="pred">pos</b><var class="arglist">(-PositiveIntegerStream)</var></a></dt><dd class="defbody">stricly positive integers</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="neg/1"><b class="pred">neg</b><var class="arglist">(-NegativeIntgerStream)</var></a></dt><dd class="defbody">strictly negative integers</dd>
@@ -120,8 +121,8 @@ used for testing</dd>
 The following predicates are exported, but not or incorrectly documented.</p>
 
 <dl class="undoc">
-<dt class="undoc"><span style="float:right">&nbsp;</span><a name="tests/0"><b class="pred">tests</b></a></dt>
 <dt class="undoc"><span style="float:right">&nbsp;</span><a name="bm/0"><b class="pred">bm</b></a></dt>
+<dt class="undoc"><span style="float:right">&nbsp;</span><a name="tests/0"><b class="pred">tests</b></a></dt>
 </dl>
 
 </body>
