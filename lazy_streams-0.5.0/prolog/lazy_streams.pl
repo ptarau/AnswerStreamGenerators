@@ -25,6 +25,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   ceng/3, % clonable engine-based answer stream generator with copy of goal and template - assumes side-effect free goal
   ceng_clone/2, % creates a clone using the goal + template wrapped in a generator
   const/2, % constant infinite stream
+  rand/1, % random floating point number in 0..1 generator
   nat/1, % stream of natural numbers starting at 0
   pos/1, % stream of positive natural numbers starting at 1
   neg/1, % stream of negative integers starting at -1
@@ -140,6 +141,12 @@ nexts_of(_,_,[]).
 % the "next" step, call(=(C),X) will simply unify X and C
 const(C,=(C)).
 
+%! rand(+RandomStreamGenerator)
+%
+% produces a stream of random floating point numbers between 0 and 1
+rand(random()).
+
+
 %! gen_next(+Advancer,InitialState+,-AnswerTemplate)
 %
 % generic simple stream advancer
@@ -167,6 +174,9 @@ pred(X,PX):-PX is X-1.
 %! neg(-NegativeIntgerStream)
 % strictly negative integers
 neg(gen_next(pred,state(-1))).
+
+
+
 
 %! gen_nextval(+Advancer,+InitialState,-Yield)
 %
@@ -213,6 +223,7 @@ range_step(To,X,SX):-X<To,succ(X,SX).
 cycle(E,CycleStream):-
   findall(X,X in E,Xs,Xs), % creates circular infinite list
   list(Xs,CycleStream).
+
 
 
 % engine-based generators
