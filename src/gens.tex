@@ -417,7 +417,7 @@ prod_loop(Ord1,A,E1-Xs,E2-Ys):-
   forall(member(Y,Ys),generate_answer(Pair)),
   ask_generator(E2,B),
   !,
-  prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
+  cart_prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
 prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
   flip(Ord1,_Ord2,X,Y,Pair),
   X in E1,member(Y,Ys),

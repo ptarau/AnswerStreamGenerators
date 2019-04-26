@@ -66,6 +66,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   iso_fun_/6, % functor transporting predicates of arity 3 between isomorphic domains on ar in 2 out
   lazy_conv/3, % convolution of lazy lists
   convolution/3, % convolution of streams, borrowed from lazy lists
+  eval_stream/2, % evaluates stream generator expression to generator
   do/1, % runs a goal exclusively for its side effects
   fact/2, % generator for infinite stream of factorials
   fibo/1, % generator for infinite stream of Fibonacci numbers
@@ -655,16 +656,17 @@ convolution(E1,E2, E):-
    
 % evaluator  
 
-%! eeval(+GeneratorExpression, -Generator)
+%! eval_stream(+GeneratorExpression, -Generator)
 % evaluates a generator expressioin to ready to use
-% gnerator that combines their effects
-eeval(E+F,S):- !,eeval(E,EE),eeval(F,EF),sum(EE,EF,S).
-eeval(E*F,P):- !,eeval(E,EE),eeval(F,EF),prod(EE,EF,P).
-eeval(E:F,R):- !,range(E,F,R).
-eeval([X|Xs],L):-!,list([X|Xs],L).
-eeval(X^G,E):-!,eng(X,G,E).
-eeval(A,C):-atomic(A),!,const(A,C).
-eeval(E,E).
+% generator that combines their effects
+eval_stream(E+F,S):- !,eval_stream(E,EE),eval_stream(F,EF),sum(EE,EF,S).
+eval_stream(E*F,P):- !,eval_stream(E,EE),eval_stream(F,EF),prod(EE,EF,P).
+eval_stream(E:F,R):- !,range(E,F,R).
+eval_stream([X|Xs],L):-!,list([X|Xs],L).
+eval_stream({E},SetGen):-!,eval_stream(E,F),setify(F,SetGen).
+eval_stream(X^G,E):-!,eng(X,G,E).
+eval_stream(A,C):-atomic(A),!,const(A,C).
+eval_stream(E,E).
 
 :-op(800,xfx,(in_)).
 
@@ -672,12 +674,12 @@ eeval(E,E).
 %
 % backtracks over elements of a generator expression
 % note that in_/2 is an xfx 800 operator, used as X in_ Gen
-X in_ E:-eeval(E,EE),X in EE.
+X in_ E:-eval_stream(E,EE),X in EE.
  
 %! ask_(GeneratorExpression, -Element)
 % 
 % produces next element after evaluating a gnerator expression
-ask_(E,X):-eeval(E,EE),ask(EE,X).
+ask_(E,X):-eval_stream(E,EE),ask(EE,X).
 
 
 %! fact(+N,-ResultGenerator)
