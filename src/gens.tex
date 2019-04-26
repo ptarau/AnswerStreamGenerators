@@ -294,6 +294,70 @@ for generating infinite AND-streams.
 Note also that generating an answer stream by either of the above methods
 is immaterial to the user of the generator which can be seen as a ``black box''.
 
+
+
+\subsection{Implementing lazy lists using attributed variables}
+
+Lazy lists form a suitable represention of infinite streams of Prolog
+terms. Lazy data structures can be implemented in Prolog using
+\emph{attributed} variables as a mechanism to extend unification
+\cite{10.1007/3-540-55844-6_141}. The lazy function implementation of
+Ciao \cite{casas2005functional}, exploits the widely supported
+\texttt{freeze/1} primitive that is usually implemented using attributed
+variables. A lazy \emph{list} is represented as a normal Prolog list where the
+\emph{tail} is formed by an attributed variable. Normal list traversal
+predicates unify this tail with either the empty list (\texttt{[]}) or a
+list cell (\texttt{[Head|Tail]}), which triggers the goal associated
+with the attributed variable.
+
+A significant disadvantage of this technique is that on backtracking the
+lazily computed extension to the list is lost. In addition to causing
+overhead for recomputing the value this makes the implementation
+unsuitable for fetching data from an external source that cannot
+backtrack. A typical example of such a source is a network socket. It is
+possible to keep a buffer to support re-fetching content from the socket
+but the amount of data we need to buffer depends on the unknown
+non-determinism in the Prolog code that processes the list and we cannot
+recover if the selected buffer size proves to be too short.
+
+The above limitation can be avoided using \emph{not-backtrackable
+assignment} as implemented by various Prolog systems. Where SICStus
+solves this problem using a dedicates \emph{mutable term}, SWI-Prolog
+provides
+\texttt{nb\_setarg/3}\footnote{\url{http://www.swi-prolog.org/pldoc/doc\_for?object=nb\_setarg/3}}
+for assigning an argument in a compound term where the assignment is not
+undone on backtracking. SWI-Prolog lazy lists are realized using an
+attributed variable that resides in the tail argument of the last list
+cell and keeps a reference to this last cell. When triggered, the next
+value(s) is/are computed and the tail of the current last cell is set to
+the new lazy list using \texttt{nb\_setarg/3}. As this binding is not
+undone on backtracking only the first unification triggers the goal
+associated with the attributed variable. Initially, a lazy list is
+represented using a term \texttt{[dummy|AttVar]}, where the lazy list
+itself is the  \texttt{AttVar}.
+
+The above technique is used to implement library \texttt{pure\_input} as
+well as the generic
+\texttt{lazy\_lists}\footnote{\url{http://www.swi-prolog.org/pldoc/doc_for?object=lazy\_lists\%3Alazy\_list/3}}
+library. The general goal to create a lazy list is
+\texttt{lazy\_list(:Next, +State0, -List)}. This calls
+\texttt{call(Next, State0, State1, Head)} to produce the next element.
+
+Lazy lists allow Prolog to handle infinite data streams provided garbage
+collection can reclaim the inaccessible head of the list. To make the
+head inaccessible, the code cannot keep a reference to the head around
+in a variable and although processing the list may be non-deterministic,
+this non-determinism must be resolved after examining a finite number of
+elements.  The attributed variable trigger and garbage collection ensure
+that the window on the stream that is kept in memory is finite and
+guaranteed to be large enough to cope with the finite non-determinism.
+
+
+% ref: https://cliplab.org/papers/lazy-functions-ciclops05.pdf
+
+
+
+
 \subsection{The Lazy List View of Prolog Streams}
 
 {\Large TODO: add here Jan's description}
