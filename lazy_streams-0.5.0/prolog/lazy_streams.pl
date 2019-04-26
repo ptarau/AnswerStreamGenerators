@@ -36,6 +36,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   drop/3, % skips initial segment of given length
   slice/4, % extracts finite slice between bounds, right bound excluded
   range/3, % generator for integers betwen two numbers, larger excluded
+  setify/2, % morphs a gnerator into one that produces distinct elements
   cat/2, % concatenates a list of gnerators - all but last should be finite
   conv/1, % generator for N * N self-convolution
   sum/3, % generator for direct sum of two finite or infinite streams
@@ -115,10 +116,10 @@ is_done(E):-arg(1,E,done).
 % in/2 backtracks over progressively advancing states.
 % in/2 is an xfx infix operator of priority 800
 
-X in E:-ask(E,A),select_from(E,A,X).
+X in Gen:-ask(Gen,A),select_from(Gen,A,X).
 
-select_from(_,A,A).
-select_from(E,_,X):-X in E.
+select_from(_,X,X).
+select_from(Gen,_,X):-X in Gen.
 
 %! show(+NumberOfItems, +Generator)
 % show/2 collects results after K steps and prints them out
@@ -181,9 +182,9 @@ neg(gen_next(pred,state(-1))).
 %! gen_nextval(+Advancer,+InitialState,-Yield)
 %
 % Generic advancer, where State and Yield are distinct.
-gen_nextval(F,State,Yield):-
+gen_nextval(Advancer,State,Yield):-
   arg(1,State,X1),
-  call(F,X1,X2, Yield),
+  call(Advancer,X1,X2, Yield),
   nb_linkarg(1,State,X2).
 
   % TODO: explain why/when nb_linkarg is ok, or 
@@ -233,7 +234,7 @@ cycle(E,CycleStream):-
 %! eng(+AnswerTemplate,+Goal, -Generator)
 %
 % Generator exposing the work of an engine as a stream of answers.  
-eng(X,G,engine_next(E)):-engine_create(X,G,E).  
+eng(X,Goal,engine_next(E)):-engine_create(X,Goal,E).  
 
 %! ceng(+Answertemplate,+Goal, -Generator)
 %
@@ -287,6 +288,12 @@ drop(_,E,E).
 % Builds generator for a slice of a given stream From..To (excluding To).
 slice(From,To)-->{K is To-From,K>=0},drop(From),take(K).
 
+%! setify(+Gen, -NewGen)
+%
+% Transforms a generator into one that produces distinct elements.
+% It avoids sorting and uses the built-in distinct/2 to ensure
+% that it also works on infinite streams.
+setify(Gen,NewGen):-eng(X,distinct(X,X in Gen),NewGen).
 
 % lazy functional operators  
 

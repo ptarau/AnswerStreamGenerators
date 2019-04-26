@@ -429,6 +429,17 @@ t47 :-
 a
 b
 c
-<engine>(3,0x7fbb11806580)
-<engine>(4,0x7fbb11806ec0)
-<engine>(5,0x7fbb10670690)
+
+t48 :-
+    nat(A),
+    nat(B),
+    sum(A, B, C),
+    setify(C, D),
+    show(D).
+
+[0,1,2,3,4,5,6,7,8,9,10,11]
+<engine>(3,0x7fe7a46a4a00)
+<engine>(4,0x7fe7a5808b00)
+<engine>(5,0x7fe7a5802140)
+<engine>(6,0x7fe7a580a2d0)
+<engine>(7,0x7fe7a580b000)

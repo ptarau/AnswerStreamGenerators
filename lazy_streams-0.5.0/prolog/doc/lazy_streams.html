@@ -54,6 +54,9 @@ That makes it clonable, assuming it runs code that's side-effect free.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="drop/3"><b class="pred">drop</b><var class="arglist">(+K, +Generator, -NewGenerator)</var></a></dt><dd class="defbody">Roll the stream to first postion after first <var>K</var> items.
 Returns generator positioned <var>K</var> steps forward.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="slice/4"><b class="pred">slice</b><var class="arglist">(+From, +To, +Generator, -NewGenerator)</var></a></dt><dd class="defbody">Builds generator for a slice of a given stream <var>From</var>..<var>To</var> (excluding <var>To</var>).</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="setify/2"><b class="pred">setify</b><var class="arglist">(+Gen, -NewGen)</var></a></dt><dd class="defbody">Transforms a generator into one that produces distinct elements.
+It avoids sorting and uses the built-in <a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=distinct/2">distinct/2</a> to ensure
+that it also works on infinite streams.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="map/3"><b class="pred">map</b><var class="arglist">(+Closure, +Generator, -NewGenerator)</var></a></dt><dd class="defbody">Builds a generator that will apply a closure to each element of a given generator.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="map/4"><b class="pred">map</b><var class="arglist">(+Closure, +Generator1, +Generator2, -NewGenerator)</var></a></dt><dd class="defbody">Builds a generator that combines two gnerators by creating
 an advancer that applies a <var>Closure</var> to their "next" yields.</dd>
@@ -121,8 +124,8 @@ used for testing</dd>
 The following predicates are exported, but not or incorrectly documented.</p>
 
 <dl class="undoc">
-<dt class="undoc"><span style="float:right">&nbsp;</span><a name="bm/0"><b class="pred">bm</b></a></dt>
 <dt class="undoc"><span style="float:right">&nbsp;</span><a name="tests/0"><b class="pred">tests</b></a></dt>
+<dt class="undoc"><span style="float:right">&nbsp;</span><a name="bm/0"><b class="pred">bm</b></a></dt>
 </dl>
 
 </body>
