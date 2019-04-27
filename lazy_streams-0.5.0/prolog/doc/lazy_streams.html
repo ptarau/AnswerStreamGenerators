@@ -116,6 +116,7 @@ generator that combines their effects</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="in_/2"><var class="arglist">-X</var> <b class="pred">in_</b> <var class="arglist">+GeneratorExpression</var></a></dt><dd class="defbody">backtracks over elements of a generator expression
 note that in_/2 is an xfx 800 operator, used as <var>X</var> in_ Gen</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="ask_/2"><b class="pred">ask_</b><var class="arglist">(GeneratorExpression, -Element)</var></a></dt><dd class="defbody">produces next element after evaluating a gnerator expression</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="term_reader/2"><b class="pred">term_reader</b><var class="arglist">(+File, -TermGenerator)</var></a></dt><dd class="defbody">creates a generator advancing on term read from a file</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="fact/2"><b class="pred">fact</b><var class="arglist">(+N, -ResultGenerator)</var></a></dt><dd class="defbody">factorial computation - use <a href="lazy_streams.html#ask/2">ask/2</a> to extract value
 used for testing</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="fibo/1"><b class="pred">fibo</b><var class="arglist">(-Generator)</var></a></dt><dd class="defbody">infinite Fibonacci stream for testing</dd>
@@ -127,8 +128,8 @@ used for testing</dd>
 The following predicates are exported, but not or incorrectly documented.</p>
 
 <dl class="undoc">
-<dt class="undoc"><span style="float:right">&nbsp;</span><a name="tests/0"><b class="pred">tests</b></a></dt>
 <dt class="undoc"><span style="float:right">&nbsp;</span><a name="bm/0"><b class="pred">bm</b></a></dt>
+<dt class="undoc"><span style="float:right">&nbsp;</span><a name="tests/0"><b class="pred">tests</b></a></dt>
 </dl>
 
 </body>

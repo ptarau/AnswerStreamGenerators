@@ -153,11 +153,13 @@ t48:-nat(A),nat(B),sum(A,B,C),setify(C,D),show(D).
 
 t49:-eval_stream({([a,b,a])}+(1:3)*c,E),show(30,E).
 
+t50:-term_reader('lazy_streams.pl',R),drop(9,R,S),show(2,S).
+
 run_tests:-
   member(T,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,
   t17,t18,t19,t20,t21,t22,t23,t24,t25,t26,t27,t28,t29,t30,
   t31,t32,t33,t34,t35,t36,t37,t38,t39,
-  t40,t41,t42,t43,t44,t45,t46,t47,t48,t49]),
+  t40,t41,t42,t43,t44,t45,t46,t47,t48,t49,t50]),
   nl,
   listing(T),
   call(T),

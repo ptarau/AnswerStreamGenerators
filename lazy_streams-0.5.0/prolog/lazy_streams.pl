@@ -69,6 +69,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   convolution/3, % convolution of streams, borrowed from lazy lists
   eval_stream/2, % evaluates stream generator expression to generator
   do/1, % runs a goal exclusively for its side effects
+  term_reader/2, % term stream generator, by reading from a Prolog file
   fact/2, % generator for infinite stream of factorials
   fibo/1, % generator for infinite stream of Fibonacci numbers
   tests/0, % run all tests, with output to tests.txt
@@ -133,7 +134,7 @@ select_from(Gen,_,X):-X in Gen.
 % show/2 collects results after K steps and prints them out
 % same as: show(K,Stream):-once(findnsols(K,X,X in Stream,Xs)),writeln(Xs).
 
-show(K,Gen):-nexts_of(Gen,K,Xs),writeln(Xs).
+show(K,Gen):-nexts_of(Gen,K,Xs),portray_clause(Xs).
 
 %! show(+Generator)
 % collects and prints 12 results of Generator
@@ -328,12 +329,7 @@ map_next(F,E1,E2,Z):-ask(E1,X),ask(E2,Y),call(F,X,Y,Z).
 %! reduce(+Closure, +Generator, +InitialVal, -ResultGenerator)
 % Builds generator that reduces given generator's yields with given closure, 
 % starting with an initial value. Yields the resulting single final value.
-reduce(F,InitVal,E,reduce_next(state(InitVal),F,E)).
-
-%! do(+Goal)
-%
-% Bactracks over Goal for its side-effects only.  
-do(G):-call(G),fail;true.
+reduce(F,InitVal,Gen,reduce_next(state(InitVal),F,Gen)).
 
 % reduces state S while E provides "next" elements
 reduce_next(S,F,E,R):-
@@ -345,6 +341,12 @@ reduce_next(S,F,E,R):-
     nb_linkarg(1,S,Z)
   )),
   arg(1,S,R).
+
+  %! do(+Goal)
+%
+% Bactracks over Goal for its side-effects only.  
+do(G):-call(G),fail;true.
+
 
 %! zipper_of(+Generator1,+Generator2, -NewGenerator)
 % zipper_of/3 collects pairs of elements in matching positions
@@ -688,6 +690,19 @@ X in_ E:-eval_stream(E,EE),X in EE.
 % produces next element after evaluating a gnerator expression
 ask_(E,X):-eval_stream(E,EE),ask(EE,X).
 
+
+
+%! term_reader(+File,-TermGenerator)
+%
+% creates a generator advancing on terms read from a file
+
+term_reader(File,next_term(Stream)):-open(File,read,Stream).
+
+next_term(Stream,Term):-
+  read(Stream,X),
+  ( X\==end_of_file->Term=X
+  ; close(Stream),fail
+  ).
 
 %! fact(+N,-ResultGenerator)
 %
