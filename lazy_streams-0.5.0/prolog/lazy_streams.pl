@@ -15,6 +15,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   ask_/2, % like ask, but working in a stream expression
   stop/1, % stop/1 marks a generator as done so its resources can be freed
   is_done/1, % true if generator is done,
+  empty/1, % empty stream generator, set to "done" up front
   op(800,xfx,(in)), % exports in/2
   op(800,xfx,(in_)), % exports in_/2
   in/2, % like member/2, for lists - test or generates
@@ -109,6 +110,12 @@ stop(E):-
 %
 % checks if a generator is done
 is_done(E):-arg(1,E,done).
+
+%! empty(-Done)
+%
+% empty stream generator, set to "done" up front
+ 
+empty(state(done)).
 
 :-op(800,xfx,(in)).
 

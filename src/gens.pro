@@ -1,124 +1,111 @@
-new_generator(X,G,engine(E,X,G)):-engine_create(X,G,E).
-
-clone_generator(engine(_,X,G),engine(E,X,G)):-engine_create(X,G,E).
-
-stop_generator(E,R):-is_done_generator(E),!,R=E.
-stop_generator(engine(E,X,G),engine(done,X,G)):-engine_destroy(E).
-
-stop_generator(E):-stop_generator(E,_).
-
-stop_generator:-engine_self(E),engine_destroy(E).
-
-ask_generator(engine(done,_,_),_):-!,fail.
-ask_generator(engine(E,_,_),X):-engine_next(E,A),!,X=A.
-ask_generator(Estate,_):-nb_setarg(1,Estate,done),fail.  
-
-generate_answer(X):-engine_yield(X).
-
-is_done_generator(engine(done,_,_)).
-
-% shows engine handle or "done" as well as the generator's stored goal
-show_generator(engine(E,X,G)):-writeln(X:G=E).
-
-nat(E):-new_generator(_,nat_goal(0),E).
-
-nat_goal(N):-
-  SN is N+1,
-  generate_answer(N),
-  nat_goal(SN).
-
-nat_(E):-new_generator(N, between(0,infinite,N), E).
+ask(E,_):-is_done(E),!,fail.
+ask(E,R):-call(E,X),!,R=X.
+ask(E,_):-stop(E),fail.
 
 :-op(800,xfx,(in)).
 
-X in E:-ask_generator(E,A),select_from(E,A,X).
+X in Gen:-ask(Gen,A),select_from(Gen,A,X).
 
-select_from(_,A,A).
-select_from(E,_,X):-X in E.
+select_from(_,X,X).
+select_from(Gen,_,X):-X in Gen.
 
-range(From,To,E):-Max is To-1,new_generator(I,between(From,Max,I),E).
+rand(random()).
 
-range(To,E):-range(0,To,E).
+gen_next(F,State,X):-
+  arg(1,State,X),
+  call(F,X,Y),
+  nb_setarg(1,State,Y).
 
-generator_loop(Modifier,State):-
-  generate_answer(State),
-  call(Modifier,State,NewState),
-  !,
-  generator_loop(Modifier,NewState).
+nat(nat_next(state(0))).
 
-generator_loop_(Modifier,InitialState):-
-  Holder=holder(InitialState),
-  repeat,
-    \+ (
-      arg(1,Holder,State),
-      generate_answer(State),
-      call(Modifier,State,NewState),
-      nb_setarg(1,Holder,NewState)
-    ),
-  !,
-  fail.
+nat_next(S,X):-gen_next(succ,S,X).
 
-pos(E):-new_generator(_,generator_loop(succ,1),E).
+gen_nextval(Advancer,State,Yield):-
+  arg(1,State,X1),
+  call(Advancer,X1,X2, Yield),
+  nb_setarg(1,State,X2).
 
-neg(E):-new_generator_(_,generator_loop(pred,-1),E).
+list(Xs, gen_nextval(list_step,state(Xs))).
 
-pred(SX,X):-succ(X,SX).
+list_step([X|Xs],Xs,X).
 
-list2generator(Xs,E):-new_generator(X,member(X,Xs),E).
+eng(X,Goal,engine_next(Engine)):-engine_create(X,Goal,Engine). 
 
-finite_generator2list(E,Xs):-findall(X,X in E,Xs).
+and_nat_stream(Gen):-eng(_,nat_goal(0),Gen).
 
-generator2list(E,Xs):-lazy_findall(X,X in E,Xs).
+nat_goal(N):-
+  SN is N+1,
+  engine_yield(N),
+  nat_goal(SN).
 
-lazy_nats(Xs):-lazy_findall(X,between(0,infinite,X),Xs).
+or_nat_stream(Gen):-eng(N, between(0,infinite,N), Gen).
 
-generator2list_(engine(E,_,_),Xs):-lazy_list(lazy_engine_next(E, 1), Xs).
 
-lend_operation_to_lazy_lists(Op,Xs,Ys,Zs):-
-  list2generator(Xs,E1),
-  list2generator(Ys,E2),
-  call(Op,E1,E2,E3),
-  generator2list(E3,Zs).
+%! gen2lazy(+Generator,-LazyLIst)  
+%
+% Turns a generator into a lazy list  
+gen2lazy(E,Ls):-lazy_list(gen2lazy_forward,E,Ls).
 
-lazy_list_sum(Xs,Ys,Zs):-lend_operation_to_lazy_lists(dir_sum,Xs,Ys,Zs).
+% E manages its state, so we just pass it on
+gen2lazy_forward(E,E,X):-ask(E,X).
 
-lazy_list_prod(Xs,Ys,Zs):-lend_operation_to_lazy_lists(cart_prod,Xs,Ys,Zs).
+%! lazy2gen(+LazyList, -Generator)
+%
+% Turns a lazy list into a generator.
+% Note that list/2 actually just  works on lazy lists!
+lazy2gen(Xs,E):-list(Xs,E).
 
-fin_dir_sum(E1,E2,E):-new_generator(R, (R in E1 ; R in E2), E).
 
-fin_cart_prod(E1,E2,E):-new_generator(R, fin_cart_prod_goal(E1,E2,R), E).
+% iso functors
 
-fin_cart_prod_goal(E1,E2,X-Y):-
-  X in E1,
-  clone_generator(E2,Clone),
-  Y in Clone.  
+%! iso_fun(+Operation,+SourceType,+TargetType,+Arg1, -ResultOfSourceType)
+%
+% Transports a predicate of arity 2 F(+A,-B) to a domain where
+% an operation can be performed and brings back the result.
+iso_fun(F,From,To,A,B):-
+  call(From,A,X),
+  call(F,X,Y),
+  call(To,Y,B).
 
-dir_sum(E1,E2,engine(E,X,G)):-
-  G=dir_sum_goal(E1,E2,X),
+%! iso_fun(+Operation,+SourceType,+TargetType,+Arg1,+Arg2, -ResultOfSourceType)
+%
+% Transports a predicate of arity 2 F(+A,+B,-C) to a domain where
+% an operation can be performed and brings back the result. 
+% transports F(+A,+B,-C) 
+iso_fun(F,From,To,A,B,C):- % writeln(iso_fun(F,From,To,A,B,C)),
+  call(From,A,X),
+  call(From,B,Y),
+  call(F,X,Y,Z),
+  call(To,Z,C).
+
+%! iso_fun_(+Operation,+SourceType,+TargetType,+Arg1, -Res1, -Res2)
+%
+% Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
+% an operation can be performed and brings back the results. 
+% transports F(+A,+B,-C) 
+iso_fun_(F,From,To,A,B,C):- 
+  call(From,A,X),
+  call(F,X, Y,Z), % X in, Y,Z out 
+  call(To,Y,B),
+  call(To,Z,C).
+
+%TODO
+
+prod(E1,E2,engine(E,X,G)):-
+  G=prod_goal(E1,E2),
   engine_create(X,G,E).
-  
-dir_sum_goal(E1,E2,X):-
-  ( ask_generator(E1,X)
-  ; ask_generator(E2,X)
-  ; \+ (is_done_generator(E1),is_done_generator(E2)),
-    dir_sum_goal(E1,E2,X)
-  ).  
 
-cart_prod(E1,E2,engine(E,X,G)):-
-  G=cart_prod_goal(E1,E2),
-  engine_create(X,G,E).
-
-cart_prod_goal(E1,E2):-
+prod_goal(E1,E2):-
   ask_generator(E1,A),
-  cart_prod_loop(1,A,E1-[],E2-[]).
+  prod_loop(1,A,E1-[],E2-[]).
 
-cart_prod_loop(Ord1,A,E1-Xs,E2-Ys):-
+prod_loop(Ord1,A,E1-Xs,E2-Ys):-
   flip(Ord1,Ord2,A,Y,Pair),
   forall(member(Y,Ys),generate_answer(Pair)),
   ask_generator(E2,B),
   !,
   cart_prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
-cart_prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
+prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
   flip(Ord1,_Ord2,X,Y,Pair),
   X in E1,member(Y,Ys),
   generate_answer(Pair),
@@ -146,14 +133,17 @@ conv_loop(E1,E2,N,Xs,Ys):-
 
 setify(E,SE):-new_generator(X,distinct(X,X in E),SE).
 
-:-op(100,fx,(!)).
-
-eeval(engine(E,X,G),engine(E,X,G)).
-eeval(!E,ClonedE):-clone_generator(E,ClonedE).
-eeval(E+F,S):-eeval(E,EE),eeval(F,EF),dir_sum(EE,EF,S).
-eeval(E*F,P):-eeval(E,EE),eeval(F,EF),cart_prod(EE,EF,P).
-eeval({E},SetGen):-eeval(E,F),setify(F,SetGen).
-eeval([X|Xs],E):-list2generator([X|Xs],E).
+%! eval_stream(+GeneratorExpression, -Generator)
+% evaluates a generator expressioin to ready to use
+% generator that combines their effects
+eval_stream(E+F,S):- !,eval_stream(E,EE),eval_stream(F,EF),sum(EE,EF,S).
+eval_stream(E*F,P):- !,eval_stream(E,EE),eval_stream(F,EF),prod(EE,EF,P).
+eval_stream(E:F,R):- !,range(E,F,R).
+eval_stream([X|Xs],L):-!,list([X|Xs],L).
+eval_stream({E},SetGen):-!,eval_stream(E,F),setify(F,SetGen).
+eval_stream(X^G,E):-!,eng(X,G,E).
+eval_stream(A,C):-atomic(A),!,const(A,C).
+eval_stream(E,E).
 
 :-op(800,xfx,(in_)).
 X in_ E:-eeval(E,EE),X in EE.     
@@ -224,119 +214,4 @@ pythagorean_slice:-
   pythagoras(P),
   slice(P,100001,100005,S),
   forall(R in S,(assertion(R),writeln(R))).
-
-t1:-
-  range(0,3,E1),
-  %range(10,14,E2),
-  list2generator([a,b,c],E2),
-  range(100,102,E3),
-  eeval(E1+E3+E2+!E3, E),
-  forall(X in E,writeln(X)).
-    
-t2:-
-  range(0,2,E1),
-  list2generator([a,b,c],E2),
-  eeval(E1*E2, E),
-  forall(X in E,writeln(X)).
-
-  
-t3:-
-  range(0,3,E1),
-  %range(10,14,E2),
-  list2generator([a,b,c],E2),
-  range(100,102,E3),
-  eeval(E1*E3+E2*!E3, E),
-  forall(X in E,writeln(X)).
-
-t4:- 
-  range(3,E),
-  eeval((!E * !E)*(!E + !E)*E,NewE),
-  forall(X in NewE,ppp(X)). 
-  
-t5:- 
- eeval([the]*[cat,dog,robot]*[walks,runs],E),eeval(!E,EE),
-  stop_generator(E,_),
-  forall(X in EE,ppp(X)).
-
-t6:-nat(E),take(4,E,F),forall(X in F,ppp(X)).
-
-t7:-range(20,E),drop(15,E,F),forall(X in F,writeln(X)).
-
-t8:-range(5,E),map_generator(succ,E,NewE),forall(X in NewE,writeln(X)).
-
-
-t9:-range(0,10,E1),range(100,110,E2),
-    dir_sum(E1,E2,E),
-    forall(R in E,writeln(R)).
-    
-t10:-range(0,10,E1),range(100,110,E2),
-    map_generator(plus,E1,E2,E),
-    forall(R in E,writeln(R)).
-
-t11:-range(0,10,E1),
-    list2generator([a,b,c,d],E2),
-    zipper_of(E1,E2,E),
-    forall(R in E,writeln(R)).
-
-
-t12:-range(10,E),reduce_with(plus,E,Sum),writeln(Sum).
-
-c1:-
-  nat(N),nat(M),conv(M,N,C),ppg(30,C).
-
-c2:-
-  nat(N),list2generator([a,b,c,d],M),conv(M,N,C),ppg(30,C).
-
-c3:-
-  nat(N),list2generator([a,b,c,d],M),conv(N,M,C),ppg(30,C).
-
-c4:-
-  range(5,N),range(5,M),conv(M,N,C),ppg(30,C).
-
-c5:-
-  range(4,N),list2generator([a,b,c,d],M),conv(M,N,C),ppg(30,C).
-  
-      
-go:-
-   member(G,[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12]),
-   ( nl,writeln(G),G,fail
-   ; current_engine(E),ppp(E),fail 
-     % tests that all stays clean
-   ).
-
-cgo:-member(G,[c1,c2,c3,c4,c5]),
-   ( nl,writeln(G),G,fail
-   ; current_engine(E),ppp(E),fail 
-     % tests that all stays clean
-   ).
-      
-% helpers
-ppp(X):-portray_clause(X).
-
-% adaptor for lazy_list syntax
-
-% finite printer for generators
-ppg(K,E):-take(K,E,F),forall(X in F,ppp(X)).
-
-% finite printer for lazy lists
-ppl(K,Xs):-findnsols(K,X,member(X,Xs),Rs),!,ppp(Rs).
-
-% positive integers
-lazy_pos(Xs) :-lazy_findall(X, between(1, infinite, X), Xs).
-
-% negative integers
-lazy_neg(Xs) :-lazy_findall(X, (between(1, infinite, X0), X is -X0), Xs).
-  
-lazy_take(K,Xs,Ys):-
-   list2generator(Xs,E1),
-   take(K,E1,E2),
-   generator2list(E2,Ys).
-
-% etc. 
-% this can be generalized with higher order mapping predicates
-% like one would do in  Haskell
-   
-l1:-lazy_pos(Ns),lazy_neg(Ms),lazy_list_sum(Ns,Ms,Xs),ppl(20,Xs).
-l2:-lazy_pos(Ns),lazy_neg(Ms),lazy_list_prod(Ns,Ms,Xs),ppl(20,Xs).  
-  
 

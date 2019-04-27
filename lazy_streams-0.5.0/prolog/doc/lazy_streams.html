@@ -28,6 +28,7 @@ by making its handle unreacheable.</p>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="stop/1"><b class="pred">stop</b><var class="arglist">(+Generator)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#stop/1">stop/1</a> marks a generator as done.
 Future calls to it will fail</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="is_done/1"><b class="pred">is_done</b><var class="arglist">(+Generator)</var></a></dt><dd class="defbody">checks if a generator is done</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="empty/1"><b class="pred">empty</b><var class="arglist">(-Done)</var></a></dt><dd class="defbody">empty stream generator, set to "done" up front</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="in/2"><var class="arglist">-Value</var> <b class="pred">in</b> <var class="arglist">+Generator</var></a></dt><dd class="defbody"><a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=in/2">in/2</a> backtracks over progressively advancing states.
 <a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=in/2">in/2</a> is an xfx infix operator of priority 800</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="show/2"><b class="pred">show</b><var class="arglist">(+NumberOfItems, +Generator)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#show/2">show/2</a> collects results after K steps and prints them out
@@ -110,6 +111,8 @@ This loops!
 infelicity: original stream shifted by one position ...</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_conv/3"><b class="pred">lazy_conv</b><var class="arglist">(+As, +Bs, -Ps)</var></a></dt><dd class="defbody">convolution of two finite or infinite lazy lists</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="convolution/3"><b class="pred">convolution</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">convolution of two finite or infinite lazy generators</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="eval_stream/2"><b class="pred">eval_stream</b><var class="arglist">(+GeneratorExpression, -Generator)</var></a></dt><dd class="defbody">evaluates a generator expressioin to ready to use
+generator that combines their effects</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="in_/2"><var class="arglist">-X</var> <b class="pred">in_</b> <var class="arglist">+GeneratorExpression</var></a></dt><dd class="defbody">backtracks over elements of a generator expression
 note that in_/2 is an xfx 800 operator, used as <var>X</var> in_ Gen</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="ask_/2"><b class="pred">ask_</b><var class="arglist">(GeneratorExpression, -Element)</var></a></dt><dd class="defbody">produces next element after evaluating a gnerator expression</dd>

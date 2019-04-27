@@ -78,7 +78,9 @@ random generator streams to file and socket I/O and dynamic database operations.
 While monadic constructs in functional languages \cite{moggi:monads,wadler93:cont}  can provide  a unified view of declarative and procedural state-management operations, logic programming languages still lack a unified approach providing a uniform interface to 
 this mix of declarative and procedural language constructs.
 
-A key step in this direction is SWI-Prolog's \cite{swi} {\em lazy\_lists} library \cite{lazy_lists}.
+A key step in this direction is SWI-Prolog's \cite{swi} 
+{\em lazy\_lists} library
+\footnote{\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl}}
  It uses, ``under the hood'', attributed variables and destructive updates  to provide a declarative view of such state transformers in terms of the list unification steps familiar to the Prolog programmer. 
 At the same time, it makes sense to expose stream generators as abstract sequence-manipulation operators, independent of the specific list representation of
 possibly infinite, lazily produced streams coming from I/O operations, coroutining logic engines or some complex computations that one might want to declaratively aggregate into an algebra of stream combinators.
@@ -120,11 +122,15 @@ The paper is organized as follows.
 \section{Overview}
 
 {\Large
-     Show small examples of the use of lazy streams to give an idea of their expressive power and how neat the code looks
+     Show small examples of the use of lazy streams to give an idea of their expressive power and how neat the code looks\\
+     
+     USE the stream evaluator with examples here
  }
      
      
-\section{Implementation}
+%\section{Implementation}
+
+\section{Implementing Stream Generators}
      
 \subsection{The Stream Generator Interface}
 
@@ -149,9 +155,9 @@ select_from(Gen,_,X):-X in Gen.
 \end{code}
 
 The simplest generator is the infinite constant stream producer {\tt const/2}:
-\begin{code}
+\begin{codex}
 const(Constant, Generator)
-\end{code}
+\end{codex}
 that when {\tt ask/2} asks for the next element with
 \begin{codex}
 call(=(Constant),X)
@@ -229,15 +235,17 @@ When more complex computations are involved, that are cannot be expressed as ste
 \subsubsection{SWI Prolog's engine implementation}
 
 A first-class logic engine \cite{tarau:cl2000,bp2011} can be seen as a Prolog virtual machine that has its own stacks and machine state. 
-In their SWI-Prolog implementation, unlike normal Prolog threads \cite{swi,swi_threads} though, they are not associated with an operating system thread. Instead, you ask an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and cause it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal. Engines are created with the built-in {\tt engine\_create/3} that uses a goal and and answer template as input and returns and engine handle as output. SWI-Prolog engines are created with minimal dynamic stack space and are garbage collected when unreachable.
+In their SWI-Prolog implementation. Unlike normal Prolog threads \cite{swi,swi_threads}, they are not associated with an operating system thread. Instead, one asks an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and cause it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal: the client decides haow many answers it wants returned and what to do with them.  
 
-Implementing the engine API does not assume that a Prolog system supports multi-threading, It only assumes that the virtual machine is fully reentrant, it can be queried and it can stop, yield data and resumes execution as a coroutine.
+Engines are created with the built-in {\tt engine\_create/3} that uses a goal and and answer template as input and returns and engine handle as output. SWI-Prolog engines are created with minimal dynamic stack space and are garbage collected when unreachable.
+
+Implementing the engine API does not assume that a Prolog system supports multi-threading, It only assumes that the virtual machine is fully reentrant, it can be queried and it can stop, yield data and resume execution as a coroutine.
 
 \begin{comment}
 As Prolog virtual machines, engines have  an internal state. Thus interacting with them requires a concise and expressive, but ultimately procedural API. This is not very different from what working with attributed variables, instrumental to adding constraint solvers, requires.
 \end{comment}
 
-\subsection{Answer Stream Generator Constructors}
+\subsubsection{Answer Stream Generator Constructors}
 
 We design Answer Stream Generators as a wrapper around the SWI-Prolog engine implementation.
 We can also keep the goals and answer templates that started the engine to make them reusable. At the same time this external wrapper ensures that engines stay garbage collectable on termination.
@@ -295,6 +303,9 @@ Note also that generating an answer stream by either of the above methods
 is immaterial to the user of the generator which can be seen as a ``black box''.
 
 
+\section{Generators and Lazy Lists}
+
+While generators provide abstract sequence operations
 
 \subsection{Implementing lazy lists using attributed variables}
 
@@ -302,7 +313,7 @@ Lazy lists form a suitable represention of infinite streams of Prolog
 terms. Lazy data structures can be implemented in Prolog using
 \emph{attributed} variables as a mechanism to extend unification
 \cite{10.1007/3-540-55844-6_141}. The lazy function implementation of
-Ciao \cite{casas2005functional}, exploits the widely supported
+Ciao \cite{casas2005functional,lazyCiao}, exploits the widely supported
 \texttt{freeze/1} primitive that is usually implemented using attributed
 variables. A lazy \emph{list} is represented as a normal Prolog list where the
 \emph{tail} is formed by an attributed variable. Normal list traversal
@@ -322,9 +333,9 @@ recover if the selected buffer size proves to be too short.
 
 The above limitation can be avoided using \emph{not-backtrackable
 assignment} as implemented by various Prolog systems. Where SICStus
-solves this problem using a dedicates \emph{mutable term}, SWI-Prolog
+solves this problem using a dedicated \emph{mutable term}, SWI-Prolog
 provides
-\texttt{nb\_setarg/3}\footnote{\url{http://www.swi-prolog.org/pldoc/doc\_for?object=nb\_setarg/3}}
+\texttt{nb\_setarg/3}\footnote{\url{http://www.swi-prolog.org/pldoc/doc_for?object=nb_setarg/3}}
 for assigning an argument in a compound term where the assignment is not
 undone on backtracking. SWI-Prolog lazy lists are realized using an
 attributed variable that resides in the tail argument of the last list
@@ -338,7 +349,7 @@ itself is the  \texttt{AttVar}.
 
 The above technique is used to implement library \texttt{pure\_input} as
 well as the generic
-\texttt{lazy\_lists}\footnote{\url{http://www.swi-prolog.org/pldoc/doc_for?object=lazy\_lists\%3Alazy\_list/3}}
+\texttt{lazy\_lists}\footnote{\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl?show=src#lazy_list/3}}
 library. The general goal to create a lazy list is
 \texttt{lazy\_list(:Next, +State0, -List)}. This calls
 \texttt{call(Next, State0, State1, Head)} to produce the next element.
@@ -360,14 +371,6 @@ guaranteed to be large enough to cope with the finite non-determinism.
 
 \subsection{The Lazy List View of Prolog Streams}
 
-{\Large TODO: add here Jan's description}
-
-   Explain that we can use lazy lists like Prolog lists:
-   \BI
-   \I
-    show examples of use
-   \I show how the representation works
- \EI
  
  \begin{code}
 %! lazy_nats(-LazyListOfNaturalNumbers)
@@ -453,7 +456,7 @@ We start with the simpler case of finite generators.
 
 In the case of possibly infinite generators, we  ask each generator for one answer inside a linear recursive loop. We ensure that termination only happens if both generators terminate.
 \begin{code}
-TODO
+%TODO
 \end{code}
 
 Designing the recursive loop for possibly infinite products
@@ -594,14 +597,17 @@ We can implement our generator algebra as an embedded language via a simple inte
 (although partial evaluation can make this more efficient). We can also add {\tt !} as a unary prefix operator, used to mark a generator that needs to be cloned.
 
 \begin{code}
-:-op(100,fx,(!)).
-
-eeval(engine(E,X,G),engine(E,X,G)).
-eeval(!E,ClonedE):-clone_generator(E,ClonedE).
-eeval(E+F,S):-eeval(E,EE),eeval(F,EF),dir_sum(EE,EF,S).
-eeval(E*F,P):-eeval(E,EE),eeval(F,EF),cart_prod(EE,EF,P).
-eeval({E},SetGen):-eeval(E,F),setify(F,SetGen).
-eeval([X|Xs],E):-list2generator([X|Xs],E).
+%! eval_stream(+GeneratorExpression, -Generator)
+% evaluates a generator expressioin to ready to use
+% generator that combines their effects
+eval_stream(E+F,S):- !,eval_stream(E,EE),eval_stream(F,EF),sum(EE,EF,S).
+eval_stream(E*F,P):- !,eval_stream(E,EE),eval_stream(F,EF),prod(EE,EF,P).
+eval_stream(E:F,R):- !,range(E,F,R).
+eval_stream([X|Xs],L):-!,list([X|Xs],L).
+eval_stream({E},SetGen):-!,eval_stream(E,F),setify(F,SetGen).
+eval_stream(X^G,E):-!,eng(X,G,E).
+eval_stream(A,C):-atomic(A),!,const(A,C).
+eval_stream(E,E).
 \end{code}
 Similarly to the {\tt in/2} predicate, we can make the action of the
 interpreter transparent, via the {\tt in\_/2} predicate, also defined as an operator.
@@ -614,23 +620,18 @@ X in_ E:-eeval(E,EE),X in EE.
 \BX
 Applying the embedded language interpreter.
 \begin{codex}
-?- list2generator([a,b],E),forall(X in_ E +(!E * !E), writeln(X)).
-a
-a-a
-b
-b-a
-b-b
-a-b
-E = engine(<engine>(7,0x7fe9b80517a0), _2298, member(_2298, [a, b])).
-
-?- forall(X in_ {[a,b] + [b,a]}, writeln(X)).
-a
-b
-true.
+?- X in_ ({[a,b,a]}+(1:3)*c).
+X = a ;
+X = 1-c ;
+X = b ;
+X = 1-c ;
+X = 2-c .
+....
 \end{codex}
-
 \EX
 \subsection{Some algebraic properties of sums and products}
+
+As sum/2 simply interleaves two streams it is clearly associative and 
 
 \BI
 \I monoid structure for + and *
