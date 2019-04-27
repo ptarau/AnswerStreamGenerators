@@ -278,10 +278,7 @@ by yielding an answer at each step of a recursive loop.
 \begin{code}
 and_nat_stream(Gen):-eng(_,nat_goal(0),Gen).
 
-nat_goal(N):-
-  SN is N+1,
-  engine_yield(N),
-  nat_goal(SN).
+nat_goal(N):-SN is N+1,engine_yield(N),nat_goal(SN).
 \end{code}
 
 Alternatively, one could define 
@@ -303,177 +300,40 @@ Note also that generating an answer stream by either of the above methods
 is immaterial to the user of the generator which can be seen as a ``black box''.
 
 
-\section{Generators and Lazy Lists}
-
-While generators provide abstract sequence operations
-
-\subsection{Implementing lazy lists using attributed variables}
-
-Lazy lists form a suitable represention of infinite streams of Prolog
-terms. Lazy data structures can be implemented in Prolog using
-\emph{attributed} variables as a mechanism to extend unification
-\cite{10.1007/3-540-55844-6_141}. The lazy function implementation of
-Ciao \cite{casas2005functional,lazyCiao}, exploits the widely supported
-\texttt{freeze/1} primitive that is usually implemented using attributed
-variables. A lazy \emph{list} is represented as a normal Prolog list where the
-\emph{tail} is formed by an attributed variable. Normal list traversal
-predicates unify this tail with either the empty list (\texttt{[]}) or a
-list cell (\texttt{[Head|Tail]}), which triggers the goal associated
-with the attributed variable.
-
-A significant disadvantage of this technique is that on backtracking the
-lazily computed extension to the list is lost. In addition to causing
-overhead for recomputing the value this makes the implementation
-unsuitable for fetching data from an external source that cannot
-backtrack. A typical example of such a source is a network socket. It is
-possible to keep a buffer to support re-fetching content from the socket
-but the amount of data we need to buffer depends on the unknown
-non-determinism in the Prolog code that processes the list and we cannot
-recover if the selected buffer size proves to be too short.
-
-The above limitation can be avoided using \emph{not-backtrackable
-assignment} as implemented by various Prolog systems. Where SICStus
-solves this problem using a dedicated \emph{mutable term}, SWI-Prolog
-provides
-\texttt{nb\_setarg/3}\footnote{\url{http://www.swi-prolog.org/pldoc/doc_for?object=nb_setarg/3}}
-for assigning an argument in a compound term where the assignment is not
-undone on backtracking. SWI-Prolog lazy lists are realized using an
-attributed variable that resides in the tail argument of the last list
-cell and keeps a reference to this last cell. When triggered, the next
-value(s) is/are computed and the tail of the current last cell is set to
-the new lazy list using \texttt{nb\_setarg/3}. As this binding is not
-undone on backtracking only the first unification triggers the goal
-associated with the attributed variable. Initially, a lazy list is
-represented using a term \texttt{[dummy|AttVar]}, where the lazy list
-itself is the  \texttt{AttVar}.
-
-The above technique is used to implement library \texttt{pure\_input} as
-well as the generic
-\texttt{lazy\_lists}\footnote{\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl?show=src#lazy_list/3}}
-library. The general goal to create a lazy list is
-\texttt{lazy\_list(:Next, +State0, -List)}. This calls
-\texttt{call(Next, State0, State1, Head)} to produce the next element.
-
-Lazy lists allow Prolog to handle infinite data streams provided garbage
-collection can reclaim the inaccessible head of the list. To make the
-head inaccessible, the code cannot keep a reference to the head around
-in a variable and although processing the list may be non-deterministic,
-this non-determinism must be resolved after examining a finite number of
-elements.  The attributed variable trigger and garbage collection ensure
-that the window on the stream that is kept in memory is finite and
-guaranteed to be large enough to cope with the finite non-determinism.
-
-
-% ref: https://cliplab.org/papers/lazy-functions-ciclops05.pdf
-
-
-
-
-\subsection{The Lazy List View of Prolog Streams}
-
- 
- \begin{code}
-%! lazy_nats(-LazyListOfNaturalNumbers)
-%
-% infinite lazy list of natural numbers
-lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
-
-lazy_nats_next(X,SX,X):-succ(X,SX).
-\end{code}
-   
-\subsection{The Operational Equivalence between Answer Stream Generators and Lazy Lists}
-
-\BI
-
-   \I show how we can convert lazy streams to lazy lists (and back), i,e., the two representations are isomorphic
-   \I explain the problem with eager maplist, show how we can transport a lazy maplist from streams and derive a specialized version
-
-
-\EI
-
-With help from SWI-Prolog's {\tt lazy\_lists} library, generators can be turned into finite or infinite (lazy) lists and vice-versa.
-\begin{code}
-%! gen2lazy(+Generator,-LazyLIst)  
-%
-% Turns a generator into a lazy list  
-gen2lazy(E,Ls):-lazy_list(gen2lazy_forward,E,Ls).
-
-% E manages its state, so we just pass it on
-gen2lazy_forward(E,E,X):-ask(E,X).
-
-%! lazy2gen(+LazyList, -Generator)
-%
-% Turns a lazy list into a generator.
-% Note that list/2 actually just  works on lazy lists!
-lazy2gen(Xs,E):-list(Xs,E).
-
-\end{code}
-
-One can lift this equivalence between data objects to one between predicates using them via higher-order constructs.
-
-\begin{code}
-% iso functors
-
-%! iso_fun(+Operation,+SourceType,+TargetType,+Arg1, -ResultOfSourceType)
-%
-% Transports a predicate of arity 2 F(+A,-B) to a domain where
-% an operation can be performed and brings back the result.
-iso_fun(F,From,To,A,B):-
-  call(From,A,X),
-  call(F,X,Y),
-  call(To,Y,B).
-
-%! iso_fun(+Operation,+SourceType,+TargetType,+Arg1,+Arg2, -ResultOfSourceType)
-%
-% Transports a predicate of arity 2 F(+A,+B,-C) to a domain where
-% an operation can be performed and brings back the result. 
-% transports F(+A,+B,-C) 
-iso_fun(F,From,To,A,B,C):- % writeln(iso_fun(F,From,To,A,B,C)),
-  call(From,A,X),
-  call(From,B,Y),
-  call(F,X,Y,Z),
-  call(To,Z,C).
-
-%! iso_fun_(+Operation,+SourceType,+TargetType,+Arg1, -Res1, -Res2)
-%
-% Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
-% an operation can be performed and brings back the results. 
-% transports F(+A,+B,-C) 
-iso_fun_(F,From,To,A,B,C):- 
-  call(From,A,X),
-  call(F,X, Y,Z), % X in, Y,Z out 
-  call(To,Y,B),
-  call(To,Z,C).
-\end{code}
 
 \section{The Generator Algebra}
-We start with the simpler case of finite generators.
+We start by describing some of the stream generator operations
+that will be organized into a generator algebra 
+via an embedded language interpreter.
  
-
-
-
 \subsection{Operations on Finite or  Infinite Stream Generators}
 
-In the case of possibly infinite generators, we  ask each generator for one answer inside a linear recursive loop. We ensure that termination only happens if both generators terminate.
+\subsubsection{Merging generators: our {\tt sum} operation}
+
+The predicate {\tt sum(+Gen1,+Gen2, -NewGen)} advances by asking each generator, in turn, for one answer. When one terminates, it keeps progressing in the other.
 \begin{code}
-%TODO
+sum(E1,E2,sum_next(state(E1,E2))).
+
+sum_next(State,X):-State=state(E1,E2),ask(E1,X),!,
+  nb_setarg(1,State,E2),
+  nb_setarg(2,State,E1).
+sum_next(state(_,E2),X):-ask(E2,X).
 \end{code}
 
-Designing the recursive loop for possibly infinite products
-proceeds with a loop that will need to store finite initial 
+\subsection{Pairing all elements from two streams: our {\tt product} operation}
+
+The easiest way to implement direct product uses a first-class logic engine.
+Designing the recursive loop for possibly infinite stream generators
+will need to store finite initial 
 segments of the generators as they grow into two lists, initially
 empty.
 \begin{code}
-prod(E1,E2,engine(E,X,G)):-
-  G=prod_goal(E1,E2),
-  engine_create(X,G,E).
+prod(E1,E2,engine(E,X,G)):-G=prod_goal(E1,E2),engine_create(X,G,E).
 
-prod_goal(E1,E2):-
-  ask_generator(E1,A),
-  prod_loop(1,A,E1-[],E2-[]).
+prod_goal(E1,E2):-ask_generator(E1,A),prod_loop(1,A,E1-[],E2-[]).
 \end{code}
 
-The algorithm, expressed by the predicate {\tt cart\_prod\_loop}
+The algorithm, expressed by the predicate {\tt prod\_loop}
 switches between generators while none of them is done.
 After that, it keeps progressing the active generator 
 for new pairs, including those selecting an element 
@@ -484,7 +344,7 @@ prod_loop(Ord1,A,E1-Xs,E2-Ys):-
   forall(member(Y,Ys),generate_answer(Pair)),
   ask_generator(E2,B),
   !,
-  cart_prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
+  prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
 prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
   flip(Ord1,_Ord2,X,Y,Pair),
   X in E1,member(Y,Ys),
@@ -801,6 +661,190 @@ preserved with things like nb\_setarg (e.g. counters or aggregates) can be encap
 
 \I mention also expressing a similar set of operations with OR-continuations?
 \EI
+
+
+\section{Generators and Lazy Lists}
+
+While generators provide abstract sequence operations, it is also useful
+to emulate as closely as possible the  list operations familiar to the 
+Prolog programmer with {\em lazy lists}.
+
+\subsection{Implementing lazy lists using attributed variables}
+
+Lazy lists form a suitable represention of infinite streams of Prolog
+terms. Lazy data structures can be implemented in Prolog using
+\emph{attributed} variables as a mechanism to extend unification
+\cite{10.1007/3-540-55844-6_141}. The lazy function implementation of
+Ciao \cite{casas2005functional,lazyCiao}, exploits the widely supported
+\texttt{freeze/1} primitive that is usually implemented using attributed
+variables. A lazy \emph{list} is represented as a normal Prolog list where the
+\emph{tail} is formed by an attributed variable. Normal list traversal
+predicates unify this tail with either the empty list (\texttt{[]}) or a
+list cell (\texttt{[Head|Tail]}), which triggers the goal associated
+with the attributed variable.
+
+A significant disadvantage of this technique is that on backtracking the
+lazily computed extension to the list is lost. In addition to causing
+overhead for recomputing the value this makes the implementation
+unsuitable for fetching data from an external source that cannot
+backtrack. A typical example of such a source is a network socket. It is
+possible to keep a buffer to support re-fetching content from the socket
+but the amount of data we need to buffer depends on the unknown
+non-determinism in the Prolog code that processes the list and we cannot
+recover if the selected buffer size proves to be too short.
+
+The above limitation can be avoided using \emph{not-backtrackable
+assignment} as implemented by various Prolog systems. Where SICStus
+solves this problem using a dedicated \emph{mutable term}, SWI-Prolog
+provides
+\texttt{nb\_setarg/3}\footnote{\url{http://www.swi-prolog.org/pldoc/doc_for?object=nb_setarg/3}}
+for assigning an argument in a compound term where the assignment is not
+undone on backtracking. SWI-Prolog lazy lists are realized using an
+attributed variable that resides in the tail argument of the last list
+cell and keeps a reference to this last cell. When triggered, the next
+value(s) is/are computed and the tail of the current last cell is set to
+the new lazy list using \texttt{nb\_setarg/3}. As this binding is not
+undone on backtracking only the first unification triggers the goal
+associated with the attributed variable. Initially, a lazy list is
+represented using a term \texttt{[dummy|AttVar]}, where the lazy list
+itself is the  \texttt{AttVar}.
+
+The above technique is used to implement the library \texttt{pure\_input}, supporting a list view of file or socket operations, 
+as well as the generic
+\texttt{lazy\_lists}\footnote{\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl?show=src#lazy_list/3}}
+library. The general goal to create a lazy list is
+\texttt{lazy\_list(:Next, +State0, -List)}. This calls
+\texttt{call(Next, State0, State1, Head)} to produce the next element.
+
+Lazy lists allow Prolog to handle infinite data streams provided garbage
+collection can reclaim the inaccessible head of the list. To make the
+head inaccessible, the code cannot keep a reference to the head around
+in a variable and although processing the list may be non-deterministic,
+this non-determinism must be resolved after examining a finite number of
+elements.  The attributed variable trigger and garbage collection ensure
+that the window on the stream that is kept in memory is finite and
+guaranteed to be large enough to cope with the finite non-determinism.
+
+% ref: https://cliplab.org/papers/lazy-functions-ciclops05.pdf
+
+For instance, 
+using the constructor  {\tt lazy\_list/3}, we implement the infinite list of
+natural numbers as follows.
+\begin{code}
+lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
+
+lazy_nats_next(X,SX,X):-succ(X,SX).
+\end{code}
+
+
+%\subsection{The Lazy List View of Prolog Streams}
+\subsection{The Operational Equivalence between Answer Stream Generators and Lazy Lists}
+
+   
+
+
+The overloading of syntax between the usual lists and lazy lists, 
+can be confusing to the
+programmer, especially when infinite streams are involved.
+
+\BX
+\begin{codex}
+?- lazy_nats(Ns),maplist(succ,Ns,Ps).
+... loops forever ...
+\end{codex}
+\EX
+
+
+The advancing to the next element, happening via a destructive update,
+a first class engine's yield operation or an attribute set on the tail of
+a lazy list are operationally equivalent.
+By lifting this equivalence via Prolog's higher order operations
+supported by {\tt call/N} we can easily morph not just  representations 
+but also  their operations.
+The formal analogy to this is an {\em iso-functor} that in category theory
+transports morphisms. 
+
+With help from SWI-Prolog's {\tt lazy\_lists} library, 
+generators can be turned into finite or infinite (lazy) lists and vice-versa.
+The predicate {\tt gen2lazy(+Generator,-LazyLIst)} turns a possibly infinite
+stream generator into a lazy list.
+\begin{code} 
+gen2lazy(Gen,Ls):-lazy_list(gen2lazy_forward,Gen,Ls).
+
+gen2lazy_forward(E,E,X):-ask(E,X).
+\end{code}
+As {\tt Gen}  manages its state, so we just pass on the action of the {\tt ask/2}
+generator stream advancer.
+By observing that the stream constructor {\tt list/2} already works
+on lazy lists we define the invers operation {\tt lazy2gen} simply as:
+\begin{code}
+lazy2gen(Xs, Gen):-list(Xs, Gen).
+\end{code}
+
+Next we define the ``iso-functors'' that 
+lift this equivalence between data objects to 
+one between their operations. We do that as generically as possible,
+but one can specialize them to the fixed stream and lazy list domain
+for sligtly more efficient code.
+
+The predicate 
+{\tt iso\_fun(+Operation, +SourceType, +TargetType, +Arg1, -Result)}
+transports a predicate of arity 2 {\tt F(+Arg1, -Arg2)} to a domain where
+an operation can be performed and brings back the result.
+
+\begin{code}
+iso_fun(F,From,To,A,B):-call(From,A,X),call(F,X,Y),call(To,Y,B).
+\end{code}
+
+
+Similar code is defined for predicates of different arities or
+modes, like 
+{\tt iso\_fun(+Operation, +SourceType, +TargetType, +Arg1, +Arg2, -Result)} 
+or, with different mode
+{\tt iso\_fun\_( +Operation, +SourceType, +TargetType, +Arg1, -Res1, -Res2)}.
+
+\begin{codeh}
+%
+% Transports a predicate of arity 2 F(+A,+B,-C) to a domain where
+% an operation can be performed and brings back the result. 
+% transports F(+A,+B,-C) 
+iso_fun(F,From,To,A,B,C):-
+  call(From,A,X),
+  call(From,B,Y),
+  call(F,X,Y,Z),
+  call(To,Z,C).
+
+%! iso_fun_(+Operation,+SourceType,+TargetType,+Arg1, -Res1, -Res2)
+%
+% Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
+% an operation can be performed and brings back the results. 
+% transports F(+A,+B,-C) 
+iso_fun_(F,From,To,A,B,C):- 
+  call(From,A,X),
+  call(F,X, Y,Z), % X in, Y,Z out 
+  call(To,Y,B),
+  call(To,Z,C).
+\end{codeh}
+
+
+This brings us to define {\tt maplist} predicates working also
+on infinite list as:
+
+\begin{code}
+lazy_maplist(F,LazyXs,LazyYs):-iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
+\end{code}
+where {\tt map/3} is the stream generator constructor that applies a binary
+predicate to a stream gnerator. In our package, similar definitions for {\tt map/N}
+are given for predicates of higher arities, as well as corresponding definitions for
+{\tt lazy\_maplist/N} predicates.
+
+\BX
+\begin{codex}
+
+\end{codex}
+\EX
+
+
 
 \section{Discussion}
 

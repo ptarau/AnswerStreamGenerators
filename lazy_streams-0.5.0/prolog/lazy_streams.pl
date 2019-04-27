@@ -412,7 +412,7 @@ clause_stream_step(H,I,SI,(NewH:-Bs)):-
 
 %! sum(+Gen1,+Gen2, -NewGen)
 %
-% Interleaved sum erging two finite or infinite generators.
+% Interleaved sum merging two finite or infinite generators.
 sum(E1,E2,sum_next(state(E1,E2))).
 
 sum_next(State,X):-
@@ -436,19 +436,19 @@ cat_next(Es,X):-member(E,Es),ask(E,X),!.
 %! prod_(+Gen1,+Gen2, -NewGen)
 %
 % engine-based direct product
-prod_(E1,E2,E):-eng(_,cart_prod_goal(E1,E2),E).
+prod_(E1,E2,E):-eng(_,prod_goal(E1,E2),E).
 
-cart_prod_goal(E1,E2):-
+prod_goal(E1,E2):-
   ask(E1,A),
-  cart_prod_loop(1,A,E1-[],E2-[]).
+  prod_loop(1,A,E1-[],E2-[]).
 
-cart_prod_loop(Ord1,A,E1-Xs,E2-Ys):-
+prod_loop(Ord1,A,E1-Xs,E2-Ys):-
   flip(Ord1,Ord2,A,Y,Pair),
   forall(member(Y,Ys),engine_yield(Pair)),
   ask(E2,B),
   !,
-  cart_prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
-cart_prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
+  prod_loop(Ord2,B,E2-Ys,E1-[A|Xs]).
+prod_loop(Ord1,_A,E1-_Xs,_E2-Ys):-
   flip(Ord1,_Ord2,X,Y,Pair),
   X in E1,member(Y,Ys),
   engine_yield(Pair),
