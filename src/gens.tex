@@ -131,7 +131,7 @@ The paper is organized as follows.
 %\section{Implementation}
 
 \section{Implementing Stream Generators}
-     
+  
 \subsection{The Stream Generator Interface}
 
 Generators are built by a family of constructors, encapsulating sequences produced algorithmically or as a result of state transformers interfacing Prolog with the ``outside world'', a design philosophy similar to that of monads in functional languages.
@@ -373,6 +373,10 @@ N = M, M = nat_next(state(0)),
 R = engine_next(<engine>(4,0x7fa7fe2002c0)).
 \end{codex}
 \EX
+
+{\Large TODO - sketch the Cantor Unpairing approach}
+
+
 
 
 \subsection{An embedded language interpreter for the algebra}
@@ -674,15 +678,21 @@ X = 3,
 \end{codex}
 \EX
 
+
+{\Large TODO - sketch the convolution operation, borrowed from lazy lists}
+
+
+
+
+\section{Discussion}
+
+
 One  can access the N-th element of a  generator in $O(1)$ space.
 Lazy lists might or might not need $O(N)$ for the same, depending on possible garbage collection of their unused prefix.
 Lazy lists are reusable while new generators must be created if the sequence
 needs to be revisited again.
 Lazy lists operate via a convenient but {\em concrete} list syntax.
 Generators represent {\em abstract} lazy sequences on which one operates directly (via a somewhat procedural API) or declaratively via an algebra encapsulated as an embedded.
-
-
-\section{Discussion}
 
 
 \BI
