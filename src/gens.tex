@@ -112,8 +112,7 @@ The main contributions of this paper are:
 %  (or two libraries if we are counting the lazy\_lists library)
 \EI
 
-Our implementation of lazy streams is available as a SWI Prolog package at:\\
-{\small \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip } }
+
 
 The paper is organized as follows.
 
@@ -121,12 +120,39 @@ The paper is organized as follows.
 
 \section{Overview}
 
-{\Large
-     Show small examples of the use of lazy streams to give an idea of their expressive power and how neat the code looks\\
-     
-     USE the stream evaluator with examples here
- }
-     
+Our implementation of lazy streams is available as a SWI Prolog package at:\\
+{\small \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip } }
+
+We start by showing a few use cases.
+
+\BX
+The generators {\tt pos/1} for the infinite positive integers and {\tt neg/1} for
+the stream of negative integers anihhilate each other via a addition operation
+resulting in a constant {\tt 0} stream.
+\begin{codex}
+?- pos(P),neg(N),map(plus,P,N,Zero),show(10,Zero).
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0].
+P = nat_next(state(11)),
+N = gen_next(pred, state(-11)),
+Zero = map_next(plus, nat_next(state(11)), gen_next(pred, state(-11))).
+\end{codex}
+\EX
+
+\BX
+Using the an embedded language interpreter for our algebra of stream
+generators, we explore with the predicate {\tt in\_/2} 
+the result of the direct product of a stream built
+from a list and a stream covering a range of natural numbers.
+
+\begin{codex}
+?- X in_ [a,b]*(1:4).
+X = a-1 ;
+X = a-2 ;
+X = b-1 ;
+X = a-3 ;
+X = b-2 .
+\end{codex}
+\EX  
      
 %\section{Implementation}
 
@@ -462,7 +488,7 @@ implemented in the package {\tt lazy\_streams}.
 The predicate {\tt map/3} creates a new generator that
 applies a predicate with two arguments to the answer stream  of a generator.
 It uses {\tt map\_next/3} that advances the generator
-and yields the result of applying the closure {\tt F} to what it 
+and yields the result of applying the closure {\tt F} to what
 the generator yields.
 \begin{code}
 map(F,Gen,map_next(F,Gen)).
@@ -610,16 +636,22 @@ programmer, especially when infinite streams are involved.
 ... loops forever ...
 \end{codex}
 \EX
+The {\tt maplist/3} example
+ shows that sharing the concrete syntax between lazy lists and  ordinary lists
+does not automatically entail that the semantics is shared between them.
 
+We will alleviate this problem by designing interoperation mechanisms between lazy lists and lazy streams resulting in operations like {\tt maplist/3} to be implemented with support for infinite lazy lists.
 
-The advancing to the next element, happening via a destructive update,
-a first class engine's yield operation or an attribute set on the tail of
-a lazy list are operationally equivalent.
-By lifting this equivalence via Prolog's higher order operations
-supported by {\tt call/N} we can easily morph not just  representations 
-but also  their operations.
-The formal analogy to this is an {\em iso-functor} that in category theory
-transports morphisms. 
+First, let's observe that the {\em advancing to the next element}, 
+whether it happens via a destructive update,
+a first class engine's yield operation or by setting an attribute on the tail of
+a lazy list are {\em operationally equivalent}.
+
+By lifting this equivalence with help from Prolog's higher order operations
+supported by {\tt call/N}, we can easily transport not just  data representations 
+but also   operations acting on them.
+The more formal analogy to this is an {\em iso-functor}, that in category theory
+transports morphisms between objects. 
 
 With help from SWI-Prolog's {\tt lazy\_lists} library, 
 generators can be turned into finite or infinite (lazy) lists and vice-versa.
@@ -630,10 +662,10 @@ gen2lazy(Gen,Ls):-lazy_list(gen2lazy_forward,Gen,Ls).
 
 gen2lazy_forward(E,E,X):-ask(E,X).
 \end{code}
-As {\tt Gen}  manages its state, so we just pass on the action of the {\tt ask/2}
+As {\tt Gen}  manages its state, we just pass on the action of the {\tt ask/2}
 generator stream advancer.
 By observing that the stream constructor {\tt list/2} already works
-on lazy lists we define the invers operation {\tt lazy2gen} simply as:
+on lazy lists we define the inverse operation {\tt lazy2gen} simply as:
 \begin{code}
 lazy2gen(Xs, Gen):-list(Xs, Gen).
 \end{code}
@@ -642,11 +674,11 @@ Next we define the ``iso-functors'' that
 lift this equivalence between data objects to 
 one between their operations. We do that as generically as possible,
 but one can specialize them to the fixed stream and lazy list domain
-for sligtly more efficient code.
+for slightly more efficient code.
 
 The predicate 
 {\tt iso\_fun(+Operation, +SourceType, +TargetType, +Arg1, -Result)}
-transports a predicate of arity 2 {\tt F(+Arg1, -Arg2)} to a domain where
+transports a predicate of the form {\tt F(+Arg1, -Arg2)} to a domain where
 an operation can be performed and brings back the result.
 
 \begin{code}
@@ -654,10 +686,9 @@ iso_fun(F,From,To,A,B):-call(From,A,X),call(F,X,Y),call(To,Y,B).
 \end{code}
 
 
-Similar code is defined for predicates of different arities or
-modes, like 
+Similar code is defined for predicates of different arities  like 
 {\tt iso\_fun(+Operation, +SourceType, +TargetType, +Arg1, +Arg2, -Result)} 
-or, with different mode
+or, with a different mode like
 {\tt iso\_fun\_( +Operation, +SourceType, +TargetType, +Arg1, -Res1, -Res2)}.
 
 \begin{codeh}
@@ -684,7 +715,7 @@ iso_fun_(F,From,To,A,B,C):-
 \end{codeh}
 
 
-This brings us to define {\tt maplist} predicates working also
+This allows us to define {\tt maplist} predicates working also
 on infinite lazy lists as:
 
 \begin{code}
@@ -707,39 +738,100 @@ Ns = [0|_21022], Ps = [1, 2, 3|_21052], X = 3,
 \end{codex}
 \EX
 
+On the other hand, a convolution operation  can be implemented more easily with lazy lists. Our package {\tt lazy\_streams} uses this technique to borrow it with help from the {\tt iso\_fun/6} predicate.
+\begin{code}
+convolution(E1,E2, E):-iso_fun(lazy_conv,gen2lazy,lazy2gen,E1,E2, E).
 
-{\Large TODO - sketch the convolution operation, borrowed from lazy lists}
+lazy_conv(As,Bs,Ps):-
+  lazy_findall(P,(
+    between(0,infinite,N),
+    lazy_lconv_step(N,As,Bs,P)
+  ),
+  Ps).
 
-
-
+lazy_lconv_step(N,As,Bs, X-Y):-N1 is N-1,
+   between(0,N1,L), K is N1-L,
+   nth0(L,As,X), nth0(K,Bs,Y).
+\end{code}
 
 \section{Discussion}
 
+The abstract sequence interface of the {\tt lazy\_streams} package and
+the concrete list-based view provided by the lazy lists library offer
+similar services, but as they interoperate with help of {\tt iso\_fun} predicates
+one can choose the  implementation most suitable for a given algorithm.
 
-One  can access the N-th element of a  generator in $O(1)$ space.
+For instance, one  can access the N-th element of a  generator in $O(1)$ space.
 Lazy lists might or might not need $O(N)$ for the same, depending on possible garbage collection of their unused prefix.
-Lazy lists are reusable while new generators must be created if the sequence
-needs to be revisited again.
-Lazy lists operate via a convenient but {\em concrete} list syntax.
-Generators represent {\em abstract} lazy sequences on which one operates directly (via a somewhat procedural API) or declaratively via an algebra encapsulated as an embedded.
+With most stream generators no garbage collection is needed when working destructively in constant space, but results can be exposed declaratively via the stream algebra.
+
+On the other hand, lazy lists are reusable while new generators 
+must be created if the sequence needs to be revisited again.
+
+Some algorithms can be most easily expressed using firs-class logic engines, but
+avoiding engines when possible reduces memory footprint and can avoid term copying.
+
+{\Large OPEN QUESTION: can a similar answer generator API be implemented
+it terms of  attributed-variables, TOR, delimited continuations? }
+
+ a way to do that would be to attach a goal+template as attributes of a variable
+and then have the unify hook make the goal call itself with a new argument, while
+extracting its "answer" in a lazy\_findall-like mechanism. Thus the simpler question becomes:
+{\large can something like lazy\_findall be implemented without engines?}
 
 
-\BI
- \I efficiency - avoiding engines when possible reduces memory footprint and avoids term copying
-\I no gc is needed when working destructively in constant space - but results can be exposed declaratively
-\I algorithms (e.g. convolution of infinite sequences) easier to implement efficiently
-\I handling big data streams -can benefit from a library of stream combinators
+
+
+
+\section{Related work}
+
+%Generators can bring in languages like Python \\-e.g. itertools, 
+%see \url{https://docs.python.org/3/library/itertools.html}
+
+\begin{comment}
+Maybe?
+\BI 
+\I some history - see
+\cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER}
+\cite{coord11tarau}
+\cite{bp2011}
+\I work on delimited continuations \cite{delim}, hookable disjunction \cite{tor}
+\I work on pipelines \cite{pipelines}
 \EI
+\end{comment}
+
+%{\Large TODO: discuss alternative ways to achieve the same in Prolog e.g. tor \cite{tor}}
+
+{\Large TODO: briefly discuss and compare with Python and mention other generator and coroutine implementations e.g. goroutines, fibers, generator libraries for other languages etc.}
 
 
-Reasons for some of the new things we propose:
-\BI
-\I what generators can bring in languages like Python \\-e.g. itertools, 
-see \url{https://docs.python.org/3/library/itertools.html}
-\I lazy evaluation brings to Haskell a declarative handling of infinite sequences
+{\Large related work on streams - e.g. Zaniolo, Gurevich,  Babcock, Eiter}
 
-\EI
-enhances the expressiveness of  
+\section{Conclusion}
+
+We have described a unified approach to program with finite or infinite stream generators
+that enhances Prolog with operations now prevalent in widely used programming languages
+like Python, C\#, JavaScript, Ruby and Lua, while also supporting lazy evaluation mechanisms comparable to those in non-strict functional languages like Haskell.
+As a special instance of our stream generators,
+we have defined first-class logic engine based constructors 
+that can expose sequence  generation
+originating from AND-streams or OR-streams of answers.
+
+Our generator algebra supported by an embedded language interpreter provides
+a declarative expression of stream algorithms in the form of compact and elegant code.
+
+We have shown that interoperation mechanisms 
+between lazy stream generators and their 
+equivalent lazy lists representation
+supports transporting operations from one side to the other,
+allowing one to choose the simplest and/or more efficient
+implementation of stream operations.
+
+Code supporting the paper has been implemented as an open source library package at:\\
+{\small \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip } }
+The reader is encouraged to explore its functionality using SWI-Prolog's {\tt pack\_install/1} utility that downloads and installs it as SWI-Prolog library.
+
+
 
 \BI
 \I  applications that one can think of are:
@@ -757,47 +849,6 @@ enhances the expressiveness of
 \EI
 
 
-
-\section{Related work}
-
-\vskip 1cm
-Maybe?
-\BI 
-\I some history - see
-\cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER}
-\cite{coord11tarau}
-\cite{bp2011}
-\I work on delimited continuations \cite{delim}, hookable disjunction \cite{tor}
-\I work on pipelines \cite{pipelines}
-\EI
-
-
-{\Large TODO: discuss alternative ways to achieve the same in Prolog e.g. tor \cite{tor}}
-
-{\Large TODO: briefly discuss and compare with Python and mention other generator and coroutine implementations e.g. goroutines, fibers, generator libraries for other languages etc.}
-
-{\Large OPEN QUESTION: can a similar answer generator API be implemented
-it terms of  attributed-variables, TOR, delimited continuations? That 
-would avoid creating new virtual machines. A different semantics would need to
-be faced: would such streams be subject to backtracking. Is that good or bad? 
-} a way to do that would be to attach a goal+template as attributes of a variable
-and then have the unify hook make the goal call itself with a new argument, while
-extracting its "answer" in a lazy\_findall-like mechanism. Thus the simpler question becomes:
-{\large can something like lazy\_findall be implemented without engines?}
-
-{\Large related work on streams - e.g. Zaniolo, Gurevich,  Babcock}
-
-\section{Conclusion}
-
-Answer Stream Generators lift the expressiveness of Prolog with language constructs comparable to generators in languages like Python, go, C\verb~#~, Ruby or Lua, and language constructs implicitly available in non-strict functional programming languages like Haskell. 
-
-They offer first-class engine based constructors that can expose sequence 
-processing as AND-streams or OR-streams of answers.
-
-The generator algebra together with its the embedded language interpreter supports
-the writing compact and elegant code.
-
-{\Large TODO: expand}
 
 \bibliographystyle{acmtrans}
 \bibliography{theory,tarau,proglang,biblio,new}

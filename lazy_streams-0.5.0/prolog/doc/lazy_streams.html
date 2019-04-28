@@ -111,12 +111,12 @@ This loops!
 infelicity: original stream shifted by one position ...</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_conv/3"><b class="pred">lazy_conv</b><var class="arglist">(+As, +Bs, -Ps)</var></a></dt><dd class="defbody">convolution of two finite or infinite lazy lists</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="convolution/3"><b class="pred">convolution</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">convolution of two finite or infinite lazy generators</dd>
-<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="eval_stream/2"><b class="pred">eval_stream</b><var class="arglist">(+GeneratorExpression, -Generator)</var></a></dt><dd class="defbody">evaluates a generator expressioin to ready to use
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="eval_stream/2"><b class="pred">eval_stream</b><var class="arglist">(+GeneratorExpression, -Generator)</var></a></dt><dd class="defbody">evaluates a generator expression to ready to use
 generator that combines their effects</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="in_/2"><var class="arglist">-X</var> <b class="pred">in_</b> <var class="arglist">+GeneratorExpression</var></a></dt><dd class="defbody">backtracks over elements of a generator expression
 note that in_/2 is an xfx 800 operator, used as <var>X</var> in_ Gen</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="ask_/2"><b class="pred">ask_</b><var class="arglist">(GeneratorExpression, -Element)</var></a></dt><dd class="defbody">produces next element after evaluating a gnerator expression</dd>
-<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="term_reader/2"><b class="pred">term_reader</b><var class="arglist">(+File, -TermGenerator)</var></a></dt><dd class="defbody">creates a generator advancing on term read from a file</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="term_reader/2"><b class="pred">term_reader</b><var class="arglist">(+File, -TermGenerator)</var></a></dt><dd class="defbody">creates a generator advancing on terms read from a file</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="fact/2"><b class="pred">fact</b><var class="arglist">(+N, -ResultGenerator)</var></a></dt><dd class="defbody">factorial computation - use <a href="lazy_streams.html#ask/2">ask/2</a> to extract value
 used for testing</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="fibo/1"><b class="pred">fibo</b><var class="arglist">(-Generator)</var></a></dt><dd class="defbody">infinite Fibonacci stream for testing</dd>
