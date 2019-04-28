@@ -64,7 +64,7 @@ Stream generators are exposed to the application programmer either through an ab
 Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time survivor in the complex ecosystem of programming languages. We believe that its longevity is due not only to its elegant semantics but also to its creative adaptations to emerging programming language features that respond to evolving software development requirements.
 
 Stream processing, now prevalent in widely used programming languages languages like Java, Python, C\# or JavaScript offers a uniform and (mostly) declarative view on processing finite 
-and infinite\footnote{We use ``infinite'' here as a short hand qualifier for data or computation streams of unpredictable, large or very large size.} sequences. Arguably, its advent has been driven, besides the expressiveness lift it provides, by the need of processing big data. This big data problem manifests itself in static incarnations like very large training sets for machine learning, or as dynamic event streams coming from Web search queries and clicks,  or from sensor networks supporting today's fast spreading IOT infrastructure.
+and infinite\footnote{We use ``infinite'' here as a short hand  for data or computation streams of unpredictable, large or very large size.} sequences. Arguably, its advent has been driven, besides the expressiveness lift it provides, by the need of processing big data. This big data problem manifests itself in static incarnations like very large training sets for machine learning, or as dynamic event streams coming from Web search queries and clicks,  or from sensor networks supporting today's fast spreading IOT infrastructure.
  
 Several techniques have been used to extend mature programming languages with stream processing. The task has been facilitated by the presence of generalized iterator constructs like Python's generators or by presence of lazy evaluation semantics in functional languages. To extend Prolog with state-of-the-art lazy stream processing capabilities, a few limitations need to be overcome.
 
@@ -104,9 +104,6 @@ By defining an iso-functor that transports operations between
 generators and lazy lists, we offer a choice between 
 abstract sequence operations and the concrete list view familiar to Prolog users.
 
-Our implementation of lazy streams is available as a SWI Prolog package at:\\
-{\small \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip } }
-
 The main contributions of this paper are:
 \BI
 \I a simple and clean approach for setting up lazy streams
@@ -114,6 +111,9 @@ The main contributions of this paper are:
 \I a library of lazy stream sources, transformers and combinators %and sinks
 %  (or two libraries if we are counting the lazy\_lists library)
 \EI
+
+Our implementation of lazy streams is available as a SWI Prolog package at:\\
+{\small \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip } }
 
 The paper is organized as follows.
 
@@ -132,17 +132,19 @@ The paper is organized as follows.
 
 \section{Implementing Stream Generators}
   
-\subsection{The Stream Generator Interface}
 
 Generators are built by a family of constructors, encapsulating sequences produced algorithmically or as a result of state transformers interfacing Prolog with the ``outside world'', a design philosophy similar to that of monads in functional languages.
 
-The ``contract'' is that a generator, defined by a closure that moves it one step further is called by the {\tt ask/2} predicate, defined as follows:
+\subsection{The Stream Generator Interface}
+
+The ``contract'' of our interface is that a generator, specified by a 
+closure that moves it one step further is called by the {\tt ask/2} predicate, defined as follows:
 \begin{code}
 ask(E,_):-is_done(E),!,fail.
 ask(E,R):-call(E,X),!,R=X.
 ask(E,_):-stop(E),fail.
 \end{code}
-Note also the checking for terminated generators by {\tt is\_done/1} and the explicit termination by {\tt stop/1} on failure.
+Note  the checking for terminated generators by {\tt is\_done/1} and the explicit termination by {\tt stop/1} on failure.
 
 The single advancement steps provided by {\tt ask/2} can be morphed into an answer stream generated on backtracking with the infix predicate {\tt in/2}.
 \begin{code}
@@ -158,17 +160,17 @@ The simplest generator is the infinite constant stream producer {\tt const/2}:
 \begin{codex}
 const(Constant, Generator)
 \end{codex}
-that when {\tt ask/2} asks for the next element with
+that, when {\tt ask/2} is called, it produces the next element with
 \begin{codex}
 call(=(Constant),X)
 \end{codex}
-it will simply unify {\tt X} and {\tt Constant}.
+Thus, call acts in this case by unifying {\tt X} and {\tt Constant}.
 
-Another one, relying on externally maintained state is {\tt rand/1}.
+Another constructor, relying this time on an externally maintained state is {\tt rand/1}.
 \begin{code}
 rand(random()).
 \end{code}
-This generator will, when called by {\tt ask/2}, produce a stream of random floating point numbers between 0 and 1.
+This generator, when called by {\tt ask/2}, will produce a stream of random floating point numbers between 0 and 1.
 
 A generic constructor for a stream evolving by incremental state changes is
 \begin{code}
@@ -177,7 +179,7 @@ gen_next(F,State,X):-
   call(F,X,Y),
   nb_setarg(1,State,Y).
 \end{code}
-where {\tt State} acts a container for destructively updated values.
+where {\tt State} acts as a container for destructively updated values.
 
 
 %\subsection{Generators as Simple State Transformers}
@@ -232,14 +234,14 @@ and taking or dropping an initial segment of a stream.
 
 When more complex computations are involved, that are cannot be expressed as step-by-step state transformations, a more powerful mechanism is needed. We will use generator constructors based on first class logic engines in this case, but we will expose their workings in terms of the same interface.
 
-\subsubsection{SWI Prolog's engine implementation}
+\subsubsection{SWI Prolog's fist-class logic engine implementation}
 
 A first-class logic engine \cite{tarau:cl2000,bp2011} can be seen as a Prolog virtual machine that has its own stacks and machine state. 
-In their SWI-Prolog implementation. Unlike normal Prolog threads \cite{swi,swi_threads}, they are not associated with an operating system thread. Instead, one asks an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and cause it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal: the client decides haow many answers it wants returned and what to do with them.  
+In their SWI-Prolog implementation. Unlike normal Prolog threads \cite{swi,swi_threads}, they are not associated with an operating system thread. Instead, one asks an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and causes it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal: the client decides how many answers it wants returned and what to do with them.  
 
-Engines are created with the built-in {\tt engine\_create/3} that uses a goal and and answer template as input and returns and engine handle as output. SWI-Prolog engines are created with minimal dynamic stack space and are garbage collected when unreachable.
+Engines are created with the built-in {\tt engine\_create/3} that uses a goal and and answer template as input and returns an engine handle as output. SWI-Prolog's engines are created with minimal dynamic stack space and are garbage collected when unreachable.
 
-Implementing the engine API does not assume that a Prolog system supports multi-threading, It only assumes that the virtual machine is fully reentrant, it can be queried and it can stop, yield data and resume execution as a coroutine.
+Implementing the engine API does not need  a Prolog system supports multi-threading. It only assumes that the virtual machine is fully reentrant, it can be queried and that it can stop, yield data and resume execution as a coroutine.
 
 \begin{comment}
 As Prolog virtual machines, engines have  an internal state. Thus interacting with them requires a concise and expressive, but ultimately procedural API. This is not very different from what working with attributed variables, instrumental to adding constraint solvers, requires.
@@ -258,7 +260,7 @@ eng(X,Goal,engine_next(Engine)):-engine_create(X,Goal,Engine).
 A variant {\tt ceng/3} is also available if one wants to preserve
 the goal and answer template, usable, for instance, to clone
 the engine's answer stream, 
-operation that makes sense when the Prolog code it is based on 
+operation that makes sense only when the Prolog code it is based on 
 is free of side effects.
 
 \subsection{The AND-stream / OR-stream Duality}
@@ -310,7 +312,7 @@ via an embedded language interpreter.
 
 \subsubsection{Merging generators: our {\tt sum} operation}
 
-The predicate {\tt sum(+Gen1,+Gen2, -NewGen)} advances by asking each generator, in turn, for one answer. When one terminates, it keeps progressing in the other.
+The predicate {\tt sum(+Gen1,+Gen2, -NewGen)} advances by asking each generator, in turn, for an answer. When one generator terminates, it keeps progressing in the other.
 \begin{code}
 sum(E1,E2,sum_next(state(E1,E2))).
 
@@ -320,7 +322,7 @@ sum_next(State,X):-State=state(E1,E2),ask(E1,X),!,
 sum_next(state(_,E2),X):-ask(E2,X).
 \end{code}
 
-\subsection{Pairing all elements from two streams: our {\tt product} operation}
+\subsubsection{Pairing all elements from two streams: our {\tt product} operation}
 
 The easiest way to implement direct product uses a first-class logic engine.
 Designing the recursive loop for possibly infinite stream generators
@@ -359,6 +361,16 @@ flip(1,2,X,Y,X-Y).
 flip(2,1,X,Y,Y-X).
 \end{code}
 
+The package {\tt lazy\_streams} also provides the {\tt prod/3} stream product 
+operation that avoids the engine creation and collection overhead,
+coming from the use of the constructor {\tt eng/3} by using the Cantor
+unpairing function  to split natural numbers generated by {\tt nat/1}
+that are used to index dynamic arrays growing with each new element consumed
+from the two input streams. By using the  $N \rightarrow N^k$ generalized Cantor
+ untupling function implemented for instance in \cite{serpro}, on can obtain efficient
+ generator  product operations for $k$ generators.
+
+
 \BX
 Working with infinite sums and products. The  predicate {\tt show/1} (defined in the package) shows a short initial segment of a generator.
 \begin{codex}
@@ -374,15 +386,19 @@ R = engine_next(<engine>(4,0x7fa7fe2002c0)).
 \end{codex}
 \EX
 
-{\Large TODO - sketch the Cantor Unpairing approach}
 
 
 
+\paragraph{Some algebraic properties of sums and products.}
+As {\tt sum/2} simply interleaves two streams, it is clearly associative and
+if  the order of the elements is unimportant, it is also commutative. 
+Up to an isomorphism that ignores the specific pair representations, the product is also associative. Under the same assumptions, the products are distributive over sums.
+The empty stream, defined such that {\tt ask/2}  fails, acts as neutral element for the sum. Any constant stream, up to an isomorphism ignoring the specific pair representation
+acts as a neutral element for product.
 
 \subsection{An embedded language interpreter for the algebra}
 
-With our sum and product operations ready, we can proceed designing the embedded language
-facilitation more complex forms of generator compositions.
+With our sum and product operations ready, we can proceed with the design of the embedded language, facilitating more complex forms of generator compositions.
 
 \subsubsection{Working with Sets}
 
@@ -392,17 +408,17 @@ of providing a canonical representation, but assumes finite streams) or by using
 
 The predicate {\tt setify} wraps a generator to ensure it produces a set of answers, with duplicates removed.
 \begin{code}
-setify(E,SE):-new_generator(X,distinct(X,X in E),SE).
+setify(E,SE):-eng(X,distinct(X,X in E),SE).
 \end{code}
 In fact, one could just apply the same modification to the goal of a generator and its answer template, but our assumption here is that the generator's engine might be a composition of several engine operations, possibly already in progress.
 
 We can implement our generator algebra as an embedded language via a simple interpreter
-(although partial evaluation can make this more efficient). We can also add {\tt !} as a unary prefix operator, used to mark a generator that needs to be cloned.
+(although partial evaluation can make this more efficient). 
 
+The predicate  {\tt eval\_stream(+GeneratorExpression, -Generator)}
+evaluates a generator expression to ready to use generator that combines 
+the effects of its components.
 \begin{code}
-%! eval_stream(+GeneratorExpression, -Generator)
-% evaluates a generator expressioin to ready to use
-% generator that combines their effects
 eval_stream(E+F,S):- !,eval_stream(E,EE),eval_stream(F,EF),sum(EE,EF,S).
 eval_stream(E*F,P):- !,eval_stream(E,EE),eval_stream(F,EF),prod(EE,EF,P).
 eval_stream(E:F,R):- !,range(E,F,R).
@@ -416,12 +432,12 @@ Similarly to the {\tt in/2} predicate, we can make the action of the
 interpreter transparent, via the {\tt in\_/2} predicate, also defined as an operator.
 \begin{code}
 :-op(800,xfx,(in_)).
-X in_ E:-eeval(E,EE),X in EE.     
+
+X in_ GenExpr:-eval_stream(GenExpr,NewGen),X in NewGen.     
 \end{code}
 
-
 \BX
-Applying the embedded language interpreter.
+Applying the embedded language interpreter to a generator expression.
 \begin{codex}
 ?- X in_ ({[a,b,a]}+(1:3)*c).
 X = a ;
@@ -432,20 +448,12 @@ X = 2-c .
 ....
 \end{codex}
 \EX
-\subsection{Some algebraic properties of sums and products}
 
-As sum/2 simply interleaves two streams it is clearly associative and 
 
-\BI
-\I monoid structure for + and *
-\I distributivity
-\I commutativity and associativity if the generated sequences represent sets
-\EI
-
-\begin{code}
-\end{code}
 
 \section{Other Stream Generator Operations}
+We describe next other operations on stream generators
+implemented in the package {\tt lazy\_streams}.
 
 \subsection{Lazy Functional Programming Constructs}
 
@@ -468,6 +476,34 @@ apply a predicate with {\tt N-1 arguments} to
 
 \subsubsection{Reduce}
 
+The predicate {\tt reduce(+Closure, +Generator, +InitialVal, -ResultGenerator)}
+creates a generator that reduces a given generator's yields with given closure, 
+starting with an initial value. Its only yield is the resulting single final value.
+Similarly to {\tt foldl} and {\tt foldr} in a language like Haskell, it can be used to
+define, generically, arithmetic sums or products over a stream,
+as done in our {\tt lazy\_streams} package.
+
+\begin{code}
+reduce(F,InitVal,Gen, reduce_next(state(InitVal),F,Gen)).
+\end{code}
+It uses the predicate {\tt reduce\_next/4} 
+that reduces state {\tt S} with closure {\tt F} 
+while generator {\tt E} provides ``next'' elements.
+\begin{code}
+reduce_next(S,F,E,R):-
+  \+ is_done(E),
+  do((
+    Y in E,
+    arg(1,S,X),
+    call(F,X,Y,Z),
+    nb_setarg(1,S,Z)
+  )),
+  arg(1,S,R).
+
+do(G):-call(G),fail;true.
+\end{code}
+Note that by working in $O(1)$ space, with destructive updates,
+we can handle streams with an arbitrary number of elements.
 \subsection{Wrappers on I/O and stateful procedural Prolog constructs}
 
 One can easily wrap file or socket readers as generators, with the
@@ -479,8 +515,7 @@ when teaching Prolog to a beginner, as shown by the generator
 \begin{code}
 term_reader(File,next_term(Stream)):-open(File,read,Stream).
 
-next_term(Stream,Term):-
-  read(Stream,X),
+next_term(Stream,Term):-read(Stream,X),
   ( X\==end_of_file->Term=X
   ; close(Stream),fail
   ).
@@ -650,7 +685,7 @@ iso_fun_(F,From,To,A,B,C):-
 
 
 This brings us to define {\tt maplist} predicates working also
-on infinite list as:
+on infinite lazy lists as:
 
 \begin{code}
 lazy_maplist(F,LazyXs,LazyYs):-iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
@@ -663,17 +698,11 @@ are given for predicates of higher arities, as well as corresponding definitions
 \BX
 \begin{codex}
 ?- lazy_nats(Ns),lazy_maplist(succ,Ns,Ps),member(X,Ps).
-Ns = [0|_20314],
-Ps = [1|_20332],
-X = 1,
+Ns = [0|_20314], Ps = [1|_20332], X = 1,
 ...
-Ns = [0|_20668],
-Ps = [1, 2|_20692],
-X = 2,
+Ns = [0|_20668], Ps = [1, 2|_20692], X = 2,
 ...
-Ns = [0|_21022],
-Ps = [1, 2, 3|_21052],
-X = 3,
+Ns = [0|_21022], Ps = [1, 2, 3|_21052], X = 3,
 ...
 \end{codex}
 \EX

@@ -666,7 +666,7 @@ convolution(E1,E2, E):-
 % evaluator  
 
 %! eval_stream(+GeneratorExpression, -Generator)
-% evaluates a generator expressioin to ready to use
+% evaluates a generator expression to ready to use
 % generator that combines their effects
 eval_stream(E+F,S):- !,eval_stream(E,EE),eval_stream(F,EF),sum(EE,EF,S).
 eval_stream(E*F,P):- !,eval_stream(E,EE),eval_stream(F,EF),prod(EE,EF,P).
@@ -683,7 +683,7 @@ eval_stream(E,E).
 %
 % backtracks over elements of a generator expression
 % note that in_/2 is an xfx 800 operator, used as X in_ Gen
-X in_ E:-eval_stream(E,EE),X in EE.
+X in_ GenExpr:-eval_stream(GenExpr,NewGen),X in NewGen.  
  
 %! ask_(GeneratorExpression, -Element)
 % 
