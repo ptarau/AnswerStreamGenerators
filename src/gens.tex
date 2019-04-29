@@ -787,8 +787,7 @@ but
 that can be very slow, or by implementing OR-continuations.
 }
 
-
- a way to do that would be to attach a goal+template as attributes of a variable
+Maybe a way to do that would be to attach a goal+template as attributes of a variable
 and then have the unify hook make the goal call itself with a new argument, while
 extracting its "answer" in a lazy\_findall-like mechanism. Thus the simpler question becomes:
 {\large can something like lazy\_findall be implemented without engines?}
