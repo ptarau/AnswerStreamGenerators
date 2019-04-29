@@ -363,7 +363,8 @@ t41 :-
     ask(E1, X),
     ask(E2, Y),
     writeln(A+X+Y),
-    show(E).
+    show(E),
+    stop(E).
 
 0+1+1
 [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].
@@ -448,10 +449,32 @@ t49 :-
 t50 :-
     term_reader('lazy_streams.pl', R),
     drop(9, R, S),
-    show(2, S).
+    show(2, S),
+    stop(S).
 
 [(is_done(A):-arg(1, A, done)), empty(state(done))].
-<engine>(3,0x7f928ff64670)
-<engine>(4,0x7f928ff65020)
-<engine>(5,0x7f928ff65cb0)
-<engine>(6,0x7f928ff66a60)
+
+t51 :-
+    and_nat_stream(N),
+    show(N),
+    stop(N).
+
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].
+
+t52 :-
+    or_nat_stream(N),
+    show(N),
+    stop(N).
+
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].
+
+t53 :-
+    prime(E),
+    show(E),
+    stop(E).
+
+[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37].
+<engine>(3,0x7f8343009af0)
+<engine>(4,0x7f834300a4a0)
+<engine>(5,0x7f834300b130)
+<engine>(6,0x7f834300bee0)

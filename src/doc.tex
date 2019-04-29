@@ -1,0 +1,242 @@
+\documentclass[11pt]{article}
+\usepackage{times}
+\usepackage{pldoc}
+\sloppy
+\makeindex
+
+\begin{document}
+% This LaTeX document was generated using the LaTeX backend of PlDoc,
+% The SWI-Prolog documentation system
+
+
+
+\section{lazy_streams.pl}
+
+\label{sec:lazystreams}
+
+\begin{description}
+    \predicate{ask}{2}{+Generator, -NextValue}
+the \arg{Generator} generator protocol works as follows:
+A generator step is a call to a closure that moves its state forward
+defining a generator simply stores it as a Prolog fact.
+
+The predicate \predref{ask}{2} queries a generator if it is not done and
+it marks a generator as "done" after its first failure.
+This ensures it can be garbage collected
+by making its handle unreacheable.
+
+\predref{ask}{2} extracts X by calling state transformer E.
+
+    \predicate{stop}{1}{+Generator}
+\predref{stop}{1} marks a generator as done.
+Future calls to it will fail
+
+    \predicate{is_done}{1}{+Generator}
+checks if a generator is done
+
+    \predicate{empty}{1}{-Done}
+empty stream generator, set to "done" up front
+
+    \infixop{in}{-Value}{+Generator}
+\predref{in}{2} backtracks over progressively advancing states.
+\predref{in}{2} is an xfx infix operator of priority 800
+
+    \predicate{show}{2}{+NumberOfItems, +Generator}
+\predref{show}{2} collects results after K steps and prints them out
+same as: \verb$show(K,Stream)$\Sneck{}\verb$once(findnsols(K,X,X in Stream,Xs))$,\verb$writeln(Xs)$.
+
+    \predicate{show}{1}{+Generator}
+collects and prints 12 results of \arg{Generator}
+
+    \predicate{const}{2}{+Constant, -Generator}
+Builds a constant infinite stream returning its first argument.
+the "next" step, \verb$call(=(C),X)$ will simply unify X and C
+
+    \predicate{rand}{1}{+RandomStreamGenerator}
+produces a stream of random floating point numbers between 0 and 1
+
+    \predicate{nat}{1}{-NaturalNumberStream}
+Natural number generator, storing the next and its initial state.
+
+    \predicate{pos}{1}{-PositiveIntegerStream}
+stricly positive integers
+
+    \predicate{neg}{1}{-NegativeIntgerStream}
+strictly negative integers
+
+    \predicate{list}{2}{+ListOrLazyList, -Stream}
+Builds stream generator from list or lazy list. 
+
+    \predicate{range}{3}{+From, +To, -RangeStream}
+finite positive integer range generator
+
+    \predicate{cycle}{2}{+StreamGenerator, -CycleStreamGenerator}
+transforms a finite generator into an infinite cycle
+advancing over its elements repeatedly.
+Uses a circular list, unified with its own tail.
+
+    \predicate{eng}{3}{+AnswerTemplate, +Goal, -Generator}
+\arg{Generator} exposing the work of an engine as a stream of answers. 
+
+    \predicate{ceng}{3}{+Answertemplate, +Goal, -Generator}
+Clonable generator exposing the work of an engine as a stream of answers.
+It works on a generator wrapping an engine
+such that its goal and answer template are kept.
+That makes it clonable, assuming it runs code that's side-effect free.
+
+    \predicate{ceng_clone}{2}{+Generator, -Clone}
+creates new generator from a generator's goal
+
+    \predicate{take}{3}{+K, +Generator, -NewGenerator}
+Builds generator for initial segment of length \arg{K} of given generator. 
+
+    \predicate{drop}{3}{+K, +Generator, -NewGenerator}
+Roll the stream to first postion after first \arg{K} items.
+Returns generator positioned \arg{K} steps forward.
+
+    \predicate{slice}{4}{+From, +To, +Generator, -NewGenerator}
+Builds generator for a slice of a given stream \arg{From}..\arg{To} (excluding \arg{To}).
+
+    \predicate{setify}{2}{+Gen, -NewGen}
+Transforms a generator into one that produces distinct elements.
+It avoids sorting and uses the built-in \predref{distinct}{2} to ensure
+that it also works on infinite streams.
+
+    \predicate{map}{3}{+Closure, +Generator, -NewGenerator}
+Builds a generator that will apply a closure to each element of a given generator.
+
+    \predicate{map}{4}{+Closure, +Generator1, +Generator2, -NewGenerator}
+Builds a generator that combines two gnerators by creating
+an advancer that applies a \arg{Closure} to their "next" yields.
+
+    \predicate{reduce}{4}{+Closure, +Generator, +InitialVal, -ResultGenerator}
+Builds generator that reduces given generator's yields with given closure,
+starting with an initial value. Yields the resulting single final value.
+
+    \predicate{do}{1}{+Goal}
+Bactracks over \arg{Goal} for its side-effects only. 
+
+    \predicate{zipper_of}{3}{+Generator1, +Generator2, -NewGenerator}
+\predref{zipper_of}{3} collects pairs of elements in matching positions
+in given two generators, finite of the same length or infinite.
+
+    \predicate{arith_sum}{3}{+Gen1, +Gen2, -NewGen}
+Elementwise addition of two streams.
+
+    \predicate{mult}{3}{+X, +Y, -P}
+\arg{P} is the result of the multiplication of two numbers
+
+    \predicate{arith_mult}{3}{+Gen1, +Gen2, -NewGen}
+Elementwise multiplication of two streams.
+
+    \predicate{chain}{3}{+Closure, +Generator, -Newgenerator}
+Pipes elements of a stream through a transformer.
+
+    \predicate{chains}{3}{+ListOfClosures, +Generator, -Newgenerator}
+Pipes stream through a list of transformers.
+
+    \predicate{mplex}{3}{+Closures, +Gen, -Values}
+multiplexes a stream through a list of transfomers
+returns the list of values obtained by appying each
+transformer to the next lement of the generator
+
+    \predicate{clause_stream}{2}{+Head, -StreamOfMatchingClauses}
+generates a stream of clauses matching a given goal
+
+    \predicate{sum}{3}{+Gen1, +Gen2, -NewGen}
+Interleaved sum merging two finite or infinite generators.
+
+    \predicate{cat}{2}{+GeneratorList, -ConcatenationOfGenerators}
+concatenates streams of a list of generators
+Int only makes sense if all but the last one are finite.
+
+    \predicate{prod_}{3}{+Gen1, +Gen2, -NewGen}
+engine-based direct product
+
+    \predicate{prod}{3}{+Gen1, +Gen2, -NewGen}
+direct product of two finite or infinite generators
+
+    \predicate{cantor_pair}{3}{+Int1, +Int2, -Int}
+Cantor's pairing function
+
+    \predicate{cantor_unpair}{3}{+Int, -Int1, -Int2}
+Inverse of Cantor's pairing function.
+
+    \predicate{int_sqrt}{2}{+PosInt, -IntSqrt}
+computes integer square root using Newton's method
+
+    \predicate{conv}{1}{-Generator}
+\arg{Generator} for N * N self-convolution.
+
+    \predicate{lazy_nats}{1}{-LazyListOfNaturalNumbers}
+infinite lazy list of natural numbers
+
+    \predicate{gen2lazy}{2}{+Generator, -LazyLIst}
+Turns a generator into a lazy list 
+
+    \predicate{lazy2gen}{2}{+LazyList, -Generator}
+Turns a lazy list into a generator.
+Note that \predref{list}{2} actually just works on lazy lists!
+
+    \predicate{iso_fun}{5}{+Operation, +SourceType, +TargetType, +Arg1, -ResultOfSourceType}
+Transports a predicate of arity 2 F(+A,-B) to a domain where
+an operation can be performed and brings back the result.
+
+    \predicate{iso_fun}{6}{+Operation, +SourceType, +TargetType, +Arg1, +Arg2, -ResultOfSourceType}
+Transports a predicate of arity 2 F(+A,+B,-C) to a domain where
+an operation can be performed and brings back the result.
+transports F(+A,+B,-C) 
+
+    \predicate{iso_fun_}{6}{+Operation, +SourceType, +TargetType, +Arg1, -Res1, -Res2}
+Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
+an operation can be performed and brings back the results.
+transports F(+A,+B,-C) 
+
+    \predicate{lazy_maplist}{3}{+F, +LazyXs, -LazyYs}
+Applies a predicate to a lazy list resulting in anoter lazy list
+Works with infinite list as input.
+
+Lazy lists are not plain lists, as proven by applying maplist:
+This loops!
+\Sdirective{}\verb$lazy_nats(Ns)$,\verb$maplist(succ,Ns,Ms)$.
+
+\predref{lazy_maplist}{3} fixes that.
+
+    \predicate{lazy_maplist}{4}{+F, +LazyXs, LazyYs, -LazyYs}
+like \predref{maplist}{4}, but working on (possibly infinite) lazy lists
+
+    \predicate{split}{3}{+E, -E1, -E2}
+\predref{split}{3} uses lazy lists to split a stream into two.
+infelicity: original stream shifted by one position ...
+
+    \predicate{lazy_conv}{3}{+As, +Bs, -Ps}
+convolution of two finite or infinite lazy lists
+
+    \predicate{convolution}{3}{+Gen1, +Gen2, -NewGen}
+convolution of two finite or infinite lazy generators
+
+    \predicate{eval_stream}{2}{+GeneratorExpression, -Generator}
+evaluates a generator expression to ready to use
+generator that combines their effects
+
+    \infixop{in_}{-X}{+GeneratorExpression}
+backtracks over elements of a generator expression
+note that in_/2 is an xfx 800 operator, used as \arg{X} in_ Gen
+
+    \predicate{ask_}{2}{GeneratorExpression, -Element}
+produces next element after evaluating a gnerator expression
+
+    \predicate{term_reader}{2}{+File, -TermGenerator}
+creates a generator advancing on terms read from a file
+
+    \predicate{fact}{2}{+N, -ResultGenerator}
+factorial computation - use \predref{ask}{2} to extract value
+used for testing
+
+    \predicate{fibo}{1}{-Generator}
+infinite Fibonacci stream for testing
+\end{description}
+
+
+\printindex
+\end{document}

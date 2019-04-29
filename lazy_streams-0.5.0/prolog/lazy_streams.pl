@@ -72,6 +72,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   term_reader/2, % term stream generator, by reading from a Prolog file
   fact/2, % generator for infinite stream of factorials
   fibo/1, % generator for infinite stream of Fibonacci numbers
+  prime/1, % simple engine-based generator for the infinite stream of prime numbers
   tests/0, % run all tests, with output to tests.txt
   bm/0 % run all benchmarks
 ]).
@@ -718,3 +719,22 @@ fibo(F):-fibo_pair(E),chain(arg(1),E,F).
 fibo_pair(gen_next(fibo_pair_step,state(1-1))).
 
 fibo_pair_step(X-Y,Y-Z) :- Z is X+Y.
+
+%! prime(+Gen)
+%
+% simple engine-based generator for the infinite stream of prime numbers
+prime(E):-eng(_,new_prime(1),E).
+
+new_prime(N):-
+  succ(N,SN),
+  ( not_a_prime(SN)->true
+  ; engine_yield(SN)
+  ),
+  new_prime(SN).
+  
+not_a_prime(N):-
+   int_sqrt(N,M),
+   between(2,M,D),
+   N mod D =:=0.
+   
+   
