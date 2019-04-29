@@ -133,7 +133,7 @@ these operations and an interface to SWI-Prolog's {\tt lazy\_lists} library. We 
 
 \BX
 The generators {\tt pos/1} for the infinite positive integers and {\tt neg/1} for
-the stream of negative integers annihhilate each other via a addition operation
+the stream of negative integers annihilate each other via a addition operation
 resulting in a constant {\tt 0} stream.
 \begin{codex}
 ?- pos(P),neg(N),map(plus,P,N,Zero),show(10,Zero).
@@ -344,7 +344,7 @@ is immaterial to the user of the generator which can be seen as a ``black box''.
 
 
 \section{The Generator Algebra}
-We start by describing some of the stream generator cpmbinators
+We start by describing some of the stream generator combinators
 that will be organized into a generator algebra 
 via an embedded language interpreter.
  
@@ -563,7 +563,7 @@ Prolog programmer with {\em lazy lists}.
 
 \subsection{Implementing lazy lists using attributed variables}
 
-Lazy lists form a suitable represention of infinite streams of Prolog
+Lazy lists form a suitable representation of infinite streams of Prolog
 terms. Lazy data structures can be implemented in Prolog using
 \emph{attributed} variables as a mechanism to extend unification
 \cite{10.1007/3-540-55844-6_141}. The lazy function implementation of
@@ -631,7 +631,7 @@ lazy_nats_next(X,SX,X):-succ(X,SX).
 
 %\subsection{The Lazy List View of Prolog Streams}
 %\subsection{The  equivalence between Answer stream generators and Lazy Lists}
-\subsection{The interoperation between stream gnerators and lazy lists}
+\subsection{The interoperation between stream generators and lazy lists}
 
 The overloading of syntax between the usual lists and lazy lists, 
 can be confusing to the
@@ -662,7 +662,7 @@ transports morphisms between objects.
 
 With help from SWI-Prolog's {\tt lazy\_lists} library, 
 generators can be turned into finite or infinite lazy lists and vice-versa.
-The predicate {\tt gen2lazy(+Generator,-LazyLIst)} turns a possibly infinite
+The predicate {\tt gen2lazy(+Generator,-LazyList)} turns a possibly infinite
 stream generator into a lazy list.
 \begin{code} 
 gen2lazy(Gen,Ls):-lazy_list(gen2lazy_forward,Gen,Ls).
