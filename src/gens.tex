@@ -106,7 +106,7 @@ functional programming languages like Haskell \cite{hudak07} or functional-logic
 
 We organize our generators as an algebra, wrapped as a library module with a declarative interface, to avoid exposing  operations requiring an implementation with a clear procedural flavor to the Prolog application programmer.
 
-By defining an iso-functor that transports operations between
+By defining a functor that transports operations between isomorphic
 generators and lazy lists, we offer a choice between 
 abstract sequence operations and the concrete list view familiar to Prolog users.
 
@@ -549,7 +549,9 @@ next_term(Stream,Term):-read(Stream,X),
 
 While generators provide abstract sequence operations, it is also useful
 to emulate as closely as possible the  list operations familiar to the 
-Prolog programmer with {\em lazy lists}.
+Prolog programmer with {\em lazy lists}. 
+As an example, they can elegantly express parsing algorithms acting on files 
+via Prolog's DCGs.
 
 \subsection{Implementing lazy lists using attributed variables}
 
@@ -600,7 +602,7 @@ library. The general goal to create a lazy list is
 \texttt{lazy\_list(:Next, +State0, -List)}. This executes
 \texttt{call(Next, State0, State1, Head)} to produce the next element.
 
-Lazy lists allow Prolog to handle infinite data streams, provided that garbage
+Lazy lists allow Prolog to handle infinite data streams,  provided that garbage
 collection can reclaim the inaccessible head of the list. To make the
 head inaccessible, the code cannot keep a reference to the head
 and although processing the list may be non-deterministic,

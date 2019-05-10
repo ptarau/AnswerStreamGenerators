@@ -20,6 +20,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   op(800,xfx,(in_)), % exports in_/2
   in/2, % like member/2, for lists - test or generates
   in_/2, % like in/2, but working on a stream expression
+  nth/3, % rolls generator until it reaches element at given Position and then returns it
   show/1, % prints a list representation of an initial segment of a stream
   show/2, % prints the first K elements of a stream as a list
   eng/3, % engine-based answer stream generator
@@ -130,6 +131,11 @@ X in Gen:-ask(Gen,A),select_from(Gen,A,X).
 
 select_from(_,X,X).
 select_from(Gen,_,X):-X in Gen.
+
+%! nth(+Position,+Generator, -Element)
+%
+% rolls generator until it reaches element at given Position and then returns it
+nth(I,Gen,X) :- between(1,I,_),ask(Gen,_),fail;ask(Gen,X).
 
 %! show(+NumberOfItems, +Generator)
 % show/2 collects results after K steps and prints them out
