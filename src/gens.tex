@@ -154,7 +154,7 @@ library package\footnote{
 \EI
 
 The rest of the paper is organized as follows.
-Section \ref{ov} overviews some simple use cases.
+Section \ref{ov} demonstrates our approach with some examples.
 Section \ref{impl} describes implementation of lazy stream generator constructors and 
 their the interface.
 Section \ref{alg} introduces several operations on generators and overviews the
@@ -171,37 +171,32 @@ section \ref{conc} concludes the paper.
 %===============================================================================
 \section{Overview}\label{ov}
 
-This section briefly introduces our lazy streams approach with a few simple use
-cases.
+This section briefly introduces our lazy streams approach with a few examples.
 
-%\BX
-The generators {\tt pos/1} for the infinite positive integers and {\tt neg/1} for
-the stream of negative integers annihilate each other via a addition operation
-resulting in a constant {\tt 0} stream.
+The generators {\tt pos/1} and {\tt neg/1} produce the infinite streams of positive
+and negative integers. With {\tt map/4} we combine these two streams element-wise;
+here they annihilate each other with {\tt plus/3}. With {\tt show/2} we display
+the first 10 elements of the resulting constant stream of zeroes.
 \begin{codex}
 ?- pos(P),neg(N),map(plus,P,N,Zero),show(10,Zero).
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0].
-...
 \end{codex}
-A convolution operation between an infinite and a finite generator is performed
-and the first few elements of the result are shown. Under the hood, it is actually
-passed to the lazy list library from where the result is returned.
+With \texttt{list/2} we turn the regular list \texttt{[a,b,c]} into a stream.
+Then {\tt convolution/3} computes its Cartesian product with the positive
+integers, following a convolution approach, and {\tt show/2} displays the first 16 elements. 
 \begin{codex}
 ?- pos(P),list([a,b,c],L),convolution(P,L,C),show(16,C).
 [1-a, 1-b, 2-a, 1-c, 2-b, 3-a, 2-c, 3-b, 4-a, 3-c, 4-b, 5-a, 4-c, 5-b, 6-a, 5-c].
-...
 \end{codex}
 Using the an embedded language interpreter for our algebra of stream
 generators, we explore with the predicate {\tt in\_/2} 
 the result of the direct product of a stream built
 from a list and a stream covering a range of natural numbers.
 Like {\tt member/2}, {\tt in\_/2} iterates over its results on backtracking.
-
 \begin{codex}
 ?- X in_ [a,b]*(1:4).
 X = a-1 ; X = a-2 ; X = b-1 ; X = a-3 ; X = b-2 .
 \end{codex}
-%\EX  
      
 
 \section{Implementing Lazy Stream Generators}\label{impl}
