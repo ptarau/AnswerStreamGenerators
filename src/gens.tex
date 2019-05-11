@@ -59,6 +59,7 @@ encapsulate the work of coroutining first-class logic engines and support intero
 Stream generators are exposed to the application programmer either through an abstract sequence manipulation API or as lazy lists. We define an algebra of stream generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms and supports moving between isomorphic sequence representations.
 \end{abstract}
 \end{comment}
+\hrule
 
 
 \section{Introduction}
@@ -66,12 +67,12 @@ Stream generators are exposed to the application programmer either through an ab
 Initial design as well as evolution of successful programming languages often walks a fine line between semantic purity and pragmatic expressiveness. With its declarative roots and creative pragmatic additions Prolog is a long-time survivor in the complex ecosystem of programming languages. We believe that its longevity is due not only to its elegant semantics but also to its creative adaptations to emerging programming language features that respond to evolving software development requirements.
 
 Stream processing, now prevalent in widely used programming languages languages like Java, Python, C\# or JavaScript offers a uniform and (mostly) declarative view on processing finite 
-and infinite\footnote{We use ``infinite'' here as a short hand  for data or computation streams of unpredictable, large or very large size.} sequences. Arguably, its advent has been driven, besides the expressiveness lift it provides, by the need of processing big data. This big data problem manifests itself in static incarnations like very large training sets for machine learning, or as dynamic event streams coming from Web search queries and clicks,  or from sensor networks supporting today's fast spreading IOT infrastructure.
+and infinite\footnote{We use ``infinite'' here as a short hand  for data or computation streams of unpredictable, large or very large size.} sequences. Arguably, its advent has been driven, besides the expressiveness lift it provides, by the need of processing big data. This big data problem manifests itself in static incarnations like very large training sets for machine learning, or as dynamic event streams coming from Web search queries and clicks,  or from sensor networks supporting today's fast spreading IoT infrastructure.
  
 Several techniques have been used to extend mature programming languages with stream processing. The task has been facilitated by the presence of generalized iterator constructs like Python's generators or by presence of lazy evaluation semantics in functional languages. To extend Prolog with state-of-the-art lazy stream processing capabilities, a few limitations need to be overcome.
 
 The first limitation is that Prolog's resolution mechanism is subject to a fixed depth-first search and a strict evaluation semantics.
-While Prolog's depth-first  search mechanism can be complemented with alternative search strategies as shown in \cite{tor} by overriding its disjunction operator, the evaluation mechanism remains ultimately eager. When programming with lists or DCGs, one chains recursive steps
+While Prolog's depth-first  search mechanism can be complemented with alternative search strategies, as shown by \citeN{tor} by overriding its disjunction operator, the evaluation mechanism remains ultimately eager. When programming with lists or DCGs, one chains recursive steps
 in the body of clauses connected by conjunctions. 
 
 The second limitation, consequence of Prolog's incremental evolution as a programming language, is the presence of procedural state-management and I/O constructs that are
