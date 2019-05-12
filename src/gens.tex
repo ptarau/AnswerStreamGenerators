@@ -188,21 +188,24 @@ integers, following a convolution approach, and {\tt show/2} displays the first 
 ?- pos(P),list([a,b,c],L),convolution(P,L,C),show(16,C).
 [1-a, 1-b, 2-a, 1-c, 2-b, 3-a, 2-c, 3-b, 4-a, 3-c, 4-b, 5-a, 4-c, 5-b, 6-a, 5-c].
 \end{codex}
-Using the an embedded language interpreter for our algebra of stream
-generators, we explore with the predicate {\tt in\_/2} 
-the result of the direct product of a stream built
-from a list and a stream covering a range of natural numbers.
-Like {\tt member/2}, {\tt in\_/2} iterates over its results on backtracking.
+We also provide an embedded language interpreter to concisely 
+express algebraic operations on stream. Here we use it to create
+the Cartesian product of the stream \texttt{[a,b]} with the stream
+\texttt{[1,2,3]}, the latter abbreviated by the shorthand \texttt{(1:4)}.
+The \texttt{in\_/2} predicate enumerates the elements of the resulting stream
+through backtracking, like \texttt{member/2} does for regular lists.
 \begin{codex}
 ?- X in_ [a,b]*(1:4).
 X = a-1 ; X = a-2 ; X = b-1 ; X = a-3 ; X = b-2 .
 \end{codex}
      
 
+%===============================================================================
 \section{Implementing Lazy Stream Generators}\label{impl}
   
 Generators are created by a family of constructors, encapsulating sequences produced algorithmically or as a result of state transformers interfacing Prolog with the ``outside world'', a design philosophy similar to that of monads in functional languages.
 
+%-------------------------------------------------------------------------------
 \subsection{The Stream Generator Interface}
 
 The ``contract'' of our interface is that a generator, specified by a 
@@ -361,7 +364,7 @@ Note also that generating an answer stream by either of the above methods
 is immaterial to the user of the generator which can be seen as a ``black box''.
 
 
-
+%===============================================================================
 \section{The Generator Algebra}\label{alg}
 We start by describing some of the stream generator combinators
 that will be organized into a generator algebra 
