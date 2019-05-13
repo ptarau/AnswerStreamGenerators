@@ -41,6 +41,9 @@ empty stream generator, set to "done" up front
 \predref{in}{2} backtracks over progressively advancing states.
 \predref{in}{2} is an xfx infix operator of priority 800
 
+    \predicate{nth}{3}{+Position, +Generator, -Element}
+rolls generator until it reaches element at given \arg{Position} and then returns it
+
     \predicate{show}{2}{+NumberOfItems, +Generator}
 \predref{show}{2} collects results after K steps and prints them out
 same as: \verb$show(K,Stream)$\Sneck{}\verb$once(findnsols(K,X,X in Stream,Xs))$,\verb$writeln(Xs)$.
@@ -116,6 +119,10 @@ starting with an initial value. Yields the resulting single final value.
     \predicate{do}{1}{+Goal}
 Bactracks over \arg{Goal} for its side-effects only. 
 
+    \predicate{scan}{4}{+Closure, +Generator, +InitialVal, -ResultGenerator}
+Builds generator that reduces given generator's yields with given closure,
+starting with an initial value. Yields all the intermediate results.
+
     \predicate{zipper_of}{3}{+Generator1, +Generator2, -NewGenerator}
 \predref{zipper_of}{3} collects pairs of elements in matching positions
 in given two generators, finite of the same length or infinite.
@@ -155,6 +162,7 @@ engine-based direct product
 
     \predicate{prod}{3}{+Gen1, +Gen2, -NewGen}
 direct product of two finite or infinite generators
+using Cantor's unparing function, and avoiding engines
 
     \predicate{cantor_pair}{3}{+Int1, +Int2, -Int}
 Cantor's pairing function
@@ -190,7 +198,7 @@ transports F(+A,+B,-C)
     \predicate{iso_fun_}{6}{+Operation, +SourceType, +TargetType, +Arg1, -Res1, -Res2}
 Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
 an operation can be performed and brings back the results.
-transports F(+A,+B,-C) 
+transports F(+A,-B,-C) 
 
     \predicate{lazy_maplist}{3}{+F, +LazyXs, -LazyYs}
 Applies a predicate to a lazy list resulting in anoter lazy list
@@ -210,10 +218,13 @@ like \predref{maplist}{4}, but working on (possibly infinite) lazy lists
 infelicity: original stream shifted by one position ...
 
     \predicate{lazy_conv}{3}{+As, +Bs, -Ps}
-convolution of two finite or infinite lazy lists
+convolution of two infinite lazy lists
 
     \predicate{convolution}{3}{+Gen1, +Gen2, -NewGen}
 convolution of two finite or infinite lazy generators
+
+    \predicate{sum_}{3}{+Gen1, +Gen2, -NewGen}
+sum of two finite or infinite lazy generators
 
     \predicate{eval_stream}{2}{+GeneratorExpression, -Generator}
 evaluates a generator expression to ready to use

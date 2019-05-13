@@ -642,7 +642,7 @@ iso_fun(F,From,To,A,B,C):- % writeln(iso_fun(F,From,To,A,B,C)),
 %
 % Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
 % an operation can be performed and brings back the results. 
-% transports F(+A,+B,-C) 
+% transports F(+A,-B,-C) 
 iso_fun_(F,From,To,A,B,C):- 
   call(From,A,X),
   call(F,X, Y,Z), % X in, Y,Z out 

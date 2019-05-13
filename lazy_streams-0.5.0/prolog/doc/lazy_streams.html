@@ -65,6 +65,8 @@ an advancer that applies a <var>Closure</var> to their "next" yields.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="reduce/4"><b class="pred">reduce</b><var class="arglist">(+Closure, +Generator, +InitialVal, -ResultGenerator)</var></a></dt><dd class="defbody">Builds generator that reduces given generator's yields with given closure,
 starting with an initial value. Yields the resulting single final value.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="do/1"><b class="pred">do</b><var class="arglist">(+Goal)</var></a></dt><dd class="defbody">Bactracks over <var>Goal</var> for its side-effects only. </dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="scan/4"><b class="pred">scan</b><var class="arglist">(+Closure, +Generator, +InitialVal, -ResultGenerator)</var></a></dt><dd class="defbody">Builds generator that reduces given generator's yields with given closure,
+starting with an initial value. Yields all the intermediate results.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="zipper_of/3"><b class="pred">zipper_of</b><var class="arglist">(+Generator1, +Generator2, -NewGenerator)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#zipper_of/3">zipper_of/3</a> collects pairs of elements in matching positions
 in given two generators, finite of the same length or infinite.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="arith_sum/3"><b class="pred">arith_sum</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">Elementwise addition of two streams.</dd>
@@ -97,7 +99,7 @@ an operation can be performed and brings back the result.
 transports F(+A,+B,-C) </dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="iso_fun_/6"><b class="pred">iso_fun_</b><var class="arglist">(+Operation, +SourceType, +TargetType, +Arg1, -Res1, -Res2)</var></a></dt><dd class="defbody">Transports a predicate of arity 2 F(+A,-B,-C) to a domain where
 an operation can be performed and brings back the results.
-transports F(+A,+B,-C) </dd>
+transports F(+A,-B,-C) </dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_maplist/3"><b class="pred">lazy_maplist</b><var class="arglist">(+F, +LazyXs, -LazyYs)</var></a></dt><dd class="defbody">Applies a predicate to a lazy list resulting in anoter lazy list
 Works with infinite list as input.
 
@@ -132,10 +134,10 @@ used for testing</dd>
 The following predicates are exported, but not or incorrectly documented.</p>
 
 <dl class="undoc">
+<dt class="undoc"><span style="float:right">&nbsp;</span><a name="bm/0"><b class="pred">bm</b></a></dt>
 <dt class="undoc"><span style="float:right">&nbsp;</span><a name="bmx/0"><b class="pred">bmx</b></a></dt>
 <dt class="undoc"><span style="float:right">&nbsp;</span><a name="bmp/0"><b class="pred">bmp</b></a></dt>
 <dt class="undoc"><span style="float:right">&nbsp;</span><a name="tests/0"><b class="pred">tests</b></a></dt>
-<dt class="undoc"><span style="float:right">&nbsp;</span><a name="bm/0"><b class="pred">bm</b></a></dt>
 </dl>
 
 </body>
