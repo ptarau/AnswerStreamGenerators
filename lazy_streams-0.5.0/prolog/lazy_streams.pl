@@ -50,7 +50,8 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   map/3, % generator obtained by applying a predicate to a stream
   map/4, % % generator obtained by applying a predicate to two streams
   zipper_of/3, % forms pairs from corresponding elements of two streams
-  reduce/4, % reduces/folds a stream with given predicate of arity 2
+  reduce/4, % reduces/folds a stream with given predicate of arity 3
+  scan/4, % reduces a stream with given predicate of arity 3 and yields intermediate results
   arith_sum/3, % adds 2 streams element by element
   mult/3, % product of two numbers
   arith_mult/3, % multiplies 2 streams element by element
@@ -183,6 +184,8 @@ nat_next(S,X):-gen_next(succ,S,X).
 %
 % Natural number generator, storing the next and its initial state.
 nat(nat_next(state(0))).
+
+nat2(gen_next(succ,state(0))).
 
 %! pos(-PositiveIntegerStream)
 %
@@ -358,6 +361,20 @@ reduce_next(S,F,E,R):-
 % Bactracks over Goal for its side-effects only.  
 do(G):-call(G),fail;true.
 
+
+%! scan(+Closure, +Generator, +InitialVal, -ResultGenerator)
+% Builds generator that reduces given generator's yields with given closure, 
+% starting with an initial value. Yields all the intermediate results.
+scan(F,InitVal,Gen,scan_next(state(InitVal),F,Gen)).
+
+scan_next(S,F,Gen,R) :-
+  arg(1,S,X),
+  ask(Gen,Y),
+  call(F,X,Y,Z),
+  nb_linkarg(1,S,Z),
+  R = Z.
+
+  
 
 %! zipper_of(+Generator1,+Generator2, -NewGenerator)
 % zipper_of/3 collects pairs of elements in matching positions
