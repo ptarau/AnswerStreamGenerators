@@ -236,14 +236,14 @@ where
 \begin{minipage}{0.4\textwidth}
 \begin{code}
 is_done(E):-arg(1,E,done).
-stop(E):-nb_linkarg(1,E,done).
+stop(E):-nb_setarg(1,E,done).
 \end{code}
 \end{minipage}
 \end{tabular}
 This code {\tt call}s the generator to produce an element. The first time the
-generator fails, \texttt{stop/1} writes \texttt{none} into its first argument
+generator fails, \texttt{stop/1} writes \texttt{done} into its first argument
 in a non-backtrackable fashion (and then propagates the failure). Subsequent 
-{\tt ask}s simply read the argument wth \texttt{is\_done/1} and never invoke
+{\tt ask}s simply read the argument with \texttt{is\_done/1} and never invoke
 the generator again. This means that its resources can be garbage collected.
 
 The {\tt in/2} predicate uses {\tt ask/2} to produce the elements on backtracking.
@@ -286,7 +286,7 @@ nat(gen_next(succ,state(0))).
 \end{code}
 
 The more general {\tt gen\_nextval/3} predicate supports generators for which
-the evolving state does not coincide with the elemens of the stream.
+the evolving state does not coincide with the elements of the stream.
 \begin{code}
 gen_nextval(Advancer,State,Yield):-
   arg(1,State,X1),
@@ -322,7 +322,7 @@ as well as for taking or dropping an initial segment of a stream.
 %-------------------------------------------------------------------------------
 \subsection{Answer Stream Generators}
 
-We can encapsulate first class logic engines as generators when when more
+We can encapsulate first class logic engines as generators  when more
 complex computations are needed for generating streams, that  cannot be
 expressed as simple step-by-step state transformations.
 
@@ -379,7 +379,7 @@ a stream of answers: 1) via backtracking (OR-streams), and 2) as part of a
 forward moving recursive loop (AND-streams).
 
 The stream generator abstraction makes the user oblivious to this choice of
-generation method, and allows us to seemlessly replace one implementation 
+generation method, and allows us to seamlessly replace one implementation 
 for another. Consider for instance the two implementations of the stream of natural
 numbers below.
 The first implementation generates an AND-stream yielding the elements in a
@@ -437,7 +437,7 @@ For instance,
 [1,-1,2,-2,3,-3,4,-4,5,-5]
 \end{codex}
 We name this operation the sum because it is clearly associative and, if the
-order of the elements is unimportant, it is also commutative.  Also, is thas
+order of the elements is unimportant, it is also commutative.  Also, it has
 the empty stream, defined such that {\tt ask/2} fails, as its neutral element.
 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -458,8 +458,8 @@ The algorithm, expressed by the predicate {\tt prod\_loop},
 alternates between both generators as neither is done.
 After that, it keeps progressing the remaining generator until 
 that too is exhausted. Each time a generator produces a new element,
-is is paired with the previously produced elements of the other generator,
-which a stored in a list.
+it is paired with the previously produced elements of the other generator,
+which are stored in a list.
 \begin{code}
 prod_loop(Ord1,A,E1-Xs,E2-Ys):-
   flip(Ord1,Ord2,A,Y,Pair),
@@ -490,7 +490,7 @@ The singleton stream with a known constant (e.g., {\tt o}) is the neutral
 element for the product, if we consider any element {\tt X} to be isomorphic to
 {\tt o-X} and {\tt X-o}.  Moreover, the product is associative if we ignore the
 association in the pair representation (e.g, {\tt 1-(2-3)} vs. {\tt (1-2)-3})
-and if the order of the elements does not matter.  Finally, under the same
+and commutative if the order of the elements does not matter.  Finally, under the same
 assumptions, the product distributes over the sum.
 
 \paragraph{Note:} Our {\tt lazy\_streams} package also provides the {\tt prod\_/3} stream product 
@@ -512,7 +512,7 @@ compositions. The grammar of this embedded language of generator expressions $F$
 \begin{center}
 \begin{tabular}{rcl@{\hspace{0.4cm}}l@{\hspace{1cm}}cl@{\hspace{0.4cm}}l}
   $F$    & ::=  & $F_1 + F_2$         & \it (sum)         & $\mid$ & $\{F\}$           & \it (setification)\\
-         & $\mid$ & $F_1 \times F_2$  & \it (product)     & $\mid$ & $X^G$             & \it (engine) \\
+         & $\mid$ & $F_1 \times F_2$  & \it (product)     & $\mid$ & $X^G$            & \it (engine) \\
          & $\mid$ & $N:M$             & \it (range)       & $\mid$ & $A$               & \it (constant)\\
          & $\mid$ & $[X|Xs]$          & \it (list)        & $\mid$ & $E$               & \it (stream)
 \end{tabular}
@@ -540,7 +540,7 @@ produces a set of answers, with duplicates removed.
 \begin{code}
 setify(E,SE):-eng(X,distinct(X,X in E),SE).
 \end{code}
-This works for infinite generators (upto the limits of available memory), in contrast
+This works for infinite generators (within the limits of available memory), in contrast
 with sorting, which also removes duplicates, but assumes the list is finite.
 
 Lastly, we define {\tt in\_/2} as a variant of \texttt{in/2} that takes a 
@@ -550,7 +550,7 @@ generator expression rather than a generator.
 
 X in_ GenExpr:-eval_stream(GenExpr,NewGen),X in NewGen.     
 \end{code}
-Here is a small example that combines many of the features:
+Here is a small example that combines many of the features described above:
 \begin{codex}
 ?- X in_ ({[a,b,a]}+(1:3)*c).
 X = a ; X = 1-c ; X = b ; X = 1-c ; X = 2-c; X = 1-c ; X = 2-c ....
@@ -562,7 +562,7 @@ X = a ; X = 1-c ; X = b ; X = 1-c ; X = 2-c; X = 1-c ; X = 2-c ....
 %===============================================================================
 \section{Other Stream Generator Operations}\label{other}
 
-This section describes the additional strream operations that our {\tt
+This section describes some additional stream operations that our {\tt
 lazy\_streams} package provides.
 
 %-------------------------------------------------------------------------------
@@ -586,8 +586,8 @@ apply a predicate with {\tt N arguments} to
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 \paragraph{Reduce}
 
-The predicate {\tt reduce(+Closure, +Generator, +InitialVal, -ResultGenerator)}
-creates a generator that reduces a given generator's elements with the given closure, 
+The predicate {\tt reduce(+Closure,+Generator,+InitialVal, -ResultGenerator)}
+creates a generator that reduces a finite generator's elements with the given closure, 
 starting with an initial value. Its only element is the resulting single final value.
 Similarly to Haskell's {\tt foldl} and {\tt foldr}, it can be used to
 generically define arithmetic sums and products over a stream.
@@ -625,7 +625,7 @@ scan_next(S,F,Gen,R) :-
   arg(1,S,X),
   ask(Gen,Y),
   call(F,X,Y,Z),
-  nb_linkarg(1,S,Z),
+  nb_setarg(1,S,Z),
   R = Z.
 \end{code}
 For example, we can compute the stream of cumulative sums of the natural numbers.
@@ -845,7 +845,7 @@ Ns = [0|_21022], Ps = [1, 2, 3|_21052], X = 3,
 \end{codex}
 \EX
 
-On the other hand, an alternative {\tt sum\_/3} operation  can be implemented 
+Inversely, an alternative {\tt sum\_/3} operation  can be implemented 
 quite easily with lazy lists. Our package {\tt lazy\_streams} 
 uses this technique to borrow it with help from the {\tt iso\_fun/6} predicate.
 \begin{code}
@@ -873,12 +873,12 @@ must be created if the sequence needs to be revisited again.
 
 Some algorithms can be most easily expressed using first-class logic engines, but
 avoiding engines when possible reduces memory footprint and can avoid term copying.
-Thus, one might ask if predicates like {\tt lazy\_findall} could be implemented
+Thus, one might ask if a predicate like {\tt lazy\_findall} could be implemented
 without using first class logic engines, e.g., it terms of  
 attributed-variables, 
 TOR \cite{tor}, delimited AND-continuations \cite{delim}.
 
-This unlikely, as  these techniques are all subject to backtracking and as such can not
+This seems unlikely, as  these techniques are all subject to backtracking and as such can not
 store state that survives it. We know that one can circumvent this challenge
 by emulating first-class engines at source level as in \cite{padl09inter}, but that is 
 extremely slow, way beyond being practical. A more promising
@@ -909,7 +909,9 @@ within logic programming
 the later with focus on
 reasoning about streams.
 Our lazy stream generators share with Python  \cite{pyref} the encapsulation of
-a stream into a mechanism providing its elements on-demand. 
+a stream into a mechanism providing its elements on-demand. But, by contrast to
+Python's generator operations (see library {\em itertools}), we ensure 
+that everything scales up to work on infinite streams.
 Adoption of a very similar mechanism by other widely
 used languages validates the claims of 
 enhanced expressiveness  that generators can bring.
@@ -920,7 +922,7 @@ lazy lists, has been present even earlier, originally introduced to support cons
 in the form of a mature API that relies as much as possible
  on implementations that bypass both first-class engines and lazy lists is a 
  novel contribution of this paper,
- as well as the uniform view  encapsulating into an open-source library 
+ as well as the uniform view,  encapsulating into an open-source library 
  our mix of declarative and procedural implementation techniques. 
  
 \section{Conclusions}\label{conc}
