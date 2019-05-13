@@ -221,17 +221,32 @@ represent the state and parameters of the generator, like \texttt{1} in
 never takes the reserved value \texttt{done} in the course of its operation.
 When the closure has no more element to yield, it fails.
 
-The ``contract'' of our interface is that a generator, specified by a 
-closure that moves it one step further is called by the {\tt ask/2} predicate, defined as follows:
+Our {\tt ask/2} predicate provides a basic interface to interact with generators:\\
+\begin{tabular}{ccc}
+\begin{minipage}{0.4\textwidth}
 \begin{code}
 ask(E,_):-is_done(E),!,fail.
 ask(E,R):-call(E,X),!,R=X.
 ask(E,_):-stop(E),fail.
 \end{code}
-Note  the checking for completed generators by {\tt is\_done/1} and the explicit termination by {\tt stop/1}, on failure. Once failed, a generator is never invoked and its resources
-are garbage collectable.
+\end{minipage}
+&
+where
+&
+\begin{minipage}{0.4\textwidth}
+\begin{code}
+is_done(E):-arg(1,E,done).
+stop(E):-nb_linkarg(1,E,done).
+\end{code}
+\end{minipage}
+\end{tabular}
+This code {\tt call}s the generator to produce an element. The first time the
+generator fails, \texttt{stop/1} writes \texttt{none} into its first argument
+in a non-backtrackable fashion (and then propagates the failure). Subsequent 
+{\tt ask}s simply read the argument wth \texttt{is\_done/1} and never invoke
+the generator again. This means that its resources can be garbage collected.
 
-The single {\em advancement steps} provided by {\tt ask/2} can be morphed into an answer stream generated on backtracking with the infix predicate {\tt in/2}, as if it were a list explored by {\tt member/2}.
+The {\tt in/2} predicate uses {\tt ask/2} to produce the elements on backtracking.
 \begin{code}
 :-op(800,xfx,(in)).
 
@@ -241,62 +256,62 @@ select_from(_,X,X).
 select_from(Gen,_,X):-X in Gen.
 \end{code}
 
-The simplest generator is the infinite constant stream constructor, {\tt const/2}:
+\paragraph{Basic Stream Generators}
+We package basic stream generators into a predicate that sets them up from
+given parameters.
+For instance, the constant stream is given by the {\tt const/2} predicate
+which takes the constant value as an input.
 \begin{code}
 const(C,=(C)).
 \end{code}
-When activated by {\tt ask/2}, it produces the next element with
-``\verb~call(=(Constant),X)~'', as {\tt call/2} triggers unification of {\tt X} with {\tt Constant}.
 
-Another generator constructor, relying this time on an externally maintained state, is {\tt rand/1}.
+The {\tt rand/1} predicate produces the {\tt random} stream generator, which relies on externally maintained state
+to yield floating point numbers between 0 and 1.
 \begin{code}
 rand(random()).
 \end{code}
-This generator, when called by {\tt ask/2}, will produce a stream of random floating point numbers between 0 and 1, with help from the built-in predicate {\tt random/1}.
 
-A generic constructor for a stream that evolves by incremental state changes is
+We can also generate a stream by by incrementally evolving a state:
 \begin{code}
 gen_next(F,State,X):-arg(1,State,X),call(F,X,Y),nb_setarg(1,State,Y).
 \end{code}
-Thus, {\tt State} acts as a container for destructively updated values using the built-in
-{\tt nb\_setarg/3}\footnote{\url{http://www.swi-prolog.org/pldoc/doc_for?object=nb_setarg/3}}.
+Here {\tt State} acts as a container for destructively updated values using the
+{\tt nb\_setarg/3} built-in.\footnote{\url{http://www.swi-prolog.org/pldoc/doc_for?object=nb_setarg/3}}
 
 %\subsection{Generators as Simple State Transformers}
 
-In terms of {\tt gen\_next}, the stream of natural numbers is defined as:
+For instance, we can define the stream of natural numbers as an evolving state:
 \begin{code}
-nat(nat_next(state(0))).
-
-nat_next(S,X):-gen_next(succ,S,X).
+nat(gen_next(succ,state(0))).
 \end{code}
 
-Generators for which state-update and value-yield are distinct,
-can be obtained as specializations of {\tt gen\_nextval/3}.
+The more general {\tt gen\_nextval/3} predicate supports generators for which
+the evolving state does not coincide with the elemens of the stream.
 \begin{code}
 gen_nextval(Advancer,State,Yield):-
   arg(1,State,X1),
-  call(Advancer,X1,X2, Yield),
+  call(Advancer,X1,X2,Yield),
   nb_setarg(1,State,X2).
 \end{code}
 
-For instance, by using {\tt gen\_nextval}, one can turn a list into a generator of its elements  in the form of the {\tt list/2} generator constructor.
+For instance, this approach is useful to turn a list into a stream.
 \begin{code}
 list(Xs, gen_nextval(list_step,state(Xs))).
 
 list_step([X|Xs],Xs,X).
 \end{code}
 
-\BX
-Using some simple generators.
-\begin{codex}
-?- nat(N),X in N.
-N = nat_next(state(1)), X = 0 ; N = nat_next(state(2)), X = 1 ; ...
-
-?- list([a,b],L),X in L.
-L = gen_nextval(list_step, state([b, c])), X = a ;
-L = gen_nextval(list_step, state([c])), X = b .
-\end{codex}
-\EX
+% \BX
+% Using some simple generators.
+% \begin{codex}
+% ?- nat(N),X in N.
+% N = nat_next(state(1)), X = 0 ; N = nat_next(state(2)), X = 1 ; ...
+% 
+% ?- list([a,b],L),X in L.
+% L = gen_nextval(list_step, state([b, c])), X = a ;
+% L = gen_nextval(list_step, state([c])), X = b .
+% \end{codex}
+% \EX
 
 We have built similar stream generators in the library package 
 {\tt lazy\_streams}, for a range of numbers, turning a finite list into
@@ -304,28 +319,49 @@ a an infinite cycle of its elements, as well as stream
 transformers excising a finite slice of a larger, possibly infinite stream,
 as well as for taking or dropping an initial segment of a stream.
 
+%-------------------------------------------------------------------------------
 \subsection{Answer Stream Generators}
 
-When more complex computations are involved, that  cannot be expressed as simple step-by-step state transformations, a more powerful mechanism is needed. We will use {\em generator constructors based on first class logic engines} in this case, but we will expose their workings in terms of the same interface.
+We can encapsulate first class logic engines as generators when when more
+complex computations are needed for generating streams, that  cannot be
+expressed as simple step-by-step state transformations.
 
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 \subsubsection{SWI Prolog's First-Class Logic Engine Implementation}
 
-A first-class logic engine \cite{tarau:cl2000,bp2011} can be seen as a Prolog virtual machine that has its own stacks and machine state. 
-In their SWI-Prolog implementation, unlike normal Prolog threads \cite{swi,swi_threads}, they are not associated with an operating system thread. Instead, one asks an engine for a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the next answer attaches the engine to the calling operating system thread and causes it to run until the engine calls {\tt engine\_yield/1} or its associated goal completes with an answer, failure or an exception. After the engine yields or completes, it is detached from the operating system thread and the answer term is made available to the calling thread. Communicating with an engine is similar to communicating with a Prolog system though the terminal: the client decides how many answers it wants returned and what to do with them.  
+A first-class logic engine \cite{tarau:cl2000,bp2011} can be seen as a Prolog
+virtual machine that has its own stacks and machine state.  In their SWI-Prolog
+implementation, unlike normal Prolog threads \cite{swi,swi_threads}, they are
+not associated with an operating system thread. Instead, one asks an engine for
+a next answer with the predicate {\tt engine\_next/2}. Asking an engine for the
+next answer attaches the engine to the calling operating system thread and
+causes it to run until the engine calls {\tt engine\_yield/1} or its associated
+goal completes with an answer, failure or an exception. After the engine yields
+or completes, it is detached from the operating system thread and the answer
+term is made available to the calling thread. Communicating with an engine is
+similar to communicating with a Prolog system though the terminal: the client
+decides how many answers it wants returned and what to do with them.  
 
-Engines are created with the built-in {\tt engine\_create/3} that uses a goal and and answer template as input and returns an engine handle as output. SWI-Prolog's engines are created with minimal dynamic stack space and are garbage collected when unreachable.
+Engines are created with the built-in {\tt engine\_create/3} that uses a goal
+and answer template as input and returns an engine handle as output.
+SWI-Prolog's engines are created with minimal dynamic stack space and are
+garbage collected when unreachable.
 
-Note that, implementing the engine API does not need  a Prolog system that supports multi-threading. It only assumes that the virtual machine is fully reentrant, it can be queried and that it can stop, yield data and resume execution as a {\em coroutine}.
+Note that, implementing the engine API does not need  a Prolog system that
+supports multi-threading. It only assumes that the virtual machine is fully
+re-entrant, that it can be queried and that it can stop, yield data and resume
+execution as a {\em coroutine}.
 
 \begin{comment}
 As Prolog virtual machines, engines have  an internal state. Thus interacting with them requires a concise and expressive, but ultimately procedural API. This is not very different from what working with attributed variables, instrumental to adding constraint solvers, requires.
 \end{comment}
 
-\subsubsection{Answer Stream Generator Constructors}
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+\subsubsection{Answer Stream Generators}
 
-We design Answer Stream Generator constructors as a wrapper around the SWI-Prolog engine implementation.
-The constructor {\tt eng/3} creates a generator as a wrapper for
-the {\tt engine\_next(Engine,Answer)} built-in.
+The predicate {\tt eng/3} creates a generator as a wrapper for the {\tt
+engine\_next(Engine,Answer)} built-in, encapsulating the answers of that engine
+as a stream.
 \begin{code}
 eng(X,Goal,engine_next(Engine)):-engine_create(X,Goal,Engine). 
 \end{code}
@@ -335,30 +371,26 @@ the engine's answer stream, an
 operation that makes sense only when the Prolog code it is based on 
 is free of side effects.
 
-\subsection{The AND-stream / OR-stream Duality}
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+\subsubsection{The AND-stream / OR-stream Duality}
 
-We call {\em AND-stream / OR-stream duality} the
-ability of first-class logic engines
- to generate the same answer stream via backtracking (OR-streams) or
-as part of a forward moving recursive loop (AND-streams).
-As the examples that follow will show,
-being oblivious to the choice of generation method they encapsulate,
-is a key contributor to the ``expressiveness lift'' answer stream
-generators bring to Prolog.
+A key feature of first-class engines is that they support two ways of producing
+a stream of answers: 1) via backtracking (OR-streams), and 2) as part of a
+forward moving recursive loop (AND-streams).
 
-An example of {\em AND-stream} is  implemented
-by the generator {\tt and\_nat\_stream}. 
-It defines the infinite stream of natural numbers 
-by yielding an answer at each step of a recursive loop.
+The stream generator abstraction makes the user oblivious to this choice of
+generation method, and allows us to seemlessly replace one implementation 
+for another. Consider for instance the two implementations of the stream of natural
+numbers below.
+The first implementation generates an AND-stream yielding the elements in a
+recursive loop.
 \begin{code}
 and_nat_stream(Gen):-eng(_,nat_goal(0),Gen).
 
 nat_goal(N):-SN is N+1,engine_yield(N),nat_goal(SN).
 \end{code}
 
-Alternatively, one could define 
-an equivalent generator as an OR-stream,  with answers 
-produced via  backtracking.
+The OR-stream implementation generates the successive elements via backtracking.
 \begin{code}
 or_nat_stream(Gen):-eng(N, nat_from(0,N), Gen).
 
@@ -372,10 +404,8 @@ While one can see backtracking over an infinite set of answers as
 a ``naturally born'' OR-stream, the ability of the generators to
 yield answers from inside an infinite recursive loop is critical
 for generating infinite AND-streams.
-
-Note also that generating an answer stream by either of the above methods
-is immaterial to the user of the generator which can be seen as a ``black box''.
-
+Because the choice of generation method is immaterial to the user of the generator,
+the implementor can choose the most convenient or efficient approach.
 
 %===============================================================================
 \section{The Generator Algebra}\label{alg}
