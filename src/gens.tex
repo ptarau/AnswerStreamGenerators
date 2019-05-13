@@ -409,15 +409,20 @@ the implementor can choose the most convenient or efficient approach.
 
 %===============================================================================
 \section{The Generator Algebra}\label{alg}
-We start by describing some of the stream generator combinators
-that will be organized into a generator algebra 
-via an embedded language interpreter.
+
+This section describes a set of stream combinators that form an algebra via an
+embedded language interpreter.
  
-\subsection{Operations on Finite or  Infinite Stream Generators}
+%-------------------------------------------------------------------------------
+\subsection{Operations on Finite or Infinite Stream Generators}
 
-\subsubsection{Merging generators: our {\em sum} operation}
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\paragraph{Sums of Streams}
 
-The predicate {\tt sum(+Gen1,+Gen2, -NewGen)} advances by asking each generator, in turn, for an answer. When one generator terminates, it keeps progressing in the other.
+We define the interleaving of two streams to be their sum. This operation is
+captured in the predicate {\tt sum(+Gen1,+Gen2, -NewGen)}, which advances by
+asking each generator, in turn, for an answer. When one generator terminates,
+it keeps progressing in the other.
 \begin{code}
 sum(E1,E2,sum_next(state(E1,E2))).
 
@@ -426,14 +431,23 @@ sum_next(State,X):-State=state(E1,E2),ask(E1,X),!,
   nb_setarg(2,State,E1).
 sum_next(state(_,E2),X):-ask(E2,X).
 \end{code}
+For instance,
+\begin{codex}
+?- pos(N),neg(M),sum(N,M,E),show(10,E).
+[1,-1,2,-2,3,-3,4,-4,5,-5]
+\end{codex}
+We name this operation the sum because it is clearly associative and, if the
+order of the elements is unimportant, it is also commutative.  Also, is thas
+the empty stream, defined such that {\tt ask/2} fails, as its neutral element.
 
-\subsubsection{Pairing all elements from two streams: our {\em product} operation}
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\paragraph{Products of Streams}
 
-The easiest way to implement direct product uses a first-class logic engine.
-Designing the recursive loop for possibly infinite stream generators
-will need to store finite initial 
-segments of the generators as they grow into two lists, initially
-empty.
+We consider the Cartesian product to be the product of two streams. We can
+easily implement this by means of convolution in a first-class logic engine.
+Our implementation uses a recursive loop that supports possibly infinite stream
+generators by storing their finite initial segments into two lists that start
+out empty.
 \begin{code}
 prod(E1,E2,E):-eng(_,prod_goal(E1,E2),E).
 
