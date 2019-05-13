@@ -196,7 +196,7 @@ The \texttt{in\_/2} predicate enumerates the elements of the resulting stream
 through backtracking, like \texttt{member/2} does for regular lists.
 \begin{codex}
 ?- X in_ [a,b]*(1:4).
-X = a-1 ; X = a-2 ; X = b-1 ; X = a-3 ; X = b-2 .
+X = a-1 ; X = b-1 ; X = b-2 ; X = a-2 ; X = b-3 ; X = a-3 .
 \end{codex}
      
 
@@ -242,9 +242,9 @@ select_from(Gen,_,X):-X in Gen.
 \end{code}
 
 The simplest generator is the infinite constant stream constructor, {\tt const/2}:
-\begin{codex}
+\begin{code}
 const(C,=(C)).
-\end{codex}
+\end{code}
 When activated by {\tt ask/2}, it produces the next element with
 ``\verb~call(=(Constant),X)~'', as {\tt call/2} triggers unification of {\tt X} with {\tt Constant}.
 
@@ -385,7 +385,7 @@ via an embedded language interpreter.
  
 \subsection{Operations on Finite or  Infinite Stream Generators}
 
-\subsubsection{Merging generators: our {\tt sum} operation}
+\subsubsection{Merging generators: our {\em sum} operation}
 
 The predicate {\tt sum(+Gen1,+Gen2, -NewGen)} advances by asking each generator, in turn, for an answer. When one generator terminates, it keeps progressing in the other.
 \begin{code}
@@ -397,7 +397,7 @@ sum_next(State,X):-State=state(E1,E2),ask(E1,X),!,
 sum_next(state(_,E2),X):-ask(E2,X).
 \end{code}
 
-\subsubsection{Pairing all elements from two streams: our {\tt product} operation}
+\subsubsection{Pairing all elements from two streams: our {\em product} operation}
 
 The easiest way to implement direct product uses a first-class logic engine.
 Designing the recursive loop for possibly infinite stream generators
@@ -405,7 +405,7 @@ will need to store finite initial
 segments of the generators as they grow into two lists, initially
 empty.
 \begin{code}
-prod_(E1,E2,E):-eng(_,prod_goal(E1,E2),E).
+prod(E1,E2,E):-eng(_,prod_goal(E1,E2),E).
 
 prod_goal(E1,E2):-ask(E1,A),prod_loop(1,A,E1-[],E2-[]).
 \end{code}
@@ -780,20 +780,16 @@ Ns = [0|_21022], Ps = [1, 2, 3|_21052], X = 3,
 \end{codex}
 \EX
 
-On the other hand, a convolution operation  can be implemented more easily with lazy lists. Our package {\tt lazy\_streams} uses this technique to borrow it with help from the {\tt iso\_fun/6} predicate.
+On the other hand, an alternative {\tt sum\_/3} operation  can be implemented 
+quite easily with lazy lists. Our package {\tt lazy\_streams} 
+uses this technique to borrow it with help from the {\tt iso\_fun/6} predicate.
 \begin{code}
-convolution(E1,E2, E):-iso_fun(lazy_conv,gen2lazy,lazy2gen,E1,E2, E).
+sum_(E1,E2, E):-iso_fun(lazy_sum,gen2lazy,lazy2gen,E1,E2, E).
 
-lazy_conv(As,Bs,Ps):-
-  lazy_findall(P,(
-    between(0,infinite,N),
-    lazy_lconv_step(N,As,Bs,P)
-  ),
-  Ps).
-
-lazy_lconv_step(N,As,Bs, X-Y):-N1 is N-1,
-   between(0,N1,L), K is N1-L,
-   nth0(L,As,X), nth0(K,Bs,Y).
+lazy_sum(Xs,Ys,Zs):-lazy_list(lazy_sum_next,Xs-Ys,Zs).
+  
+lazy_sum_next([X|Xs]-Ys,Ys-Xs,X).
+lazy_sum_next(Xs-[Y|Ys],Ys-Xs,Y).
 \end{code}
 
 \section{Discussion}\label{disc}

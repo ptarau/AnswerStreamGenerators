@@ -31,6 +31,7 @@ Future calls to it will fail</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="empty/1"><b class="pred">empty</b><var class="arglist">(-Done)</var></a></dt><dd class="defbody">empty stream generator, set to "done" up front</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="in/2"><var class="arglist">-Value</var> <b class="pred">in</b> <var class="arglist">+Generator</var></a></dt><dd class="defbody"><a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=in/2">in/2</a> backtracks over progressively advancing states.
 <a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=in/2">in/2</a> is an xfx infix operator of priority 800</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="nth/3"><b class="pred">nth</b><var class="arglist">(+Position, +Generator, -Element)</var></a></dt><dd class="defbody">rolls generator until it reaches element at given <var>Position</var> and then returns it</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="show/2"><b class="pred">show</b><var class="arglist">(+NumberOfItems, +Generator)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#show/2">show/2</a> collects results after K steps and prints them out
 same as: <code>show(K,Stream)</code>:-<code>once(findnsols(K,X,X in Stream,Xs))</code>,<code>writeln(Xs)</code>.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="show/1"><b class="pred">show</b><var class="arglist">(+Generator)</var></a></dt><dd class="defbody">collects and prints 12 results of <var>Generator</var></dd>
@@ -79,7 +80,8 @@ transformer to the next lement of the generator</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="cat/2"><b class="pred">cat</b><var class="arglist">(+GeneratorList, -ConcatenationOfGenerators)</var></a></dt><dd class="defbody">concatenates streams of a list of generators
 Int only makes sense if all but the last one are finite.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="prod_/3"><b class="pred">prod_</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">engine-based direct product</dd>
-<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="prod/3"><b class="pred">prod</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">direct product of two finite or infinite generators</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="prod/3"><b class="pred">prod</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">direct product of two finite or infinite generators
+using Cantor's unparing function, and avoiding engines</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="cantor_pair/3"><b class="pred">cantor_pair</b><var class="arglist">(+Int1, +Int2, -Int)</var></a></dt><dd class="defbody">Cantor's pairing function</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="cantor_unpair/3"><b class="pred">cantor_unpair</b><var class="arglist">(+Int, -Int1, -Int2)</var></a></dt><dd class="defbody">Inverse of Cantor's pairing function.</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="int_sqrt/2"><b class="pred">int_sqrt</b><var class="arglist">(+PosInt, -IntSqrt)</var></a></dt><dd class="defbody">computes integer square root using Newton's method</dd>
@@ -109,8 +111,9 @@ This loops!
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_maplist/4"><b class="pred">lazy_maplist</b><var class="arglist">(+F, +LazyXs, LazyYs, -LazyYs)</var></a></dt><dd class="defbody">like <a class="builtin" href="http://www.swi-prolog.org/pldoc/man?predicate=maplist/4">maplist/4</a>, but working on (possibly infinite) lazy lists</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="split/3"><b class="pred">split</b><var class="arglist">(+E, -E1, -E2)</var></a></dt><dd class="defbody"><a href="lazy_streams.html#split/3">split/3</a> uses lazy lists to split a stream into two.
 infelicity: original stream shifted by one position ...</dd>
-<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_conv/3"><b class="pred">lazy_conv</b><var class="arglist">(+As, +Bs, -Ps)</var></a></dt><dd class="defbody">convolution of two finite or infinite lazy lists</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="lazy_conv/3"><b class="pred">lazy_conv</b><var class="arglist">(+As, +Bs, -Ps)</var></a></dt><dd class="defbody">convolution of two infinite lazy lists</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="convolution/3"><b class="pred">convolution</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">convolution of two finite or infinite lazy generators</dd>
+<dt class="pubdef"><span style="float:right">&nbsp;</span><a name="sum_/3"><b class="pred">sum_</b><var class="arglist">(+Gen1, +Gen2, -NewGen)</var></a></dt><dd class="defbody">sum of two finite or infinite lazy generators</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="eval_stream/2"><b class="pred">eval_stream</b><var class="arglist">(+GeneratorExpression, -Generator)</var></a></dt><dd class="defbody">evaluates a generator expression to ready to use
 generator that combines their effects</dd>
 <dt class="pubdef"><span style="float:right">&nbsp;</span><a name="in_/2"><var class="arglist">-X</var> <b class="pred">in_</b> <var class="arglist">+GeneratorExpression</var></a></dt><dd class="defbody">backtracks over elements of a generator expression
@@ -129,6 +132,8 @@ used for testing</dd>
 The following predicates are exported, but not or incorrectly documented.</p>
 
 <dl class="undoc">
+<dt class="undoc"><span style="float:right">&nbsp;</span><a name="bmx/0"><b class="pred">bmx</b></a></dt>
+<dt class="undoc"><span style="float:right">&nbsp;</span><a name="bmp/0"><b class="pred">bmp</b></a></dt>
 <dt class="undoc"><span style="float:right">&nbsp;</span><a name="tests/0"><b class="pred">tests</b></a></dt>
 <dt class="undoc"><span style="float:right">&nbsp;</span><a name="bm/0"><b class="pred">bm</b></a></dt>
 </dl>

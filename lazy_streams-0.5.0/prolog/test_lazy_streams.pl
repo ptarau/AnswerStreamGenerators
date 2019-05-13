@@ -1,7 +1,9 @@
 /*
 :-module(test_lazy_streams,[
   tests/0,
-  bm/0
+  bm/0,
+  bmx,
+  bmp
   ]
 ).
 */
@@ -295,15 +297,32 @@ bm_all(N):-
  time(do((_ in Range))),
  time(do((_ in Eng))),
  time(do((member(_,Ls)))).
-  
-% all benchmarks together
+
+%! bmx
+% 
+%  benchmarks comparing plain Prolog with lazy streams and lazy lists
 bmx:-
   N is 2^23,
   bm_inf(N),statistics,nl,
   bm_last(N),statistics,nl,
   bm_all(N),statistics.
-  
 
+%! bmp
+%
+% benchmarking product operations
+bmp:-N is 2^9,bmp(N).
+
+bmp(N):-  
+  bmp(N,prod),
+  bmp(N,prod_).
+  
+bmp(N,Op):-
+ range(1,N,L),
+ range(1,N,R),
+ call(Op,L,R,P),
+ N2 is N*N,
+ time(do(nth(N2,P,_))).
+ 
 /*
 
 % Run on a 128GB 18-core iMacPro, with 8 GB given to Prolog to avoid stack overflows with lazy lists.
@@ -372,5 +391,9 @@ bmx:-
 % 2 threads, 0 finished threads used 0.000 seconds
 % 3 engines, 4 finished engines
 true.
+
+?- lazy_streams:bmp.
+% 1,309,715 inferences, 0.423 CPU in 0.502 seconds (84% CPU, 3099866 Lips)
+% 241,963,257 inferences, 8.841 CPU in 8.851 seconds (100% CPU, 27367598 Lips)
 
 */
