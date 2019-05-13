@@ -203,10 +203,23 @@ X = a-1 ; X = a-2 ; X = b-1 ; X = a-3 ; X = b-2 .
 %===============================================================================
 \section{Implementing Lazy Stream Generators}\label{impl}
   
-Generators are created by a family of constructors, encapsulating sequences produced algorithmically or as a result of state transformers interfacing Prolog with the ``outside world'', a design philosophy similar to that of monads in functional languages.
+Generators are created by a family of constructors, encapsulating sequences
+produced algorithmically or as a result of state transformers interfacing
+Prolog with the ``outside world'', a design philosophy similar to that of
+monads in functional languages.
 
 %-------------------------------------------------------------------------------
 \subsection{The Stream Generator Interface}
+
+A generator is represented by a \emph{closure}, which is a term that can be
+called with an additional argument to yield the next element in the stream. For
+instance, the generator for the constant stream of \texttt{1}s is
+\texttt{=(1)}, where \texttt{call(=(1),X)} instantiates \texttt{X} to the next
+element, which is always \texttt{1}.  Typically the other arguments of the term
+represent the state and parameters of the generator, like \texttt{1} in
+\texttt{=(1)}. We require that the closure has at least one argument, which
+never takes the reserved value \texttt{done} in the course of its operation.
+When the closure has no more element to yield, it fails.
 
 The ``contract'' of our interface is that a generator, specified by a 
 closure that moves it one step further is called by the {\tt ask/2} predicate, defined as follows:
