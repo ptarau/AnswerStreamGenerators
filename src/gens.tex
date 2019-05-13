@@ -482,7 +482,7 @@ flip(2,1,X,Y,Y-X).
 \end{code}
 Here is the product of the natural numbers with themselves as an example:
 \begin{codex}
-?- nat(N),nat(M),prod_(N,M,R),show(12,R).
+?- nat(N),nat(M),prod(N,M,R),show(12,R).
 [0-0,1-0,1-1,0-1,2-1,2-0,2-2,1-2,0-2,3-2,3-1,3-0]
 \end{codex}
 
@@ -504,27 +504,24 @@ generator product operations for $k$ generators.
 
 
 %-------------------------------------------------------------------------------
-\subsection{An embedded language interpreter for the algebra}
+\subsection{An Embedded Language Interpreter}
 
-With our sum and product operations ready, we can proceed with the design of the embedded language, facilitating more complex forms of generator compositions.
-
-\subsubsection{Working with Sets}
-
-If generators work over sets rather than multisets or arbitrary sequences,
-duplicates need to be removed. This can be done either by sorting (which has the advantage
-of providing a canonical representation, but assumes finite streams) or by using  a built-in like {\tt distinct/2} which will also work with infinite generators (within the limits of actual memory available).
-
-The predicate {\tt setify} wraps a generator to ensure it produces a set of answers, with duplicates removed.
-\begin{code}
-setify(E,SE):-eng(X,distinct(X,X in E),SE).
-\end{code}
-In fact, one could just apply the same modification to the goal of a generator and its answer template, but our assumption here is that the generator's engine might be a composition of several engine operations, possibly already in progress.
-
-We can implement our generator algebra as an embedded language via a simple interpreter
-(although partial evaluation can make this more efficient). 
-
-The predicate  {\tt eval\_stream(+GeneratorExpression, -Generator)}
-evaluates a generator expression to a ready to use generator that combines 
+With our sum and product operations ready, we can proceed with the design of
+the embedded language, facilitating more complex forms of generator
+compositions. The grammar of this embedded language of generator expressions $F$ is:
+\begin{center}
+\begin{tabular}{rcl@{\hspace{0.4cm}}l@{\hspace{1cm}}cl@{\hspace{0.4cm}}l}
+  $F$    & ::=  & $F_1 + F_2$         & \it (sum)         & $\mid$ & $\{F\}$           & \it (setification)\\
+         & $\mid$ & $F_1 \times F_2$  & \it (product)     & $\mid$ & $X^G$             & \it (engine) \\
+         & $\mid$ & $N:M$             & \it (range)       & $\mid$ & $A$               & \it (constant)\\
+         & $\mid$ & $[X|Xs]$          & \it (list)        & $\mid$ & $E$               & \it (stream)
+\end{tabular}
+\end{center}
+The language comprises lists, engines, ranges, constants and existing streams, as well as their sums, products and
+\emph{setification} (i.e., removing duplicates).
+We have implemented it with a simple interpreter,
+the predicate  {\tt eval\_stream(+GeneratorExpression, -Generator)},
+which turns a generator expression into a ready-to-use generator that combines 
 the effects of its components.
 \begin{code}
 eval_stream(E+F,S):- !,eval_stream(E,EE),eval_stream(F,EF),sum(EE,EF,S).
@@ -536,24 +533,32 @@ eval_stream(X^G,E):-!,eng(X,G,E).
 eval_stream(A,C):-atomic(A),!,const(A,C).
 eval_stream(E,E).
 \end{code}
-Similarly to the {\tt in/2} predicate, we can make the action of the
-interpreter transparent, via the {\tt in\_/2} predicate, also defined as an operator.
+We already explained the auxiliary predicates used in the evaluator, except for
+{\tt setify/2}. That predicate wraps a generator to ensure it
+produces a set of answers, with duplicates removed.  
+\begin{code}
+setify(E,SE):-eng(X,distinct(X,X in E),SE).
+\end{code}
+This works for infinite generators (upto the limits of available memory), in contrast
+with sorting, which also removes duplicates, but assumes the list is finite.
+
+Lastly, we define {\tt in\_/2} as a variant of \texttt{in/2} that takes a 
+generator expression rather than a generator.
 \begin{code}
 :-op(800,xfx,(in_)).
 
 X in_ GenExpr:-eval_stream(GenExpr,NewGen),X in NewGen.     
 \end{code}
-
-\BX
-Applying the embedded language interpreter to a generator expression.
+Here is a small example that combines many of the features:
 \begin{codex}
 ?- X in_ ({[a,b,a]}+(1:3)*c).
 X = a ; X = 1-c ; X = b ; X = 1-c ; X = 2-c; X = 1-c ; X = 2-c ....
 \end{codex}
-\EX
 
 
 
+
+%===============================================================================
 \section{Other Stream Generator Operations}\label{other}
 We describe next other operations on stream generators
 implemented in the package {\tt lazy\_streams}.
