@@ -445,7 +445,7 @@ cat_next(Es,X):-member(E,Es),ask(E,X),!.
 %! prod_(+Gen1,+Gen2, -NewGen)
 %
 % engine-based direct product
-prod_(E1,E2,E):-eng(_,prod_goal(E1,E2),E).
+prod(E1,E2,E):-eng(_,prod_goal(E1,E2),E).
 
 prod_goal(E1,E2):-
   ask(E1,A),
@@ -469,21 +469,27 @@ flip(2,1,X,Y,Y-X).
 %! prod(+Gen1,+Gen2, -NewGen)
 %
 % direct product of two finite or infinite generators
-prod(E1,E2,prod_next(state(0,E1,E2,A1,A2))):-
+% using Cantor's unparing function, and avoiding engines
+prod_(E1,E2,prod_next(state(0,E1,E2,A1,A2))):-
   new_array(A1),
   new_array(A2).
 
 prod_next(S,X-Y):-
   S=state(_,E1,E2,A1,A2),
-  %conv(C),
   repeat,
-    ( is_done(E1),is_done(E2) -> !,fail
-    ; nat_pair_next(S,I-J),
-      %ask(C,I-J),
-      fill_to(I,E1,A1,X),
+    nat_pair_next(S,I-J),
+    ( no_more_left(I,J,A1,A2,E1,E2) -> !,fail
+    ; fill_to(I,E1,A1,X),
       fill_to(J,E2,A2,Y)
     ),
-    !.
+  !.
+
+no_more_left(I,J,A1,A2,E1,E2):-
+  is_done(E1),is_done(E2),
+  array_size(A1,L1),
+  array_size(A2,L2),
+  I>L1,
+  J>L2.
   
 fill_to(N,E,A,R):-
   array_size(A,L),
@@ -494,13 +500,19 @@ fill_to(N,E,A,R):-
   )),
   array_get(A,N,R),
   nonvar(R).
-  
+
+bug:-list([a,b],L),list([aa,bb,ccc],R),prod_(L,R,P),show(P).
+
 %! nat_pair(+PairGenerator)  
 % generator of natural number pairs
 % 
 nat_pair(nat_pair_next(state(0))).
 
-nat_pair_next(S,A-B):-nat_next(S,X),cantor_unpair(X,B,A).
+nat_pair_next(S,A-B):-
+   nat_next(S,X),
+   cantor_unpair(X,B,A),
+   %ppp(X=A+B),
+   true.
 
 
 %! cantor_pair(+Int1,+Int2, -Int)
@@ -649,27 +661,38 @@ lazy_dup(Xs,Xs,Xs).
 
 %! lazy_conv(+As,+Bs,-Ps) 
 % 
-% convolution of two finite or infinite lazy lists
+% convolution of two infinite lazy lists
 lazy_conv(As,Bs,Ps):-
-  lazy_findall(P,(
-    between(0,infinite,N),
-    lazy_lconv_step(N,As,Bs,P)
-  ),
-  Ps).
+  lazy_findall(P,lazy_lconv_step(0,As,Bs,P),Ps).
 
 lazy_lconv_step(N,As,Bs, X-Y):-
-   N1 is N-1,
-   between(0,N1,L),
-   K is N1-L,
-   nth0(L,As,X),
-   nth0(K,Bs,Y).
-
+   between(0,N,L),
+     K is N-L,
+     nth0(L,As,X),
+     nth0(K,Bs,Y)
+;  succ(N,SN),
+   lazy_lconv_step(SN,As,Bs, X-Y).
+   
 %! convolution(+Gen1,+Gen2,-NewGen) 
 % 
 % convolution of two finite or infinite lazy generators
 convolution(E1,E2, E):-
   iso_fun(lazy_conv,gen2lazy,lazy2gen,E1,E2, E).
-   
+  
+
+%! sum(+Gen1,+Gen2,-NewGen) 
+% 
+% sum of two finite or infinite lazy generators
+sum_(E1,E2, E):-
+  iso_fun(lazy_sum,gen2lazy,lazy2gen,E1,E2, E).
+
+lazy_sum(Xs,Ys,Zs):-lazy_list(lazy_sum_next,Xs-Ys,Zs).
+  
+lazy_sum_next([X|Xs]-Ys,Ys-Xs,X).
+lazy_sum_next(Xs-[Y|Ys],Ys-Xs,Y).
+
+
+
 % evaluator  
 
 %! eval_stream(+GeneratorExpression, -Generator)
