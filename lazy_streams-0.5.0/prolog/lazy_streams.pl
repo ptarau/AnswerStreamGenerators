@@ -722,6 +722,7 @@ lazy_sum_next(Xs-[Y|Ys],Ys-Xs,Y).
 eval_stream(E+F,S):- !,eval_stream(E,EE),eval_stream(F,EF),sum(EE,EF,S).
 eval_stream(E*F,P):- !,eval_stream(E,EE),eval_stream(F,EF),prod(EE,EF,P).
 eval_stream(E:F,R):- !,range(E,F,R).
+eval_stream([],L):-!,list([],L).
 eval_stream([X|Xs],L):-!,list([X|Xs],L).
 eval_stream({E},SetGen):-!,eval_stream(E,F),setify(F,SetGen).
 eval_stream(X^G,E):-!,eng(X,G,E).
