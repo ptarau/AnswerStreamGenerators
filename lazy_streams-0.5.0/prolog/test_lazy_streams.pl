@@ -1,7 +1,9 @@
 /*
 :-module(test_lazy_streams,[
   tests/0,
-  bm/0
+  bm/0,
+  bmx,
+  bmp
   ]
 ).
 */
@@ -295,16 +297,22 @@ bm_all(N):-
  time(do((_ in Range))),
  time(do((_ in Eng))),
  time(do((member(_,Ls)))).
-  
-% all benchmarks together
+
+%! bmx
+% 
+%  benchmarks comparing plain Prolog with lazy streams and lazy lists
 bmx:-
   N is 2^23,
   bm_inf(N),statistics,nl,
   bm_last(N),statistics,nl,
   bm_all(N),statistics.
-  
-bmp:-
-  N is 2^9,
+
+%! bmp
+%
+% benchmarking product operations
+bmp:-N is 2^9,bmp(N).
+
+bmp(N):-  
   bmp(N,prod),
   bmp(N,prod_).
   

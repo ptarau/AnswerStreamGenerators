@@ -67,7 +67,9 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   iso_fun/6, % functor transporting predicates of arity 3 between isomorphic domains
   iso_fun_/6, % functor transporting predicates of arity 3 between isomorphic domains on ar in 2 out
   lazy_conv/3, % convolution of lazy lists
-  convolution/3, % convolution of streams, borrowed from lazy lists
+  
+  sum_/3, % generator for direct sum of two finite or infinite streams borrowed from lazy lists
+  convolution/3, % convolution of infinite streams, borrowed from lazy lists
   eval_stream/2, % evaluates stream generator expression to generator
   do/1, % runs a goal exclusively for its side effects
   term_reader/2, % term stream generator, by reading from a Prolog file
@@ -75,7 +77,9 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   fibo/1, % generator for infinite stream of Fibonacci numbers
   prime/1, % simple engine-based generator for the infinite stream of prime numbers
   tests/0, % run all tests, with output to tests.txt
-  bm/0 % run all benchmarks
+  bm/0, % run all benchmarks
+  bmx/0, % benchmarks comparing plain Prolog with lazy streams and lazy lists
+  bmp/0  % benchmarking product operations
 ]).
 
 :-use_module(dynamic_arrays).
@@ -680,7 +684,7 @@ convolution(E1,E2, E):-
   iso_fun(lazy_conv,gen2lazy,lazy2gen,E1,E2, E).
   
 
-%! sum(+Gen1,+Gen2,-NewGen) 
+%! sum_(+Gen1,+Gen2,-NewGen) 
 % 
 % sum of two finite or infinite lazy generators
 sum_(E1,E2, E):-
