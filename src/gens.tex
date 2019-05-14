@@ -566,7 +566,7 @@ This section describes some additional stream operations that our {\tt
 lazy\_streams} package provides.
 
 %-------------------------------------------------------------------------------
-\subsection{Lazy Functional Programming Constructs}
+\subsection{Lazy Functional Programming Constructs}\label{sec:other:fp}
 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 \paragraph{Map}
@@ -772,72 +772,63 @@ guaranteed to be large enough to cope with the finite non-determinism.
 
 %\subsection{The Lazy List View of Prolog Streams}
 %\subsection{The  equivalence between Answer stream generators and Lazy Lists}
+
 %-------------------------------------------------------------------------------
-\subsection{The interoperation between stream generators and lazy lists}
+\subsection{From Lazy Streams to Lazy Lists}
 
-The overloading of syntax between the usual lists and lazy lists, 
-can be confusing to the
-programmer, especially when infinite streams are involved.
-
-\BX
+Now we show that it is easy to convert from lazy streams to lazy lists and back by
+providing an isomorphism between both representations.
+The former conversion is interesting because lazy lists may present a convenient, tangible 
+representation. In contrast the latter may be more convenient for defining new
+generators, and avoids confusion with regular lists.
+Indeed, although infinite lazy lists look like regular lists, they don't work
+well with all regular list predicates. For instance,
 \begin{codex}
 ?- lazy_nats(Ns),maplist(succ,Ns,Ps).
 ... loops forever ...
 \end{codex}
-\EX
-The {\tt maplist/3} example
- shows that sharing the concrete syntax between lazy lists and  ordinary lists
-does not automatically entail that the semantics is shared between them.
+The problem is that while the list is infinite and lazy, {\tt maplist/3} is eager
+and only works on finite lists.
+By exploiting the isomorphism we can easily import the lazy {\tt map/3} from
+streams to get a {\tt lazy\_maplist/3}.
 
-We will alleviate this problem by designing interoperation mechanisms between lazy lists and lazy streams resulting in operations like {\tt maplist/3} to be implemented with support for infinite lazy lists.
-
-First, let's observe that  {\em advancing to the next element}, 
-whether it happens via a destructive update,
-a first class engine's yield operation or by setting an attribute on the tail of
-a lazy list are {\em operationally equivalent}.
-
-By lifting this equivalence with help from Prolog's higher order operations
-supported by {\tt call/N}, we can easily transport not just  data representations 
-but also   operations acting on them.
-The more formal analogy to this is an {\em iso-functor}, that in category theory
-transports morphisms between objects of a category to another and back. 
-
-With help from SWI-Prolog's {\tt lazy\_lists} library, 
-generators can be turned into finite or infinite lazy lists and vice-versa.
-The predicate {\tt gen2lazy(+Generator,-LazyList)} turns a possibly infinite
-stream generator into a lazy list.
+\paragraph{Isomorphism} The isomorphism between the two representation is
+witnessed by the following two predicates.  The predicate {\tt
+gen2lazy(+Generator,-LazyList)} turns a possibly infinite stream generator into
+a lazy list by using the generator as the state on which the lazy list is
+based, and using \texttt{ask/2} to advance that state (which is in fact already
+handled by the generator) and produce a new element.
 \begin{code} 
 gen2lazy(Gen,Ls):-lazy_list(gen2lazy_forward,Gen,Ls).
 
 gen2lazy_forward(E,E,X):-ask(E,X).
 \end{code}
-As {\tt Gen}  manages the advancement of its own state, 
-we just pass on the action of the {\tt ask/2}
-generator stream advancer.
-By observing that the stream constructor {\tt list/2} already works
-on lazy lists, we define the inverse operation {\tt lazy2gen} simply as:
+The opposite direction is even easier, as the {\tt list/2} generator also works
+on lazy lists.
 \begin{code}
 lazy2gen(Xs, Gen):-list(Xs, Gen).
 \end{code}
 
-Next we define the ``iso-functors'' that 
-lift this equivalence between data objects to 
-one between their operations. We do that as generically as possible,
-but one can specialize them to the fixed stream and lazy list domain
-for slightly more efficient code.
+
+\paragraph{Iso-Functor}
+We can easily transport not just the data representations but also the
+operations acting on them. In category theory, this concept is formally known
+as an {\em iso-functor}, a mapping that transports morphisms between objects
+from one category to another and back. 
 
 The predicate 
 {\tt iso\_fun(+Operation, +SourceType, +TargetType, +Arg1, -Result)}
-transports a predicate of the form {\tt F(+Arg1, -Arg2)} to a domain where
+generically transports a predicate of the form {\tt F(+Arg1, -Arg2)} to a domain where
 an operation can be performed and brings back the result.
 
 \begin{code}
 iso_fun(F,From,To,A,B):-call(From,A,X),call(F,X,Y),call(To,Y,B).
 \end{code}
-Similar code is defined for predicates of different arities,
-{\tt iso\_fun(+Operation, +SourceType, +TargetType, +Arg1, +Arg2, -Result)} 
-or, with a different mode
-{\tt iso\_fun\_( +Operation, +SourceType, +TargetType, +Arg1, -Res1, -Res2)}.
+(We have defined similar code for predicates with other arities and modes.)
+% Similar code is defined for predicates of different arities,
+% {\tt iso\_fun(+Operation, +SourceType, +TargetType, +Arg1, +Arg2, -Result)} 
+% or, with a different mode
+% {\tt iso\_fun\_( +Operation, +SourceType, +TargetType, +Arg1, -Res1, -Res2)}.
 
 \begin{codeh}
 %
@@ -862,32 +853,19 @@ iso_fun_(F,From,To,A,B,C):-
   call(To,Z,C).
 \end{codeh}
 
-
-This allows us to define {\tt maplist} predicates working also
-on infinite lazy lists as:
-
+This allows us to define lazy version of {\tt maplist}:
 \begin{code}
 lazy_maplist(F,LazyXs,LazyYs):-iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
 \end{code}
-where {\tt map/3} is the stream generator constructor that applies a binary
-predicate to a stream generator. In our package, similar definitions for {\tt map/N}
-are given for predicates of higher arities, as well as corresponding definitions for
-{\tt lazy\_maplist/N} predicates.
-
-\BX
+where {\tt map/3} is the stream generator from Section~\ref{sec:other:fp}. Here
+is an example of the result.
 \begin{codex}
-?- lazy_nats(Ns),lazy_maplist(succ,Ns,Ps),member(X,Ps).
-Ns = [0|_20314], Ps = [1|_20332], X = 1,
-...
-Ns = [0|_20668], Ps = [1, 2|_20692], X = 2,
-...
-Ns = [0|_21022], Ps = [1, 2, 3|_21052], X = 3,
-...
+?- ll_nat(Ns),lazy_maplist(succ,Ns,Ps),prefix([A,B,C],Ps).
+Ns = [0,1,2|_20314], Ps = [1,2,3|_20332], A=1,B=2,C=3,...
 \end{codex}
-\EX
 
 Inversely, an alternative {\tt sum\_/3} operation  can be implemented 
-quite easily with lazy lists. Our package {\tt lazy\_streams} 
+quite easily with lazy lists. Our {\tt lazy\_streams} package 
 uses this technique to borrow it with help from the {\tt iso\_fun/6} predicate.
 \begin{code}
 sum_(E1,E2, E):-iso_fun(lazy_sum,gen2lazy,lazy2gen,E1,E2, E).
@@ -898,6 +876,7 @@ lazy_sum_next([X|Xs]-Ys,Ys-Xs,X).
 lazy_sum_next(Xs-[Y|Ys],Ys-Xs,Y).
 \end{code}
 
+%===============================================================================
 \section{Discussion}\label{disc}
 
 The abstract sequence interface of the {\tt lazy\_streams} package and
