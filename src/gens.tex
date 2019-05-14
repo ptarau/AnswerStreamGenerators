@@ -387,7 +387,7 @@ recursive loop.
 \begin{code}
 and_nat_stream(Gen):-eng(_,nat_goal(0),Gen).
 
-nat_goal(N):-SN is N+1,engine_yield(N),nat_goal(SN).
+nat_goal(N):-succ(N,SN),engine_yield(N),nat_goal(SN).
 \end{code}
 
 The OR-stream implementation generates the successive elements via backtracking.
@@ -683,15 +683,15 @@ We apply this technique to compute a list incrementally as more
 and more of it is needed. Thus a lazy \emph{list} is represented as a normal
 Prolog list where the \emph{tail} is formed by an attributed variable. The following
 code illustrates this approach on the lazy list of natural numbers.
-\begin{code}
+\begin{codex}
 lazy_nats(List):-lazy_nats_from(0,List). 
-lazy_nats_from(N,List):-put_attr(List,lazy_list,N).
+lazy_nats_from(N,List):-put_attr(List,lazy_streams,N).
 
 attr_unify_hook(N,Value):-
   succ(N,M),
   lazy_nats_from(M,Tail),
   Value = [N|Tail].
-\end{code}
+\end{codex}
 A call to \texttt{lazy\_nat/1} creates an attributed variable for the lazy list
 that can be passed to a typical list traversal predicate.  Such a predicate
 unifies this variable with either the empty list (\texttt{[]}) or a list cell
