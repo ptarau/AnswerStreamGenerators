@@ -684,15 +684,15 @@ and more of it is needed. Thus a lazy \emph{list} is represented as a normal
 Prolog list where the \emph{tail} is formed by an attributed variable. The following
 code illustrates this approach on the lazy list of natural numbers.
 \begin{code}
-ll_nat(List):-ll_nat(0,List). 
-ll_nat(N,List):-put_attr(List,lazy_list,N).
+lazy_nats(List):-lazy_nats_from(0,List). 
+lazy_nats_from(N,List):-put_attr(List,lazy_list,N).
 
 attr_unify_hook(N,Value):-
   succ(N,M),
-  ll_nat(M,Tail),
+  lazy_nats_from(M,Tail),
   Value = [N|Tail].
 \end{code}
-A call to \texttt{ll\_nat/1} creates an attributed variable for the lazy list
+A call to \texttt{lazy\_nat/1} creates an attributed variable for the lazy list
 that can be passed to a typical list traversal predicate.  Such a predicate
 unifies this variable with either the empty list (\texttt{[]}) or a list cell
 (\texttt{[Head|Tail]}), which triggers the attributed variable hook and
@@ -700,7 +700,7 @@ instantiates the variable to {\tt [N|Tail]} where {\tt Tail} is again an
 attributed variable. When the list traversal predicate recurses on {\tt Tail},
 this process is repeated.
 
-\paragraph{Imnprovement}
+\paragraph{Improvement}
 There is a significant disadvantage to the above basic approach.  As already
 observed by Casas et al., on backtracking the lazily computed extension of the
 list is lost and possibly recomputed again on the next forward computation. A
@@ -722,7 +722,7 @@ assignment} in the form of SWI-Prolog' \texttt{nb\_setarg/3}, which assigns an
 argument in a compound term and is not undone on backtracking. We illustrate this
 idea on the lazy list of natural numbers:
 \begin{code}
-ll_nats(N,L) :- put_attr(L,test,state(N,_)).
+lazy_nats_from(N,L) :- put_attr(L,lazy_streams,state(N,_)).
 
 attr_unify_hook(State,Value) :-
   State=state(N,Read),
@@ -859,7 +859,7 @@ lazy_maplist(F,LazyXs,LazyYs):-iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
 where {\tt map/3} is the stream generator from Section~\ref{sec:other:fp}. Here
 is an example of the result.
 \begin{codex}
-?- ll_nat(Ns),lazy_maplist(succ,Ns,Ps),prefix([A,B,C],Ps).
+?- lazy_nats(Ns),lazy_maplist(succ,Ns,Ps),prefix([A,B,C],Ps).
 Ns = [0,1,2|_20314], Ps = [1,2,3|_20332], A=1,B=2,C=3,...
 \end{codex}
 

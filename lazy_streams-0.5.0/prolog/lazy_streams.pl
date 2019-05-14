@@ -598,9 +598,26 @@ conv_step(N-[],SN-Xs,X):-succ(N,SN),conv_pairs(SN,[X|Xs]).
 %! lazy_nats(-LazyListOfNaturalNumbers)
 %
 % infinite lazy list of natural numbers
-lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
+lazy_nats(Ns):-lazy_nats_from(0,Ns).
 
-lazy_nats_next(X,SX,X):-succ(X,SX).
+
+%! lazy_nats_from(+N, -LazyList)
+%
+% shows the basic mechanism for implementing lazy lists
+% using attributed variables
+lazy_nats_from(N,Ns) :- put_attr(Ns,lazy_streams,state(N,_)).
+
+attr_unify_hook(State,Value) :-
+  State=state(N,Read),
+  ( var(Read) ->
+      succ(N,M),
+      lazy_nats_from(M,Tail),
+      nb_setarg(2,State,[N|Tail]),
+      arg(2,State,Value)
+  ;
+      Value = Read
+  ).
+  
   
 %! gen2lazy(+Generator,-LazyLIst)  
 %
@@ -788,22 +805,6 @@ not_a_prime(N):-
    between(2,M,D),
    N mod D =:=0.
  
-%! lazy_nats_from(+N, -LazyList)
-%
-% shows the basic mechanism for implementing lazy lists
-% using attributed variables
-lazy_nats_from(N,L) :- put_attr(L,lazy_streams,state(N,_)).
-
-attr_unify_hook(State,Value) :-
-  State=state(N,Read),
-  ( var(Read) ->
-      succ(N,M),
-      lazy_nats_from(M,Tail),
-      nb_setarg(2,State,[N|Tail]),
-      arg(2,State,Value)
-  ;
-      Value = Read
-  ).
-  
+   
   
    
