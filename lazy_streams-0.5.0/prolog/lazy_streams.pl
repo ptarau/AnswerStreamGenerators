@@ -60,6 +60,7 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   mplex/3, % multiplexes a stream to by applying to its output a list of generators
   split/3,
   lazy_nats/1, % infinite lazy list of natural numbers starting at 0
+  lazy_nats_from/2, % shows the basic mechanism for implementing lazy lists using attributed variables
   lazy_maplist/3, % maplist working also on an infinite lazy list
   lazy_maplist/4, % maplist working also on two infinite lazy lists
   gen2lazy/2, % turns a generator into an isomorphic lazy list
@@ -68,7 +69,6 @@ As a special instance, we introduce answer stream generators that  encapsulate t
   iso_fun/6, % functor transporting predicates of arity 3 between isomorphic domains
   iso_fun_/6, % functor transporting predicates of arity 3 between isomorphic domains on ar in 2 out
   lazy_conv/3, % convolution of lazy lists
-  
   sum_/3, % generator for direct sum of two finite or infinite streams borrowed from lazy lists
   convolution/3, % convolution of infinite streams, borrowed from lazy lists
   eval_stream/2, % evaluates stream generator expression to generator
@@ -787,5 +787,23 @@ not_a_prime(N):-
    int_sqrt(N,M),
    between(2,M,D),
    N mod D =:=0.
-   
+ 
+%! lazy_nats_from(+N, -LazyList)
+%
+% shows the basic mechanism for implementing lazy lists
+% using attributed variables
+lazy_nats_from(N,L) :- put_attr(L,lazy_streams,state(N,_)).
+
+attr_unify_hook(State,Value) :-
+  State=state(N,Read),
+  ( var(Read) ->
+      succ(N,M),
+      lazy_nats_from(M,Tail),
+      nb_setarg(2,State,[N|Tail]),
+      arg(2,State,Value)
+  ;
+      Value = Read
+  ).
+  
+  
    
