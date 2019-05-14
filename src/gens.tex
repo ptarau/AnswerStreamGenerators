@@ -711,8 +711,7 @@ list fails, and a second time when the unification with the non-empty list
 succeeds.
 
 In addition to the recomputation overhead, this makes the implementation
-unsuitable for fetching data from an external source that cannot backtrack. A
-typical example of such a source is a network socket. It is possible to keep a
+unsuitable for fetching data from an external source---like a network socket---that cannot backtrack. It is possible to keep a
 buffer to support re-fetching content from the socket but the amount of data we
 need to buffer depends on the unknown non-determinism in the Prolog code that
 processes the list and we cannot recover if the selected buffer size proves to
@@ -737,8 +736,8 @@ attr_unify_hook(State,Value) :-
   ).
 \end{code}
 Compared to the basic version, we use a compound state here, where a
-the \texttt{Read} field is free when the value has not been computed before
-and instantiated with the resulting list structure when it has. Because
+the \texttt{Read} field is initially free 
+and instantiated with the resulting list structure once the value has been computed. Because
 of the use of {\tt nb\_setarg/3}, the information recorded in \texttt{Read}
 survives backtracking.
 
@@ -776,7 +775,7 @@ guaranteed to be large enough to cope with the finite non-determinism.
 %-------------------------------------------------------------------------------
 \subsection{From Lazy Streams to Lazy Lists}
 
-Now we show that it is easy to convert from lazy streams to lazy lists and back by
+Now we show how to convert from lazy streams to lazy lists and back by
 providing an isomorphism between both representations.
 The former conversion is interesting because lazy lists may present a convenient, tangible 
 representation. In contrast the latter may be more convenient for defining new
@@ -937,46 +936,46 @@ used languages validates the claims of
 enhanced expressiveness  that generators can bring.
 The basic idea of using coroutining in the form of first-class logic engines
 has been present in the BinProlog system  \cite{bp2011} as early as 1995 and
-the attributed variables  mechanism \cite{holz92} that we used to implement 
+the attributed variables mechanism \cite{holz92} that we used to implement 
 lazy lists, has been present even earlier, originally introduced to support constraint programming. However, putting it all together
-in the form of a mature API that relies as much as possible
- on implementations that bypass both first-class engines and lazy lists is a 
+in the form of a mature API is a 
  novel contribution of this paper,
- as well as the uniform view,  encapsulating into an open-source library 
+ as well as the uniform view, encapsulating into an open-source library 
  our mix of declarative and procedural implementation techniques. 
  
+%===============================================================================
 \section{Conclusions}\label{conc}
 
-We have described a unified approach to program with finite or infinite stream generators
-that enhances Prolog with operations now prevalent in widely used programming languages
-like Python, C\#, go, JavaScript, Ruby and Lua, while also supporting lazy evaluation mechanisms comparable to those in non-strict functional languages like Haskell.
-As a special instance of our stream generators,
-we have defined first-class logic engine based generator constructors 
-that can expose sequence  generation
-originating from AND-streams or OR-streams of answers.
+We have described a unified approach to program with finite and infinite stream
+generators that enhances Prolog with operations now prevalent in widely used
+programming languages like Python, C\#, go, JavaScript, Ruby and Lua, while
+also supporting lazy evaluation mechanisms comparable to those in non-strict
+functional languages like Haskell. As a special instance, we have defined
+generators based on first-class logic engines that can encapsulate both
+AND-streams and OR-streams of answers.  Moreover, we have provided an embedded
+interpreter for our generator algebra to enable declarative expression of
+stream algorithms in the form of compact and elegant code.
+% 
+In addition, we have provided a lazy list representation for our streams, which
+interacts nicely with unification and typical Prolog list code. Our iso-functor
+allows us to transport operations between lazy lists and generators, which
+allows us to choose the simplest or most efficient implementation of stream
+operations.
 
-Our generator algebra supported by an embedded language interpreter provides
-a declarative expression of stream algorithms in the form of compact and elegant code.
+In future work we plan to explore applications of our lazy streams.
+% Among the applications that can benefit from the use of our stream generators, we mention the following.
+% Stream processing  can be parallelized when streams originate from  arrays or
+% file systems supporting  direct access.
+% % event streams can be seen as generators 
+% Generator operations can express algorithms for working with multiple streams 
+% e.g., scanning tweets for a common topic,  finding correlations in multiple stock quote streams or integrating multiple IoT signal streams.
+% Combinatorial generation algorithms, e.g., when used for automated test generation, can be encapsulated as lazy streams.
+% Prolog interfaces to  ASP or SAT solvers, returning answers sets as streams can benefit from stream combinator operations.
 
-We have shown that interoperation mechanisms 
-between lazy stream generators and their 
-equivalent lazy lists representation
-supports transporting operations from one side to the other,
-allowing one to choose the simplest and/or more efficient
-implementation of stream operations.
-
-Among the applications that can benefit from the use of our stream generators, we mention the following.
-Stream processing  can be parallelized when streams originate from  arrays or
-file systems supporting  direct access.
-% event streams can be seen as generators 
-Generator operations can express algorithms for working with multiple streams 
-e.g., scanning tweets for a common topic,  finding correlations in multiple stock quote streams or integrating multiple IOT signal streams.
-Combinatorial generation algorithms, e.g., when used for automated test generation, can be encapsulated as lazy streams.
-Prolog interfaces to  ASP or SAT solvers, returning answers sets as streams can benefit from stream combinator operations.
-
-Code supporting the paper has been implemented as an open source library package at:\\
-{\small \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip } }
-The reader is encouraged to explore its functionality using SWI-Prolog's {\tt pack\_install/1} utility that downloads and installs it as SWI-Prolog library.
+% The introduction already lists these URLs.
+% Code supporting the paper has been implemented as an open source library package at:\\
+% {\small \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip } }
+% The reader is encouraged to explore its functionality using SWI-Prolog's {\tt pack\_install/1} utility that downloads and installs it as SWI-Prolog library.
 
 \bibliographystyle{acmtrans}
 \bibliography{theory,tarau,proglang,biblio,new}
