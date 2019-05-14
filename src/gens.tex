@@ -742,14 +742,14 @@ and instantiated with the resulting list structure when it has. Because
 of the use of {\tt nb\_setarg/3}, the information recorded in \texttt{Read}
 survives backtracking.
 
-The above technique is used to implement the library \texttt{pure\_input}, supporting a list view of file or socket operations, 
+With the above technique we have implemented the \texttt{pure\_input} library, which supports a lazy list view of files and sockets, 
 as well as the generic
 \texttt{lazy\_lists}\footnote{\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl?show=src\#lazy_list/3}}
 library. The general goal to create a lazy list is
 \texttt{lazy\_list(:Next, +State0, -List)}. This executes
 \texttt{call(Next, State0, State1, Head)} to produce the next element.
 
-Lazy lists allow Prolog to handle infinite data streams,  provided that garbage
+Lazy lists allow Prolog to handle infinite data streams, provided that garbage
 collection can reclaim the inaccessible head of the list. To make the
 head inaccessible, the code cannot keep a reference to the head
 and although processing the list may be non-deterministic,
@@ -760,18 +760,19 @@ guaranteed to be large enough to cope with the finite non-determinism.
 
 % ref: https://cliplab.org/papers/lazy-functions-ciclops05.pdf
 
-For instance, 
-using the constructor  {\tt lazy\_list/3}, we implement the infinite list of
-natural numbers as follows.
-\begin{code}
-lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
-
-lazy_nats_next(X,SX,X):-succ(X,SX).
-\end{code}
+% For instance, 
+% using the constructor  {\tt lazy\_list/3}, we implement the infinite list of
+% natural numbers as follows.
+% \begin{code}
+% lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
+% 
+% lazy_nats_next(X,SX,X):-succ(X,SX).
+% \end{code}
 
 
 %\subsection{The Lazy List View of Prolog Streams}
 %\subsection{The  equivalence between Answer stream generators and Lazy Lists}
+%-------------------------------------------------------------------------------
 \subsection{The interoperation between stream generators and lazy lists}
 
 The overloading of syntax between the usual lists and lazy lists, 
