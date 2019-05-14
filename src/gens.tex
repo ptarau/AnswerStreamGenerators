@@ -514,7 +514,7 @@ compositions. The grammar of this embedded language of generator expressions $F$
   $F$    & ::=  & $F_1 + F_2$         & \it (sum)         & $\mid$ & $\{F\}$           & \it (setification)\\
          & $\mid$ & $F_1 \times F_2$  & \it (product)     & $\mid$ & $X^G$            & \it (engine) \\
          & $\mid$ & $N:M$             & \it (range)       & $\mid$ & $A$               & \it (constant)\\
-         & $\mid$ & $[X|Xs]$          & \it (list)        & $\mid$ & $E$               & \it (stream)
+         & $\mid$ & $[X|Xs] \mid []$  & \it (list)        & $\mid$ & $E$               & \it (stream)
 \end{tabular}
 \end{center}
 The language comprises lists, engines, ranges, constants and existing streams, as well as their sums, products and
@@ -652,55 +652,95 @@ next_term(Stream,Term):-read(Stream,X),
 \end{code}
 
 
-\section{Generators and Lazy Lists}\label{ll}
+%===============================================================================
+\section{Lazy Streams as Lazy Lists}\label{ll}
 
-While generators provide abstract sequence operations, it is also useful
-to emulate as closely as possible the  list operations familiar to the 
-Prolog programmer with {\em lazy lists}. 
-As an example, they can elegantly express parsing algorithms acting on files 
-via Prolog's DCGs.
+In addition to the abstract datatype representation for lazy streams where the
+user interacts with them through an API, we also provide a more concrete
+representation for lazy streams in the form of {\em lazy lists}. Lazy lists
+look much like regular Prolog lists and, just like regular lists, they can be
+inspected and deconstructed with unification. The difference with regular lists
+is that lazy lists are not fully materialized from the start, but that, like
+lazy streams, their elements are computed on demand and thus can conceptually
+hold infinitely many elements. 
 
-\subsection{Implementing lazy lists using attributed variables}
+A key advantage over the abstract stream representation is that much of the
+existing functionality for regular lists can be reused for lazy lists; a good
+example are DCGs, which can also be used to parse lazy lists.
 
-Lazy lists form a suitable representation of infinite streams of Prolog
-terms. Lazy data structures can be implemented in Prolog using
-\emph{attributed} variables as a mechanism to extend unification
-\cite{holz92}. 
-The lazy function implementation of
-Ciao \cite{lazyCiao,casas2005functional}
-exploits the widely supported
-\texttt{freeze/1} primitive that is usually implemented using attributed
-variables. A lazy \emph{list} is represented as a normal Prolog list where the
-\emph{tail} is formed by an attributed variable. Normal list traversal
-predicates unify this tail with either the empty list (\texttt{[]}) or a
-list cell (\texttt{[Head|Tail]}), which triggers the goal associated
-with the attributed variable.
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+\subsection{Lazy List Representation}
 
-A significant disadvantage of this technique is that. on backtracking, the
-lazily computed extension to the list is lost. In addition to causing
-overhead for recomputing the value, this makes the implementation
-unsuitable for fetching data from an external source that cannot
-backtrack. A typical example of such a source is a network socket. It is
-possible to keep a buffer to support re-fetching content from the socket
-but the amount of data we need to buffer depends on the unknown
-non-determinism in the Prolog code that processes the list and we cannot
-recover if the selected buffer size proves to be too short.
+Our lazy list representation is based on the lazy function technique of Casas
+et al.~\cite{lazyCiao,casas2005functional}. The main idea is to delay the
+evaluation of a computation until its result is actually needed. Initially, the
+result is represented by a logic variable. When this variable is inspected
+through unification~(the need), a coroutine mechanism (e.g., {\tt freeze/2} or
+attributed variables~\cite{holz92}) is triggered to perform the computation and
+deliver the actual value just in time for the inspection.
 
-The above limitation can be avoided using \emph{not-backtrackable
-assignment} as implemented by various Prolog systems. Where SICStus
-solves this problem using a dedicated \emph{mutable term}, SWI-Prolog
-provides
-\texttt{nb\_setarg/3}
-for assigning an argument in a compound term where the assignment is not
-undone on backtracking. SWI-Prolog's lazy lists are realized using an
-attributed variable that resides in the tail argument of the last list
-cell and keeps a reference to this last cell. When triggered, the next
-value(s) is/are computed and the tail of the current last cell is set to
-the new lazy list using \texttt{nb\_setarg/3}. As this binding is not
-undone on backtracking only the first unification triggers the goal
-associated with the attributed variable. Initially, a lazy list is
-represented using a term \texttt{[dummy|AttVar]}, where the lazy list
-itself is the  \texttt{AttVar}.
+We apply this technique to compute a list incrementally as more
+and more of it is needed. Thus a lazy \emph{list} is represented as a normal
+Prolog list where the \emph{tail} is formed by an attributed variable. The following
+code illustrates this approach on the lazy list of natural numbers.
+\begin{code}
+ll_nat(List):-ll_nat(0,List). 
+ll_nat(N,List):-put_attr(List,lazy_list,N).
+
+attr_unify_hook(N,Value):-
+  succ(N,M),
+  ll_nat(M,Tail),
+  Value = [N|Tail].
+\end{code}
+A call to \texttt{ll\_nat/1} creates an attributed variable for the lazy list
+that can be passed to a typical list traversal predicate.  Such a predicate
+unifies this variable with either the empty list (\texttt{[]}) or a list cell
+(\texttt{[Head|Tail]}), which triggers the attributed variable hook and
+instantiates the variable to {\tt [N|Tail]} where {\tt Tail} is again an
+attributed variable. When the list traversal predicate recurses on {\tt Tail},
+this process is repeated.
+
+\paragraph{Imnprovement}
+There is a significant disadvantage to the above basic approach.  As already
+observed by Casas et al., on backtracking the lazily computed extension of the
+list is lost and possibly recomputed again on the next forward computation. A
+pathological case is that where the list traversal first tries to unify with
+the empty list and then with the non-empty list. For such a predicate, every
+element is computed twice. A first time when the unification with the empty
+list fails, and a second time when the unification with the non-empty list
+succeeds.
+
+In addition to the recomputation overhead, this makes the implementation
+unsuitable for fetching data from an external source that cannot backtrack. A
+typical example of such a source is a network socket. It is possible to keep a
+buffer to support re-fetching content from the socket but the amount of data we
+need to buffer depends on the unknown non-determinism in the Prolog code that
+processes the list and we cannot recover if the selected buffer size proves to
+be too short.
+
+We provide a solution for this problem by using \emph{non-backtrackable
+assignment} in the form of SWI-Prolog' \texttt{nb\_setarg/3}, which assigns an
+argument in a compound term and is not undone on backtracking. We illustrate this
+idea on the lazy list of natural numbers:
+\begin{code}
+ll_nats(N,L) :- put_attr(L,test,state(N,_)).
+
+attr_unify_hook(State,Value) :-
+  State=state(N,Read),
+  ( var(Read) ->
+      succ(N,M),
+      nats(M,Tail),
+      nb_setarg(2,State,[N|Tail]),
+      arg(2,State,Value)
+  ;
+      Value = Read
+  ).
+\end{code}
+Compared to the basic version, we use a compound state here, where a
+the \texttt{Read} field is free when the value has not been computed before
+and instantiated with the resulting list structure when it has. Because
+of the use of {\tt nb\_setarg/3}, the information recorded in \texttt{Read}
+survives backtracking.
 
 The above technique is used to implement the library \texttt{pure\_input}, supporting a list view of file or socket operations, 
 as well as the generic
