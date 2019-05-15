@@ -794,8 +794,8 @@ and only works on finite lists.
 By exploiting the isomorphism we can easily import the lazy {\tt map/3} from
 streams to get a {\tt lazy\_maplist/3}.
 
-\paragraph{Isomorphism} The isomorphism between the two representation is
-witnessed by the following two predicates.  The predicate {\tt
+\paragraph{Isomorphism} Two predicates witness the isormophism between the
+representations. The predicate {\tt
 gen2lazy(+Generator,-LazyList)} turns a possibly infinite stream generator into
 a lazy list by using the generator as the state on which the lazy list is
 based, and using \texttt{ask/2} to advance that state (which is in fact already
@@ -890,6 +890,7 @@ Lazy lists might or might not need $O(n)$ for that, depending on possible garbag
 With most stream generators no garbage collection is needed when working destructively in constant space, while their results can be exposed declaratively via the stream algebra.
 On the other hand, lazy lists are reusable, while new generators 
 must be created to revisit a sequence.
+\ref{appendix} also shows with benchmarks that stream generators are faster than lazy lists.
 
 Some algorithms can be most easily expressed using first-class logic engines, but
 avoiding engines when possible reduces memory footprint and can avoid term copying.
@@ -982,7 +983,7 @@ expose our libraries to the wider community.
 \appendix
 
 %===============================================================================
-\section{Benchmarks}
+\section{Benchmarks}\label{appendix}
 
 To get a relative idea of the performance overhead of different approaches,
 we here present several benchmark results.
