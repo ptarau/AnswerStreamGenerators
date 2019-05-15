@@ -333,70 +333,70 @@ bmp(N,Op):-
 % Run on a 128GB 18-core iMacPro, with 8 GB given to Prolog to avoid stack overflows with lazy lists.
 
 ?- bmx.
-% 75,497,483 inferences, 2.999 CPU in 3.004 seconds (100% CPU, 25174563 Lips)
-% 41,943,046 inferences, 8.137 CPU in 9.606 seconds (85% CPU, 5154863 Lips)
-% 41,943,046 inferences, 7.579 CPU in 9.064 seconds (84% CPU, 5533910 Lips)
-% 95,070,967 inferences, 11.982 CPU in 12.453 seconds (96% CPU, 7934266 Lips)
-% 128,625,340 inferences, 21.734 CPU in 24.157 seconds (90% CPU, 5918102 Lips)
-% Started at Wed May 15 09:19:47 2019
-% 58.379 seconds cpu time for 383,867,626 inferences
-% 7,453 atoms, 4,443 functors, 3,449 predicates, 69 modules, 130,610 VM-codes
+% 75,497,485 inferences, 3.170 CPU in 3.177 seconds (100% CPU, 23815813 Lips)
+% 41,943,046 inferences, 8.016 CPU in 9.479 seconds (85% CPU, 5232260 Lips)
+% 41,943,046 inferences, 7.444 CPU in 8.916 seconds (83% CPU, 5634595 Lips)
+% 95,070,968 inferences, 10.644 CPU in 11.224 seconds (95% CPU, 8932246 Lips)
+% 128,625,343 inferences, 20.370 CPU in 22.123 seconds (92% CPU, 6314463 Lips)
+% Started at Wed May 15 09:38:32 2019
+% 55.017 seconds cpu time for 383,865,225 inferences
+% 7,449 atoms, 4,442 functors, 3,486 predicates, 69 modules, 130,606 VM-codes
 % 
 %                     Limit   Allocated      In use
 % Local  stack:           -       20 Kb    1,824  b
-% Global stack:           -    4,096 Mb    1,691 Mb
-% Trail  stack:           -    2,048 Mb    3,720  b
-%        Total:    8,192 Mb    6,144 Mb    1,691 Mb
+% Global stack:           -    2,048 Mb    1,913 Mb
+% Trail  stack:           -    1,024 Mb    3,792  b
+%        Total:    8,192 Mb    3,072 Mb    1,913 Mb
 % 
-% 17 garbage collections gained 5,499,092,552 bytes in 13.547 seconds.
-% 3 clause garbage collections gained 125 clauses in 0.000 seconds.
-% Stack shifts: 2 local, 18 global, 18 trail in 0.095 seconds
+% 21 garbage collections gained 5,040,575,560 bytes in 11.206 seconds.
+% 2 clause garbage collections gained 109 clauses in 0.000 seconds.
+% Stack shifts: 2 local, 17 global, 17 trail in 0.047 seconds
+% 2 threads, 0 finished threads used 0.000 seconds
+% 3 engines, 0 finished engines
+
+% 2,796,205 inferences, 0.113 CPU in 0.113 seconds (100% CPU, 24827128 Lips)
+% 67,108,873 inferences, 2.898 CPU in 2.901 seconds (100% CPU, 23155603 Lips)
+% 83,886,096 inferences, 3.318 CPU in 3.326 seconds (100% CPU, 25281936 Lips)
+% 41,943,046 inferences, 7.555 CPU in 9.038 seconds (84% CPU, 5552041 Lips)
+% 128,625,340 inferences, 19.509 CPU in 21.473 seconds (91% CPU, 6593280 Lips)
+% 103,459,513 inferences, 4.470 CPU in 4.532 seconds (99% CPU, 23145455 Lips)
+% Started at Wed May 15 09:38:32 2019
+% 97.776 seconds cpu time for 820,074,185 inferences
+% 7,452 atoms, 4,442 functors, 3,476 predicates, 69 modules, 130,624 VM-codes
+% 
+%                     Limit   Allocated      In use
+% Local  stack:           -       20 Kb    1,824  b
+% Global stack:           -    4,096 Mb    4,043 Mb
+% Trail  stack:           -    2,048 Mb    4,952  b
+%        Total:    8,192 Mb    6,144 Mb    4,043 Mb
+% 
+% 22 garbage collections gained 8,786,317,528 bytes in 16.768 seconds.
+% 2 clause garbage collections gained 109 clauses in 0.000 seconds.
+% Stack shifts: 2 local, 18 global, 18 trail in 0.047 seconds
 % 2 threads, 0 finished threads used 0.000 seconds
 % 3 engines, 2 finished engines
 
-% 2,796,205 inferences, 0.113 CPU in 0.113 seconds (100% CPU, 24789051 Lips)
-% 67,108,873 inferences, 2.908 CPU in 2.912 seconds (100% CPU, 23077131 Lips)
-% 83,886,095 inferences, 3.360 CPU in 3.366 seconds (100% CPU, 24963581 Lips)
-% 41,943,046 inferences, 7.779 CPU in 9.258 seconds (84% CPU, 5391779 Lips)
-% 128,625,340 inferences, 14.303 CPU in 16.110 seconds (89% CPU, 8992591 Lips)
-% 103,459,513 inferences, 12.810 CPU in 13.070 seconds (98% CPU, 8076431 Lips)
-% Started at Wed May 15 09:19:47 2019
-% 104.547 seconds cpu time for 820,076,521 inferences
-% 7,456 atoms, 4,443 functors, 3,443 predicates, 69 modules, 130,610 VM-codes
+% 8,388,611 inferences, 0.494 CPU in 0.495 seconds (100% CPU, 16980203 Lips)
+% 75,497,495 inferences, 3.201 CPU in 3.209 seconds (100% CPU, 23582620 Lips)
+% 92,274,703 inferences, 3.696 CPU in 3.703 seconds (100% CPU, 24965437 Lips)
+% 50,331,669 inferences, 7.993 CPU in 9.469 seconds (84% CPU, 6297037 Lips)
+% 134,217,757 inferences, 14.248 CPU in 15.800 seconds (90% CPU, 9419945 Lips)
+% 109,051,925 inferences, 9.171 CPU in 9.183 seconds (100% CPU, 11890763 Lips)
+% Started at Wed May 15 09:38:32 2019
+% 144.298 seconds cpu time for 1,298,226,162 inferences
+% 7,454 atoms, 4,442 functors, 3,475 predicates, 69 modules, 130,624 VM-codes
 % 
 %                     Limit   Allocated      In use
-% Local  stack:           -       24 Kb    1,824  b
-% Global stack:           -    6,351 Mb    2,251 Mb
-% Trail  stack:           -    1,841 Mb    3,856  b
-%        Total:    8,192 Mb    8,192 Mb    2,251 Mb
+% Local  stack:           -       20 Kb    1,752  b
+% Global stack:           -    4,096 Mb    1,760 Mb
+% Trail  stack:           -    2,048 Mb    4,784  b
+%        Total:    8,192 Mb    6,144 Mb    1,760 Mb
 % 
-% 18 garbage collections gained 11,706,621,416 bytes in 20.518 seconds.
-% 3 clause garbage collections gained 125 clauses in 0.000 seconds.
-% Stack shifts: 3 local, 19 global, 19 trail in 0.197 seconds
+% 24 garbage collections gained 16,897,951,560 bytes in 24.353 seconds.
+% 2 clause garbage collections gained 109 clauses in 0.000 seconds.
+% Stack shifts: 2 local, 18 global, 18 trail in 0.047 seconds
 % 2 threads, 0 finished threads used 0.000 seconds
 % 3 engines, 4 finished engines
-
-% 8,388,611 inferences, 0.495 CPU in 0.496 seconds (100% CPU, 16949771 Lips)
-% 75,497,495 inferences, 3.248 CPU in 3.258 seconds (100% CPU, 23245090 Lips)
-% 92,274,703 inferences, 3.738 CPU in 3.739 seconds (100% CPU, 24683495 Lips)
-% 50,331,668 inferences, 8.057 CPU in 9.571 seconds (84% CPU, 6246626 Lips)
-% 134,217,757 inferences, 14.664 CPU in 16.237 seconds (90% CPU, 9153069 Lips)
-% 109,051,925 inferences, 12.945 CPU in 12.980 seconds (100% CPU, 8424321 Lips)
-% Started at Wed May 15 09:19:47 2019
-% 152.156 seconds cpu time for 1,298,228,497 inferences
-% 7,458 atoms, 4,443 functors, 3,443 predicates, 69 modules, 130,610 VM-codes
-% 
-%                     Limit   Allocated      In use
-% Local  stack:           -       24 Kb    1,752  b
-% Global stack:           -    6,351 Mb    2,626 Mb
-% Trail  stack:           -    1,841 Mb    3,856  b
-%        Total:    8,192 Mb    8,192 Mb    2,626 Mb
-% 
-% 19 garbage collections gained 18,003,118,520 bytes in 27.139 seconds.
-% 3 clause garbage collections gained 125 clauses in 0.000 seconds.
-% Stack shifts: 3 local, 19 global, 19 trail in 0.197 seconds
-% 2 threads, 0 finished threads used 0.000 seconds
-% 3 engines, 6 finished engines
 true.
 
 */
@@ -409,7 +409,7 @@ test:attr_unify_hook(State,Value) :-
   ( var(Read) ->
       succ(N,SN),
       test:lazy_nats_from_to(SN,M,Tail),
-      nb_setarg(3,State,[N|Tail]),
+      nb_linkarg(3,State,[N|Tail]),
       arg(3,State,Value)
   ;
       Value = Read
