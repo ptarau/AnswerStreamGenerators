@@ -152,7 +152,7 @@ the next library.
    The first is available as an SWI-Prolog
 library package,\footnote{%
 \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip}}
-  while the other two are bundled as a SWI-Prolog standard librarys.\footnote{%
+  while the other two are bundled as a SWI-Prolog standard libraries.\footnote{%
 \url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl},
 \url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/pure_input.pl}}
 \EI
@@ -790,7 +790,7 @@ and only works on finite lists.
 By exploiting the isomorphism we can easily import the lazy {\tt map/3} from
 streams to get a {\tt lazy\_maplist/3}.
 
-\paragraph{Isomorphism} Two predicates witness the isormophism between the
+\paragraph{Isomorphism} Two predicates witness the isomorphism between the
 representations. The predicate {\tt
 gen2lazy(+Generator,-LazyList)} turns a possibly infinite stream generator into
 a lazy list by using the generator as the state on which the lazy list is
@@ -1001,7 +1001,7 @@ Table~\ref{tab:bench1} shows the benchmark results for $N = 2^{23}$, obtained on
 Clearly, the direct generator is the fastest, while the engine-based generators
 are about 5 times slower (with little difference between AND and OR). The lazy
 lists are more costly as they trigger the attributed variable hook at every
-element. The lazy findall is the worst, combining the cost of attributed
+element, involving a metacall and an {\tt nb\_setarg/1} operation. The lazy findall is the worst, combining the cost of attributed
 variables with that of engines.
 
 %-------------------------------------------------------------------------------
@@ -1024,6 +1024,8 @@ all is to compute the elements algorithmically on demand. When backtracking
 through all elements, the overhead is lower than when going straight
 for the last element.
 
+But, more importantly, our benchmarks show that differences between implementations
+are all within a $O(1)$  time complexity margin from each other. We believe that the (fairly small) constant overhead is acceptable, in exchange for supporting lazy stream operations in a way that is as convenient as possible to the application programmer.
 \newpage
 \renewcommand{\arraystretch}{1.2} 
 \newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
@@ -1044,10 +1046,10 @@ lazy findall &  28.6 &  9.53 $\times$  \\
 \caption{Benchmark results for accessing the $2^{23}$th element in an infinite stream.}\label{tab:bench1}
 \end{table*}
 
-
 \begin{table*}\centering
 \ra{1.3}
 \begin{tabular}{@{}rrrlrr@{}}
+\toprule
 \toprule
 & \multicolumn{2}{c}{Last Element} & \phantom{abc} & \multicolumn{2}{c}{All Elements}\\
 \cmidrule{2-3}\cmidrule{5-6}
