@@ -3,7 +3,7 @@ ask(E,R):-call(E,X),!,R=X.
 ask(E,_):-stop(E),fail.
 
 is_done(E):-arg(1,E,done).
-stop(E):-nb_linkarg(1,E,done).
+stop(E):-nb_setarg(1,E,done).
 
 :-op(800,xfx,(in)).
 
@@ -33,7 +33,7 @@ eng(X,Goal,engine_next(Engine)):-engine_create(X,Goal,Engine).
 
 and_nat_stream(Gen):-eng(_,nat_goal(0),Gen).
 
-nat_goal(N):-SN is N+1,engine_yield(N),nat_goal(SN).
+nat_goal(N):-succ(N,SN),engine_yield(N),nat_goal(SN).
 
 or_nat_stream(Gen):-eng(N, nat_from(0,N), Gen).
 
@@ -68,6 +68,7 @@ flip(2,1,X,Y,Y-X).
 eval_stream(E+F,S):- !,eval_stream(E,EE),eval_stream(F,EF),sum(EE,EF,S).
 eval_stream(E*F,P):- !,eval_stream(E,EE),eval_stream(F,EF),prod(EE,EF,P).
 eval_stream(E:F,R):- !,range(E,F,R).
+eval_stream([],L):-!,list([],L).
 eval_stream([X|Xs],L):-!,list([X|Xs],L).
 eval_stream({E},SetGen):-!,eval_stream(E,F),setify(F,SetGen).
 eval_stream(X^G,E):-!,eng(X,G,E).
@@ -98,12 +99,10 @@ do(G):-call(G),fail;true.
 
 scan(F,InitVal,Gen,scan_next(state(InitVal),F,Gen)).
 
-scan_next(S,F,Gen,R) :-
-  arg(1,S,X),
+scan_next(S,F,Gen,R) :- arg(1,S,X),
   ask(Gen,Y),
-  call(F,X,Y,Z),
-  nb_linkarg(1,S,Z),
-  R = Z.
+  call(F,X,Y,R),
+  nb_setarg(1,S,R).
 
 term_reader(File,next_term(Stream)):-open(File,read,Stream).
 
@@ -112,9 +111,23 @@ next_term(Stream,Term):-read(Stream,X),
   ; close(Stream),fail
   ).
 
-lazy_nats(L):-lazy_list(lazy_nats_next,0,L).
+simple:lazy_nats(List):-simple:lazy_nats_from(0,List). 
+simple:lazy_nats_from(N,List):-put_attr(List,simple,N).
 
-lazy_nats_next(X,SX,X):-succ(X,SX).
+simple:attr_unify_hook(N,Value):-succ(N,M),
+  simple:lazy_nats_from(M,Tail),Value = [N|Tail].
+
+lazy_nats_from(N,L) :- put_attr(L,lazy_streams,state(N,_)).
+
+attr_unify_hook(State,Value) :-State=state(N,Read),
+  ( var(Read) ->
+      succ(N,M),
+      nats(M,Tail),
+      nb_setarg(2,State,[N|Tail]),
+      arg(2,State,Value)
+  ;
+      Value = Read
+  ).
 
 gen2lazy(Gen,Ls):-lazy_list(gen2lazy_forward,Gen,Ls).
 
