@@ -108,8 +108,7 @@ different streaming mechanisms---state transformers, lazy lists and first-class 
 %\cite{tarau:parimp99,tarau:cl2000,iclp08:inter,ciclops08:pINTER,bp2011},
 \cite{tarau:cl2000,padl09inter,bp2011}, 
 recently added to SWI-Prolog\footnote{
-\url{http://www.swi-prolog.org/pldoc/man?section=engines}
----} into a set of operations organized compositionally in the form of {\em 
+\url{http://www.swi-prolog.org/pldoc/man?section=engines}} into a set of operations organized compositionally in the form of {\em 
 stream generators}.
 Our generators work in a way similar to Python's {\em yield} mechanism \cite{pyref,beazley09} and 
 they share features with coroutining constructs now present in a several  programming languages including C\#, go, Javascript and Lua. At the same time, 
@@ -131,26 +130,30 @@ abstract sequence operations and the concrete list view familiar to Prolog users
 
 The main contributions of this paper are:
 \BI
-\I We present a simple and clean approach for setting up lazy streams.
-\I We provide a technique to expose lazy streams in the form of (lazy) Prolog lists
-   that can be inspected and decomposed, with unification, just like conventional lists.
-   The technique uses attributed variables and destructive updates under the hood to
-   extend the list as needed.
-\I We have implemented our approach in two libraries:
-   \BI 
+\I We present a simple and clean approach for setting up lazy streams, which
+   uniformly encapsulates algorithms, lists, first-class logic engines and other data sources.
+\I We show how to expose lazy streams in the form of lazy Prolog lists
+   that, just like conventional lists, can be inspected and decomposed with unification.
+   Under the hood lazy lists use attributed variables and destructive updates under the hood to
+   extend the list when needed.
+\I We have implemented our approach in several libraries:
+   \BE 
    \I Our \texttt{lazy\_streams} library
 features a dozen generator predicates (stream sources), an API to query
 them, a set of generator  operations, a generator expression interpreter
 offering a declarative view of these operations and an interface to
-the other library. 
-cases.
+the next library. 
    \I Our \texttt{lazy\_lists} library provides a dozen generator predicates for 
       directly setting up lazy lists.
-   \EI
-   The \texttt{lazy\_streams} library is available as an SWI-Prolog
-library package\footnote{
+   \I Our \texttt{pure\_input} library provides a range of predicates for reading
+      files and sockets backed by lazy lists.
+   \EE
+   The first is available as an SWI-Prolog
+library package,\footnote{%
 \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip}}
-  and the \texttt{lazy\_lists} library is bundled as a standard library\footnote{\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl}} with SWI-Prolog.
+  while the other two are bundled as a SWI-Prolog standard librarys.\footnote{%
+\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl},
+\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/pure_input.pl}}
 \EI
 
 The rest of the paper is organized as follows.
@@ -163,8 +166,7 @@ Section \ref{other} describes lazy functional language style generator operation
 and an example of I/O stream generator.
 Section \ref{ll} overviews implementation of lazy lists using attributed variables
 and introduces the iso-functor connecting them to  lazy stream generators.
-Section \ref{disc} compares lazy list and stream generators 
-and discusses some alternative implementation options. 
+Section \ref{disc} compares and discusses alternative implementation options of lazy list and stream generators.
 Section \ref{rel} overviews related work and
 section \ref{conc} concludes the paper.
 
@@ -562,8 +564,8 @@ X = a ; X = 1-c ; X = b ; X = 1-c ; X = 2-c; X = 1-c ; X = 2-c ....
 %===============================================================================
 \section{Other Stream Generator Operations}\label{other}
 
-This section describes some additional stream operations that our {\tt
-lazy\_streams} package provides.
+This section describes the additional stream operations in our {\tt
+lazy\_streams} package.
 
 %-------------------------------------------------------------------------------
 \subsection{Lazy Functional Programming Constructs}\label{sec:other:fp}
@@ -656,7 +658,7 @@ next_term(Stream,Term):-read(Stream,X),
 \section{Lazy Streams as Lazy Lists}\label{ll}
 
 In addition to the abstract datatype representation for lazy streams where the
-user interacts with them through an API, we also provide a more concrete
+user interacts with them through a dedicated API, we also provide a more concrete
 representation for lazy streams in the form of {\em lazy lists}. Lazy lists
 look much like regular Prolog lists and, just like regular lists, they can be
 inspected and deconstructed with unification. The difference with regular lists
@@ -683,7 +685,7 @@ We apply this technique to compute a list incrementally as more
 and more of it is needed. Thus a lazy \emph{list} is represented as a normal
 Prolog list where the \emph{tail} is formed by an attributed variable. The following
 code illustrates this approach on the lazy list of natural numbers.
-\begin{codex}
+\begin{code}
 lazy_nats(List):-lazy_nats_from(0,List). 
 lazy_nats_from(N,List):-put_attr(List,lazy_streams,N).
 
@@ -691,7 +693,7 @@ attr_unify_hook(N,Value):-
   succ(N,M),
   lazy_nats_from(M,Tail),
   Value = [N|Tail].
-\end{codex}
+\end{code}
 A call to \texttt{lazy\_nat/1} creates an attributed variable for the lazy list
 that can be passed to a typical list traversal predicate.  Such a predicate
 unifies this variable with either the empty list (\texttt{[]}) or a list cell
@@ -743,17 +745,17 @@ survives backtracking.
 
 With the above technique we have implemented the \texttt{pure\_input} library, which supports a lazy list view of files and sockets, 
 as well as the generic
-\texttt{lazy\_lists}\footnote{\url{http://www.swi-prolog.org/pldoc/doc/_SWI_/library/lazy_lists.pl?show=src\#lazy_list/3}}
+\texttt{lazy\_lists}
 library. The general goal to create a lazy list is
 \texttt{lazy\_list(:Next, +State0, -List)}. This executes
 \texttt{call(Next, State0, State1, Head)} to produce the next element.
 
-Lazy lists allow Prolog to handle infinite data streams, provided that garbage
-collection can reclaim the inaccessible head of the list. To make the
-head inaccessible, the code cannot keep a reference to the head
-and although processing the list may be non-deterministic,
+Lazy lists allow Prolog to handle infinite data streams in limited memory, provided that garbage
+collection can reclaim the already processed part of the list. This is possible
+if the user code does not keep a reference to the head of the list.
+Hence, although processing the list may be non-deterministic,
 this non-determinism must be resolved after examining a finite number of
-elements.  The attributed variable trigger and garbage collection ensure
+elements. Then the attributed variable trigger and garbage collection ensure
 that the window on the stream that is kept in memory is finite and
 guaranteed to be large enough to cope with the finite non-determinism.
 
@@ -879,16 +881,14 @@ lazy_sum_next(Xs-[Y|Ys],Ys-Xs,Y).
 \section{Discussion}\label{disc}
 
 The abstract sequence interface of the {\tt lazy\_streams} package and
-the concrete list-based view provided by the lazy lists library offer
+the concrete list-based view provided by the {\tt lazy\_lists} library offer
 similar services, but as they interoperate with help of {\tt iso\_fun} predicates,
 one can choose the  implementation most suitable for a given algorithm.
-
-For instance, one  can access the N-th element of a  generator in $O(1)$ space.
-Lazy lists might or might not need $O(N)$ for the same, depending on possible garbage collection of their unused prefix.
+For instance, one can access the $n$th element of a generator in $O(1)$ space.
+Lazy lists might or might not need $O(n)$ for that, depending on possible garbage collection of their unused prefix.
 With most stream generators no garbage collection is needed when working destructively in constant space, while their results can be exposed declaratively via the stream algebra.
-
 On the other hand, lazy lists are reusable, while new generators 
-must be created if the sequence needs to be revisited again.
+must be created to revisit a sequence.
 
 Some algorithms can be most easily expressed using first-class logic engines, but
 avoiding engines when possible reduces memory footprint and can avoid term copying.
@@ -896,14 +896,9 @@ Thus, one might ask if a predicate like {\tt lazy\_findall} could be implemented
 without using first class logic engines, e.g., it terms of  
 attributed-variables, 
 TOR \cite{tor}, delimited AND-continuations \cite{delim}.
-
-This seems unlikely, as  these techniques are all subject to backtracking and as such can not
-store state that survives it. We know that one can circumvent this challenge
-by emulating first-class engines at source level as in \cite{padl09inter}, but that is 
-extremely slow, way beyond being practical. A more promising
-way to achieve  that would be to support
-OR-continuations, in an implementation that fully reflects Prolog's backtracking
-mechanism.
+This seems unlikely as  these techniques are all subject to backtracking and cannot
+store state that survives it. First-class engines can be simulated~\cite{padl09inter}, but that is 
+impractically slow. Reflecting Prolog's backtracking mechanism in OR-continuations seems more promising.
 
 \section{Related work}\label{rel}
 
@@ -925,7 +920,7 @@ present in the database community
 and 
 within logic programming 
 \cite{Beck15}, %,Beck18}, 
-the later with focus on
+the latter with focus on
 reasoning about streams.
 Our lazy stream generators share with Python  \cite{pyref} the encapsulation of
 a stream into a mechanism providing its elements on-demand. But, by contrast to
@@ -962,7 +957,10 @@ allows us to transport operations between lazy lists and generators, which
 allows us to choose the simplest or most efficient implementation of stream
 operations.
 
-In future work we plan to explore applications of our lazy streams.
+Ogborne's analysis tools for the Enron e-mail
+corpus\footnote{\url{https://github.com/Anniepoo/enron}} already make good use
+of our {\tt pure\_input} library. We plan to explore further applications and
+expose our libraries to the wider community.
 % Among the applications that can benefit from the use of our stream generators, we mention the following.
 % Stream processing  can be parallelized when streams originate from  arrays or
 % file systems supporting  direct access.
