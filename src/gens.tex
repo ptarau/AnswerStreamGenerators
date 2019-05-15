@@ -4,6 +4,7 @@
 %\usepackage{pldoc}
 
 \usepackage{hyperref}
+\usepackage{booktabs}
 
 \begin{document}
 
@@ -977,5 +978,110 @@ expose our libraries to the wider community.
 
 \bibliographystyle{acmtrans}
 \bibliography{theory,tarau,proglang,biblio,new}
+
+\appendix
+
+%===============================================================================
+\section{Benchmarks}
+
+To get a relative idea of the performance overhead of different approaches,
+we here present several benchmark results.
+
+%-------------------------------------------------------------------------------
+\subsection{Infinite Streams}
+
+First we compare different the runtime for accessing the $N$th element in the
+infinite stream of natural numbers represented in different ways.
+
+The different representations we use are the direct stream generator
+presented in Section~\ref{}, engines encapsulated as streams for both OR
+and AND answers, the direct lazy list representation of Section~\ref{}, and
+a lazy list version of findall.
+
+Table~\ref{tab:bench1} shows the benchmark results for $N = 2^{23}$, obtained on a a
+128GB 18-core iMacPro, with 8 GB given to SWI-Prolog to avoid stack overflows.
+
+Clearly, the direct generator is the fastest, while the engine-based generators
+are about 5 times slower (with little difference between AND and OR). The lazy
+lists are more costly as they trigger the attributed variable hook at every
+element. The lazy findall is the worst, combining the cost of attributed
+variables with that of engines.
+
+\renewcommand{\arraystretch}{1.2} 
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
+
+\begin{table*}\centering
+\ra{1.3}
+\begin{tabular}{@{}rrr@{}}
+\toprule
+& Time (s) & Relative ($\times$) \\
+\midrule
+generator    &   3.0 &  1.00 $\times$  \\ 
+OR engine    &  16.5 &  5.50 $\times$  \\
+AND engine   &  15.6 &  5.20 $\times$  \\
+lazy list    &  18.8 &  6.27 $\times$  \\
+lazy findall &  28.6 &  9.53 $\times$  \\
+\bottomrule
+\end{tabular}
+\caption{Benchmark results for accessing the $2^{23}$th element in an infinite stream.}\label{tab:bench1}
+\end{table*}
+
+%-------------------------------------------------------------------------------
+\subsection{Finite Streams}
+
+We also consider two benchmarks that process finite streams, in order to compare them to regular
+lists where the elements are not produced on demand but are already pre-computed and pre-loaded
+in memory. The two benchmarks both process the sequence of numbers 1 to $N$ (with $N=2^{23}$). 
+The first sequentially steps to the last number, while the second backtracks over all elements.
+
+We consider two generator approaches: the first fetches the elements from the
+list, while the second creates the range algorithmically. In addition we
+consider an engine-as-stream and a lazy findall that both backtrack through the
+list to produce their elements.
+
+Table~\ref{tab:bench2} shows the results. As to be expected, the list version
+is by far the fastest. There is a price to be paid for using generators, and as
+we saw above, lazy findall is even more expensive. Yet, the largest price of
+all is to compute the elements algorithmically on demand. When backtracking
+through all elements, the overhead is lower than when going straight
+for the last element.
+
+\begin{table*}\centering
+\ra{1.3}
+\begin{tabular}{@{}rrrlrr@{}}
+\toprule
+& \multicolumn{2}{c}{Last Element} & \phantom{abc} & \multicolumn{2}{c}{All Elements}\\
+\cmidrule{2-3}\cmidrule{5-6}
+& Time (s) & Relative ($\times$) & & Time (s) & Relative ($\times$)  \\
+\midrule
+list             &   0.1 &   1 $\times$ & &  0.5 &   1.0 $\times$  \\
+list generator   &   3.8 &  38 $\times$ & &  3.1 &   6.2 $\times$  \\ 
+range generator  &  26.7 & 277 $\times$ & & 28.1 &  56,2 $\times$  \\ 
+OR engine        &   3.3 &  33 $\times$ & &  3.7 &   7,4 $\times$  \\
+lazy findall     &  13.7 & 137 $\times$ & & 15.9 &  31,8 $\times$  \\
+\bottomrule
+\end{tabular}
+\caption{Benchmark results for processing a stream of $2^{23}$ elements.}\label{tab:bench2}
+\end{table*}
+
+% \begin{table*}\centering
+% \ra{1.3}
+% \begin{tabular}{@{}rrrrcrrrcrrr@{}}\toprule
+% & \multicolumn{3}{c}{$w = 8$} & \phantom{abc}& \multicolumn{3}{c}{$w = 16$} &
+% \phantom{abc} & \multicolumn{3}{c}{$w = 32$}\\
+% \cmidrule{2-4} \cmidrule{6-8} \cmidrule{10-12}
+% & $t=0$ & $t=1$ & $t=2$ && $t=0$ & $t=1$ & $t=2$ && $t=0$ & $t=1$ & $t=2$\\ \midrule
+% $dir=1$\\
+% $c$ & 0.0790 & 0.1692 & 0.2945 && 0.3670 & 0.7187 & 3.1815 && -1.0032 & -1.7104 & -21.7969\\
+% $c$ & -0.8651& 50.0476& 5.9384&& -9.0714& 297.0923& 46.2143&& 4.3590& 34.5809& 76.9167\\
+% $c$ & 124.2756& -50.9612& -14.2721&& 128.2265& -630.5455& -381.0930&& -121.0518& -137.1210& -220.2500\\
+% $dir=0$\\
+% $c$ & 0.0357& 1.2473& 0.2119&& 0.3593& -0.2755& 2.1764&& -1.2998& -3.8202& -1.2784\\
+% $c$ & -17.9048& -37.1111& 8.8591&& -30.7381& -9.5952& -3.0000&& -11.1631& -5.7108& -15.6728\\
+% $c$ & 105.5518& 232.1160& -94.7351&& 100.2497& 141.2778& -259.7326&& 52.5745& 10.1098& -140.2130\\
+% \bottomrule
+% \end{tabular}
+% \caption{Caption}
+% \end{table*}
 
 \end{document}
