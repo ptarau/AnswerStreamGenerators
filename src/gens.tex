@@ -624,12 +624,10 @@ also meaningful for infinite streams.
 \begin{code}
 scan(F,InitVal,Gen,scan_next(state(InitVal),F,Gen)).
 
-scan_next(S,F,Gen,R) :-
-  arg(1,S,X),
+scan_next(S,F,Gen,R) :- arg(1,S,X),
   ask(Gen,Y),
   call(F,X,Y,Z),
-  nb_setarg(1,S,Z),
-  R = Z.
+  nb_setarg(1,S,Z),R = Z.
 \end{code}
 For example, we can compute the stream of cumulative sums of the natural numbers.
 \begin{codex}
@@ -690,8 +688,7 @@ code illustrates this approach on the lazy list of natural numbers.
 lazy_nats(List):-lazy_nats_from(0,List). 
 lazy_nats_from(N,List):-put_attr(List,lazy_streams,N).
 
-attr_unify_hook(N,Value):-
-  succ(N,M),
+attr_unify_hook(N,Value):-succ(N,M),
   lazy_nats_from(M,Tail),
   Value = [N|Tail].
 \end{code}
@@ -727,8 +724,7 @@ idea on the lazy list of natural numbers:
 \begin{code}
 lazy_nats_from(N,L) :- put_attr(L,lazy_streams,state(N,_)).
 
-attr_unify_hook(State,Value) :-
-  State=state(N,Read),
+attr_unify_hook(State,Value) :-State=state(N,Read),
   ( var(Read) ->
       succ(N,M),
       nats(M,Tail),
@@ -953,15 +949,15 @@ AND-streams and OR-streams of answers.  Moreover, we have provided an embedded
 interpreter for our generator algebra to enable declarative expression of
 stream algorithms in the form of compact and elegant code.
 % 
+
 In addition, we have provided a lazy list representation for our streams, which
 interacts nicely with unification and typical Prolog list code. Our iso-functor
 allows us to transport operations between lazy lists and generators, which
 allows us to choose the simplest or most efficient implementation of stream
-operations.
-
-Ogborne's analysis tools for the Enron e-mail
+operations. In terms of impact, there are {\tt 83} github sites using the {\tt lazy\_lists} library, and
+ Ogborne's analysis tools for the Enron e-mail
 corpus\footnote{\url{https://github.com/Anniepoo/enron}} already make good use
-of our {\tt pure\_input} library. We plan to explore further applications and
+of our {\tt pure\_input} library based on them. We plan to explore further applications and
 expose our libraries to the wider community.
 % Among the applications that can benefit from the use of our stream generators, we mention the following.
 % Stream processing  can be parallelized when streams originate from  arrays or
@@ -986,20 +982,20 @@ expose our libraries to the wider community.
 \section{Benchmarks}\label{appendix}
 
 To get a relative idea of the performance overhead of different approaches,
-we here present several benchmark results.
+we  present here several benchmark results.
 
 %-------------------------------------------------------------------------------
 \subsection{Infinite Streams}
 
-First we compare different the runtime for accessing the $N$th element in the
+First we compare  the different runtimes for accessing the $N$th element in the
 infinite stream of natural numbers represented in different ways.
 
 The different representations we use are the direct stream generator
-presented in Section~\ref{}, engines encapsulated as streams for both OR
-and AND answers, the direct lazy list representation of Section~\ref{}, and
-a lazy list version of findall.
+presented in Section~\ref{impl}, engines encapsulated as streams for both OR
+and AND answers, the direct lazy list representation of Section~\ref{ll}, and
+a lazy list version of {\tt findall/3} in library {\tt lazy\_lists}.
 
-Table~\ref{tab:bench1} shows the benchmark results for $N = 2^{23}$, obtained on a a
+Table~\ref{tab:bench1} shows the benchmark results for $N = 2^{23}$, obtained on a
 128GB 18-core iMacPro, with 8 GB given to SWI-Prolog to avoid stack overflows.
 
 Clearly, the direct generator is the fastest, while the engine-based generators
@@ -1007,25 +1003,6 @@ are about 5 times slower (with little difference between AND and OR). The lazy
 lists are more costly as they trigger the attributed variable hook at every
 element. The lazy findall is the worst, combining the cost of attributed
 variables with that of engines.
-
-\renewcommand{\arraystretch}{1.2} 
-\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
-
-\begin{table*}\centering
-\ra{1.3}
-\begin{tabular}{@{}rrr@{}}
-\toprule
-& Time (s) & Relative ($\times$) \\
-\midrule
-generator    &   3.0 &  1.00 $\times$  \\ 
-OR engine    &  16.5 &  5.50 $\times$  \\
-AND engine   &  15.6 &  5.20 $\times$  \\
-lazy list    &  18.8 &  6.27 $\times$  \\
-lazy findall &  28.6 &  9.53 $\times$  \\
-\bottomrule
-\end{tabular}
-\caption{Benchmark results for accessing the $2^{23}$th element in an infinite stream.}\label{tab:bench1}
-\end{table*}
 
 %-------------------------------------------------------------------------------
 \subsection{Finite Streams}
@@ -1046,6 +1023,27 @@ we saw above, lazy findall is even more expensive. Yet, the largest price of
 all is to compute the elements algorithmically on demand. When backtracking
 through all elements, the overhead is lower than when going straight
 for the last element.
+
+\newpage
+\renewcommand{\arraystretch}{1.2} 
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
+
+\begin{table*}\centering
+\ra{1.3}
+\begin{tabular}{@{}rrr@{}}
+\toprule
+& Time (s) & Relative ($\times$) \\
+\midrule
+generator    &   3.0 &  1.00 $\times$  \\ 
+OR engine    &  16.5 &  5.50 $\times$  \\
+AND engine   &  15.6 &  5.20 $\times$  \\
+lazy list    &  18.8 &  6.27 $\times$  \\
+lazy findall &  28.6 &  9.53 $\times$  \\
+\bottomrule
+\end{tabular}
+\caption{Benchmark results for accessing the $2^{23}$th element in an infinite stream.}\label{tab:bench1}
+\end{table*}
+
 
 \begin{table*}\centering
 \ra{1.3}
