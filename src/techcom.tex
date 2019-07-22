@@ -753,15 +753,18 @@ library. The general goal to create a lazy list is
 \texttt{lazy\_list(:Next, +State0, -List)}. This executes
 \texttt{call(Next, State0, State1, Head)} to produce the next element.
 
-Lazy lists allow Prolog to handle infinite data streams in limited memory, provided that garbage
-collection can reclaim the already processed part of the list. This is possible
-if the user code does not keep a reference to the head of the list.
-Hence, although processing the list may be non-deterministic,
-this non-determinism must be resolved after examining a finite number of
-elements.
- Then the attributed variable trigger and garbage collection ensure
-that the window on the stream that is kept in memory is finite and
-guaranteed to be large enough to cope with the finite non-determinism.
+Lazy lists allow Prolog to handle infinite data streams in limited memory,
+provided that garbage collection can reclaim the already processed part of the
+list. This is possible if the user code does not keep a reference to the head
+of the list. A particular pitfall here is nondeterminism: even when the current
+branch no longer needs the head of the list, the runtime environment may have
+to hold onto it for the sake of unexplored alternative branches.
+Hence, non-determinism can only be mixed with lazy lists if every choicepoint
+is resolved (i.e., no unexplored alternatives remain) after examining only a bounded number of additional elements. 
+If this condition is met, 
+the attributed variable trigger, which advances the stream, and garbage
+collection, which reclaims the unused prefix of the list, together
+ensure that the in-memory window of the stream is finite. 
 
 % ref: https://cliplab.org/papers/lazy-functions-ciclops05.pdf
 
@@ -979,6 +982,9 @@ expose our libraries to the wider community.
 % Code supporting the paper has been implemented as an open source library package at:\\
 % {\small \url{https://github.com/ptarau/AnswerStreamGenerators/raw/master/lazy_streams-0.5.0.zip } }
 % The reader is encouraged to explore its functionality using SWI-Prolog's {\tt pack\_install/1} utility that downloads and installs it as SWI-Prolog library.
+
+\subsection*{Acknowledgments}
+Part of this work was supported by the Flemish Fund for Scientific Research (grant G0D1419N).
 
 \bibliographystyle{eptcs}
 \bibliography{theory,tarau,proglang,biblio,new}
