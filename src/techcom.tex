@@ -89,7 +89,7 @@ Prolog presents two major obstacles that make this task particularly challenging
 
 The first obstacle is presented by Prolog's fixed depth-first search resolution
 and strict evaluation semantics. While Prolog's depth-first search mechanism
-can be complemented with alternative search strategies, as shown by \cite{tor}
+can be complemented with alternative search strategies, as shown in \cite{tor}
 by overriding its disjunction operator, the evaluation mechanism remains
 ultimately eager. When programming with lists or DCGs, one chains recursive
 steps in the body of clauses connected by conjunctions. 
@@ -99,7 +99,7 @@ programming language, is the presence of procedural state-management and I/O
 constructs that are interleaved with its native declarative programming
 constructs. These range from random generator streams to file and socket I/O
 and dynamic database operations.  While monadic constructs in functional
-languages \cite{moggi:monads,wadler93:cont}  can provide  a unified view of
+languages \cite{moggi:monads,wadler93:cont}  offer  a unified view of
 declarative and procedural state-management operations, most logic programming
 languages still lack a unified approach providing a uniform interface to this
 mix of declarative and procedural language constructs.
@@ -162,9 +162,9 @@ library package,\footnote{%
 The rest of the paper is organized as follows.
 Section \ref{ov} demonstrates our approach with some examples.
 Section \ref{impl} describes implementation of lazy stream generator constructors and 
-their the interface.
+their  interface.
 Section \ref{alg} introduces several operations on generators and overviews the
-embedded language interpreter organizing then as an algebra of generator combinators.
+embedded language interpreter organizing them as an algebra of generator combinators.
 Section \ref{other} describes lazy functional language style generator operations
 and an example of I/O stream generator.
 Section \ref{ll} overviews implementation of lazy lists using attributed variables
@@ -245,6 +245,7 @@ stop(E):-nb_setarg(1,E,done).
 \end{code}
 \end{minipage}
 \end{tabular}
+
 This code {\tt call}s the generator to produce an element. The first time the
 generator fails, \texttt{stop/1} writes \texttt{done} into its first argument
 in a non-backtrackable fashion (and then propagates the failure). Subsequent 
@@ -273,7 +274,7 @@ const(C,=(C)).
 The {\tt rand/1} predicate produces the {\tt random/1} stream generator, which relies on externally maintained state
 to yield floating point numbers between 0 and 1.
 \begin{code}
-rand(random()).
+rand(random).
 \end{code}
 
 We can also generate a stream by by incrementally evolving a state:
@@ -408,7 +409,7 @@ When using engines,
 both AND-streams and OR-streams can be infinite, as in the
 case of the generators {\tt or\_nat\_stream} and {\tt and\_nat\_stream}.
 While one can see backtracking over an infinite set of answers as
-a ``naturally born'' OR-stream, the ability of the generators to
+a ``naturally born'' OR-stream, the ability of the engine-based  generators to
 yield answers from inside an infinite recursive loop is critical
 for generating infinite AND-streams.
 Because the choice of generation method is immaterial to the user of the generator,
@@ -464,7 +465,7 @@ prod_goal(E1,E2):-ask(E1,A),prod_loop(1,A,E1-[],E2-[]).
 
 The algorithm, expressed by the predicate {\tt prod\_loop},
 alternates between both generators while neither is done.
-After that, it keeps progressing the remaining generator until 
+After that, it keeps progressing in the remaining generator until 
 that too is exhausted. Each time a generator produces a new element,
 it is paired with the previously produced elements of the other generator,
 which are stored in a list.
@@ -497,8 +498,8 @@ Here is the product of the natural numbers with themselves as an example:
 The singleton stream with a known constant (e.g., {\tt o}) is the neutral
 element for the product, if we consider any element {\tt X} to be isomorphic to
 {\tt o-X} and {\tt X-o}.  Moreover, the product is associative if we ignore the
-association in the pair representation (e.g, {\tt 1-(2-3)} vs. {\tt (1-2)-3})
-and commutative if the order of the elements does not matter.  Finally, under the same
+association in the pair representation (e.g, {\tt 1-(2-3)} seen as equivalent to {\tt (1-2)-3})
+and commutative if the order of the elements does not matter, when interpreting our streams as multisets.  Finally, under the same
 assumptions, the product distributes over the sum.
 
 \paragraph{Note:} Our {\tt lazy\_streams} package also provides the {\tt prod\_/3} stream product 
@@ -731,13 +732,9 @@ idea on the lazy list of natural numbers:
 lazy_nats_from(N,L) :- put_attr(L,lazy_streams,state(N,_)).
 
 attr_unify_hook(State,Value) :-State=state(N,Read),
-  ( var(Read) ->
-      succ(N,M),
-      nats(M,Tail),
-      nb_setarg(2,State,[N|Tail]),
-      arg(2,State,Value)
-  ;
-      Value = Read
+  ( var(Read) -> succ(N,M),nats(M,Tail),
+     nb_setarg(2,State,[N|Tail]),arg(2,State,Value)
+  ;  Value = Read
   ).
 \end{code}
 Compared to the basic version, we use a compound state here, where a
@@ -797,7 +794,7 @@ well with all regular list predicates. For instance,
 \end{codex}
 The problem is that while the list is infinite and lazy, {\tt maplist/3} is eager
 and only works on finite lists.
-By exploiting the isomorphism we can easily import the lazy {\tt map/3} from
+By exploiting the isomorphism between the two representations we can easily import the lazy {\tt map/3} from
 streams to get a {\tt lazy\_maplist/3}.
 
 \paragraph{Isomorphism} Two predicates witness the isomorphism between the
@@ -896,7 +893,7 @@ Lazy lists might or might not need $O(n)$ for that, depending on possible garbag
 With most stream generators no garbage collection is needed when working destructively in constant space, while their results can be exposed declaratively via the stream algebra.
 On the other hand, lazy lists are reusable, while new generators 
 must be created to revisit a sequence.
-\ref{appendix} also shows with benchmarks that stream generators are faster than lazy lists.
+The Appendix \ref{appendix} also shows with benchmarks that stream generators are faster than lazy lists.
 
 Some algorithms can be most easily expressed using first-class logic engines, but
 avoiding engines when possible reduces memory footprint and can avoid term copying.
@@ -989,6 +986,7 @@ Part of this work was supported by the Flemish Fund for Scientific Research (gra
 \bibliographystyle{eptcs}
 \bibliography{theory,tarau,proglang,biblio,new}
 
+\newpage
 \appendix
 
 %===============================================================================
