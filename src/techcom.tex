@@ -171,7 +171,8 @@ Section \ref{ll} overviews implementation of lazy lists using attributed variabl
 and introduces the iso-functor connecting them to  lazy stream generators.
 Section \ref{disc} compares and discusses alternative implementation options of lazy list and stream generators.
 Section \ref{rel} overviews related work and
-section \ref{conc} concludes the paper. The Appendix contains benchmarks comparing implementation alternatives for finite and infinite lazy streams.
+section \ref{conc} concludes the paper. 
+%The Appendix contains benchmarks comparing implementation alternatives for finite and infinite lazy streams.
 
 %===============================================================================
 \section{Overview}\label{ov}
@@ -894,6 +895,7 @@ With most stream generators no garbage collection is needed when working destruc
 On the other hand, lazy lists are reusable, while new generators 
 must be created to revisit a sequence.
 The Appendix in the extended version of this paper\footnote{
+https://github.com/ptarau/AnswerStreamGenerators/blob/master/doc/techcom.pdf
 }
 also shows with benchmarks that stream generators are faster than lazy lists.
 
@@ -988,9 +990,8 @@ and by the Flemish Fund for Scientific Research (grant G0D1419N).
 
 \bibliographystyle{eptcs}
 \bibliography{theory,tarau,proglang,biblio,new}
-%\bibliography{techcom.bbl}
 
-%\end{document}
+\end{document}
 \newpage
 \appendix
 
