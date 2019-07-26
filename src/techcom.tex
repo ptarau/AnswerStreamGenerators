@@ -893,7 +893,9 @@ Lazy lists might or might not need $O(n)$ for that, depending on possible garbag
 With most stream generators no garbage collection is needed when working destructively in constant space, while their results can be exposed declaratively via the stream algebra.
 On the other hand, lazy lists are reusable, while new generators 
 must be created to revisit a sequence.
-The Appendix \ref{appendix} also shows with benchmarks that stream generators are faster than lazy lists.
+The Appendix in the extended version of this paper\footnote{
+}
+also shows with benchmarks that stream generators are faster than lazy lists.
 
 Some algorithms can be most easily expressed using first-class logic engines, but
 avoiding engines when possible reduces memory footprint and can avoid term copying.
@@ -981,11 +983,14 @@ expose our libraries to the wider community.
 % The reader is encouraged to explore its functionality using SWI-Prolog's {\tt pack\_install/1} utility that downloads and installs it as SWI-Prolog library.
 
 \subsection*{Acknowledgments}
-Part of this work was supported by the Flemish Fund for Scientific Research (grant G0D1419N).
+This work has been partially supported by NSF grant \verb~1423324~
+and by the Flemish Fund for Scientific Research (grant G0D1419N).
 
 \bibliographystyle{eptcs}
 \bibliography{theory,tarau,proglang,biblio,new}
+%\bibliography{techcom.bbl}
 
+%\end{document}
 \newpage
 \appendix
 
