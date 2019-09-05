@@ -74,10 +74,10 @@
 
 \BFC{Motivation}
 \BI
-\I \emph{stream processing} is now prevalent in widely used programming languages
+\I \emph{stream processing} is now prevalent in widely used programming 
 languages like Java, Python, C\#, go or JavaScript
 
-\I processing infinite sequences is also available in non-strict functional languages like Haskell
+\I processing {\em infinite sequences} is also available in non-strict functional languages like Haskell
 
 \I streams offers a uniform and
 (mostly) declarative view on processing finite and infinite sequences
@@ -109,7 +109,7 @@ encapsulate the work of coroutining first-class logic engines and support intero
 
 \I Stream generators are exposed to the application programmer either through an abstract sequence manipulation API or as lazy lists. 
 
-\I We describe an isomorphism that morphs data and operations between these representations.
+\I We describe an isomorphism that transports data and equivalent operations between these representations.
 
 \I We define an algebra of stream generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms.
 
@@ -148,7 +148,7 @@ encapsulate the work of coroutining first-class logic engines and support intero
 \BFC{A few use cases}
 
 \BI
-\I map operation infinite streams
+\I map operation on infinite streams
 \begin{codex}
 ?- pos(P),neg(N),map(plus,P,N,Zero),show(10,Zero).
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0].
@@ -230,8 +230,8 @@ gen_next(F,State,X):-
 
 \BFC{Iterating over the elements of a stream via backtracking}
 \BI
-\I x
-The {\tt in/2} predicate uses {\tt ask/2} to produce the elements on backtracking.
+\I 
+the {\tt in/2} predicate uses {\tt ask/2} to produce the elements on backtracking
 \begin{code}
 :-op(800,xfx,(in)).
 
@@ -242,7 +242,7 @@ select_from(Gen,_,X):-X in Gen.
 \end{code}
 
 \I with {\tt in/2}, the generator emulates its declarative Prolog equivalent
-\I e.g., it gives the same view as if  {\tt member/2} were  used on a list
+\I a \alert{declarative} view of a procedural iteration mechanism: it works as if  {\tt member/2} were  used on a list!
 \EI
 \end{frame}
 
@@ -515,7 +515,7 @@ next_term(Stream,Term):-
   ; close(Stream),fail
   ).
 \end{code}
-\I again, not that we do not need to explicitly iterate
+\I again, note that we do not need to explicitly iterate
 \I we only specify a single step and the end condition
 \EI
 \end{frame}
@@ -533,13 +533,13 @@ next_term(Stream,Term):-
 \BI
 \I we delay the
 evaluation of a computation until its result is actually needed
-\I the lazy list is represented as
+\I the lazy list is represented as a
 Prolog list where the tail is formed by an attributed variable
 \I when inspected through unification,
 attributed variables  trigger  the computation and
 deliver the actual value
 
-\I building the the list happens incrementally, when needed,
+\I building the  list happens incrementally, when needed,
 but what has been computed can be reused
 \I Example:  the lazy list of natural numbers:
 \begin{code}
@@ -601,7 +601,7 @@ iso_fun(F,From,To,A,B):-call(From,A,X),call(F,X,Y),call(To,Y,B).
 \BI
 \I maplist will loop on lazy lists as its halting condition is unification against the empty list
 \I when a list is infinite this never happens
-\I we borrow {\tt map} to define lazy version of {\tt maplist}:
+\I we borrow {\tt map} to define a lazy version of {\tt maplist}:
 \begin{code}
 lazy_maplist(F,LazyXs,LazyYs):-
   iso_fun(map(F),lazy2gen,gen2lazy,LazyXs,LazyYs).
