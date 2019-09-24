@@ -50,11 +50,13 @@
           tom.schrijvers@cs.kuleuven.be}
 }          
    
-\date{ICLP'2019}
+\date{ICLP'2019, Las Cruces, New Mexico}
 
 
 \begin{document}
 
+\usebackgroundtemplate{%
+ \includegraphics[width=\paperwidth,height=\paperheight]{dunes.jpg}} 
 
 \begin{frame}
 \titlepage
@@ -62,6 +64,7 @@
 
 \end{frame}
 
+\usebackgroundtemplate{}
 
 %\BFT{Outline}
 %\tableofcontents
@@ -72,19 +75,15 @@
 
 
 
-\BFC{Motivation}
+\BFT{Motivation}
 \BI
-\I \emph{stream processing} is now prevalent in widely used programming 
-languages like Java, Python, C\#, go or JavaScript
+\I \emph{stream processing} is now prevalent in:
+Java, Python, C\#, go, Lua, JavaScript etc.
 
 \I processing {\em infinite sequences} is also available in non-strict functional languages like Haskell
 
 \I streams offers a uniform and
 (mostly) declarative view on processing finite and infinite sequences
-
-\I besides the expressiveness
-boost they provide, the advent of these language constructs 
- has been driven by the need for processing:
 
 \BI
 \I local or network/cloud-based I/O operations
@@ -92,26 +91,27 @@ boost they provide, the advent of these language constructs
 \I dynamic event streams coming from Web search queries and clicks
 \I sensor networks supporting today's IoT infrastructure
 \EI
-\I we want to extend Prolog with state-of-the-art lazy
-stream processing capabilities supporting infinite computations or very large data sources
-comparable to those available in widely used
-programming languages and emerging ML and AI paradigms
+\I $\Rightarrow$ extend Prolog with state-of-the-art lazy
+stream processing! 
 
 \EI
+
 \end{frame}
+
+
+
 
 \BFC{Overview}
 \BI
-\I Lazy stream generators provide a unified interface to stateful computations, I/O operations as well as algorithms producing finite or infinite sequences. 
+\I answer stream generators that 
+encapsulate the work of coroutining first-class logic engines
+\I support interoperation between forward recursive {\em AND-streams} and backtracking-generated {\em OR-streams}
 
-\I We introduce answer stream generators that 
-encapsulate the work of coroutining first-class logic engines and support interoperation between forward recursive {\em AND-streams} and backtracking-generated {\em OR-streams}. 
+\I expose them to the application programmer either through an abstract sequence manipulation API or as lazy lists
 
-\I Stream generators are exposed to the application programmer either through an abstract sequence manipulation API or as lazy lists. 
+\I an isomorphism that transports data and  operations between these two representations
 
-\I We describe an isomorphism that transports data and equivalent operations between these representations.
-
-\I We define an algebra of stream generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms.
+\I an algebra of stream generator operations that extends Prolog via an embedded language interpreter providing a compact notation for composition mechanisms
 
 \EI
 \end{frame}
@@ -120,11 +120,12 @@ encapsulate the work of coroutining first-class logic engines and support intero
 \BFT{Contributions}
 
 \BI
-\I we  design a simple and clean approach for setting up lazy streams, which
+\I  simple and clean approach for setting up lazy streams, which
    uniformly encapsulates algorithms, lists, first-class logic engines and other data sources
 \I by using attributed variables, we expose lazy streams in the form of lazy Prolog lists
    that, just like conventional lists, can be inspected and decomposed with unification
-\I we provide an embedded language interpreter supporting an algebra of stream operations
+   
+\I an embedded language interpreter supporting an algebra of stream operations
 \I we have implemented our approach in several libraries:
    \BE 
    \I \texttt{lazy\_streams}: generator builders, generator operations, an embedded generator algebra interpreter:
@@ -292,7 +293,8 @@ execution as a {\em coroutine}
 engine\_next(Engine,Answer)} built-in, encapsulating the answers of that engine
 as a stream
 \begin{code}
-eng(X,Goal,engine_next(Engine)):-engine_create(X,Goal,Engine). 
+eng(X,Goal,engine_next(Engine)):-
+  engine_create(X,Goal,Engine). 
 \end{code}
 
 \EI
@@ -634,18 +636,25 @@ lazy_sum_next(Xs-[Y|Ys],Ys-Xs,Y).
 
 \BFC{Discussion: pros and cons of lazy streams vs. lazy lists}
 \BI
-\I the abstract sequence interface of the {\tt lazy\_streams} package and
-the concrete list-based view provided by the {\tt lazy\_lists} library offer
-similar services, but as they interoperate with help of {\tt iso\_fun} predicates,
-one can choose the  implementation most suitable for a given algorithm
+\I lazy streams: abstract sequence interface
 \I
- one can access the $n$-th element of a generator in $O(1)$ space
+lazy lists: the concrete list-based view 
+
+\I one can access the $n$-th element of a generator in $O(1)$ space
 \I
 lazy lists might or might not need $O(n)$ for that, depending on possible garbage collection of their unused prefix
 \I
-with most stream generators no garbage collection is needed when working destructively in constant space, while their results can be exposed declaratively via the stream algebra.
+for stream generators no garbage collection is needed when working destructively in constant space
+
+\I their results can be exposed declaratively via the stream algebra
+
 \I lazy lists are reusable, while new generators 
 must be created to revisit a sequence
+
+\I $\Rightarrow$ they offer
+similar services, but as they interoperate with help of {\tt iso\_fun} predicates,
+one can choose the  implementation most suitable for a given algorithm
+
 \EI
 \end{frame}
 
@@ -671,5 +680,16 @@ that supports  transport of operations between lazy lists and generators
 \EI
 \end{frame}
 
+\usebackgroundtemplate{%
+ \includegraphics[width=\paperwidth,height=\paperheight]{stream2.jpg}} 
 
+\BFT{~~~~~~~~~~~~~~~~~~~~~~~~~~~~Thank you!}
+\begin{center}
+{\Huge QUESTIONS?}
+\end{center}
+%\center{{\tiny Research supported by NSF grant {\bf 1423324}}}
+
+\end{frame}
+
+\usebackgroundtemplate{}
 \end{document}
